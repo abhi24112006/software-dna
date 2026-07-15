@@ -15,12 +15,15 @@ public class ParsedFile {
 
     private List<ParsedEnum> enums;
 
+    private List<ParsedRecord> records;
+
     public ParsedFile() {
 
         imports = new ArrayList<>();
         classes = new ArrayList<>();
         interfaces = new ArrayList<>();
         enums = new ArrayList<>();
+        records = new ArrayList<>();
 
     }
 
@@ -62,6 +65,14 @@ public class ParsedFile {
 
     public void setEnums(List<ParsedEnum> enums) {
         this.enums = enums;
+    }
+
+    public List<ParsedRecord> getRecords() {
+        return records;
+    }
+
+    public void setRecords(List<ParsedRecord> records) {
+        this.records = records;
     }
 
 }

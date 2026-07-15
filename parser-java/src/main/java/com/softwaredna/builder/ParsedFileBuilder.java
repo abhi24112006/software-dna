@@ -18,6 +18,7 @@ public class ParsedFileBuilder {
     private final ConstructorExtractor constructorExtractor;
     private final InterfaceExtractor interfaceExtractor;
     private final EnumExtractor enumExtractor;
+    private final RecordExtractor recordExtractor;
 
     public ParsedFileBuilder() {
 
@@ -29,6 +30,7 @@ public class ParsedFileBuilder {
         constructorExtractor = new ConstructorExtractor();
         interfaceExtractor = new InterfaceExtractor();
         enumExtractor = new EnumExtractor();
+        recordExtractor = new RecordExtractor();
 
     }
 
@@ -50,6 +52,10 @@ public class ParsedFileBuilder {
 
         parsedFile.setEnums(
                 enumExtractor.extractEnums(cu)
+        );
+
+        parsedFile.setRecords(
+            recordExtractor.extractRecords(cu)
         );
 
         List<ParsedClass> classes =

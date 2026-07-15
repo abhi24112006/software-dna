@@ -94,6 +94,26 @@ if (file.getEnums().isEmpty()) {
 
 System.out.println();
 
+System.out.println("Records");
+
+if (file.getRecords().isEmpty()) {
+
+    System.out.println("  None");
+
+} else {
+
+    for (ParsedRecord parsedRecord : file.getRecords()) {
+
+        System.out.println(
+                "  - " + parsedRecord.getName()
+        );
+
+    }
+
+}
+
+System.out.println();
+
 System.out.println("Classes");
 
                 for (ParsedClass clazz : file.getClasses()) {
@@ -196,3 +216,31 @@ System.out.println("Classes");
     }
 
 }
+/*package com.softwaredna.parser;
+
+import com.softwaredna.ast.ASTGenerator;
+import com.github.javaparser.ast.CompilationUnit;
+
+public class ParserApplication {
+
+    public static void main(String[] args) {
+
+        String code = """
+                package com.demo;
+
+                public record User(
+                        String name,
+                        int age
+                ) {
+                }
+                """;
+
+        ASTGenerator generator = new ASTGenerator();
+
+        CompilationUnit cu = generator.generateAST(code);
+
+        System.out.println(cu);
+
+    }
+
+}*/

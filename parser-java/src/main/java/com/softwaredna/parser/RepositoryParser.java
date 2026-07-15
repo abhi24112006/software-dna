@@ -47,6 +47,10 @@ public class RepositoryParser {
                             String source =
                                     reader.readFile(path.toString());
 
+                            System.out.println("================================");
+                            System.out.println(path);
+                            System.out.println(source);
+
                             CompilationUnit cu =
                                     generator.generateAST(source);
 
@@ -63,6 +67,7 @@ public class RepositoryParser {
                                     "Failed to parse: "
                                             + path
                             );
+                            e.printStackTrace();
 
                         }
 
