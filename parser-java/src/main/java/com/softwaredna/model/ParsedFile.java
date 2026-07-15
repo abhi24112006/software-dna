@@ -13,11 +13,14 @@ public class ParsedFile {
 
     private List<ParsedInterface> interfaces;
 
+    private List<ParsedEnum> enums;
+
     public ParsedFile() {
 
         imports = new ArrayList<>();
         classes = new ArrayList<>();
         interfaces = new ArrayList<>();
+        enums = new ArrayList<>();
 
     }
 
@@ -51,6 +54,14 @@ public class ParsedFile {
 
     public void setInterfaces(List<ParsedInterface> interfaces) {
         this.interfaces = interfaces;
+    }
+
+    public List<ParsedEnum> getEnums() {
+        return enums;
+    }
+
+    public void setEnums(List<ParsedEnum> enums) {
+        this.enums = enums;
     }
 
 }

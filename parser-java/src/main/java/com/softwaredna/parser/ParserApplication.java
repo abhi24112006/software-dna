@@ -71,6 +71,27 @@ public class ParserApplication {
 
 }
 
+
+System.out.println();
+
+System.out.println("Enums");
+
+if (file.getEnums().isEmpty()) {
+
+    System.out.println("  None");
+
+} else {
+
+    for (ParsedEnum parsedEnum : file.getEnums()) {
+
+        System.out.println(
+                "  - " + parsedEnum.getName()
+        );
+
+    }
+
+}
+
 System.out.println();
 
 System.out.println("Classes");
