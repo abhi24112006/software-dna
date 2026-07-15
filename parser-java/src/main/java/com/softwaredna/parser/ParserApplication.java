@@ -1,10 +1,9 @@
 package com.softwaredna.parser;
 
-import com.github.javaparser.ast.CompilationUnit;
-import com.softwaredna.ast.ASTGenerator;
-import com.softwaredna.builder.ParsedFileBuilder;
+import com.softwaredna.model.ParsedClass;
 import com.softwaredna.model.ParsedFile;
-import com.softwaredna.reader.JavaFileReader;
+import com.softwaredna.model.ParsedMethod;
+import com.softwaredna.model.RepositoryModel;
 
 public class ParserApplication {
 
@@ -12,44 +11,67 @@ public class ParserApplication {
 
         try {
 
-            JavaFileReader reader = new JavaFileReader();
+            RepositoryParser parser = new RepositoryParser();
 
-            String sourceCode =
-                    reader.readFile("../sample_projects/demo/Student.java");
+            RepositoryModel repository =
+                    parser.parseRepository("../sample_projects");
 
-            ASTGenerator generator = new ASTGenerator();
+            System.out.println("======================================");
+            System.out.println("     Software DNA Repository Engine");
+            System.out.println("======================================");
 
-            CompilationUnit cu =
-                    generator.generateAST(sourceCode);
+            System.out.println();
 
-            ParsedFileBuilder builder =
-                    new ParsedFileBuilder();
+            System.out.println("Repository : "
+                    + repository.getRepositoryName());
 
-            ParsedFile parsedFile =
-                    builder.build(cu);
+            System.out.println();
 
-            System.out.println("=================================");
-    System.out.println(" Software DNA Parser Engine");
-    System.out.println("=================================");
+            System.out.println("Files Parsed : "
+                    + repository.getFiles().size());
 
-    System.out.println();
+            System.out.println();
 
-    System.out.println("Package");
-    System.out.println(parsedFile.getPackageName());
+            for (ParsedFile file : repository.getFiles()) {
 
-    System.out.println();
+                System.out.println("--------------------------------------");
 
-    System.out.println("Imports");
+                System.out.println("Package : "
+                        + file.getPackageName());
 
-    parsedFile.getImports()
-        .forEach(System.out::println);
+                System.out.println();
 
-    System.out.println();
+                System.out.println("Imports");
 
-    System.out.println("Classes");
+                file.getImports()
+                        .forEach(i -> System.out.println("  - " + i));
 
-    parsedFile.getClasses()
-        .forEach(c -> System.out.println(c.getName()));
+                System.out.println();
+
+                System.out.println("Classes");
+
+                for (ParsedClass clazz : file.getClasses()) {
+
+                    System.out.println("  Class : "
+                            + clazz.getName());
+
+                    System.out.println("    Methods");
+
+                    for (ParsedMethod method : clazz.getMethods()) {
+
+                        System.out.println("      - "
+                                + method.getName()
+                                + "() : "
+                                + method.getReturnType());
+
+                    }
+
+                    System.out.println();
+
+                }
+
+            }
+
         }
 
         catch (Exception e) {

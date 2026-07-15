@@ -1,14 +1,21 @@
 package com.softwaredna.model;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class ParsedClass {
 
     private String name;
 
+    private List<ParsedMethod> methods;
+
     public ParsedClass() {
+        methods = new ArrayList<>();
     }
 
     public ParsedClass(String name) {
         this.name = name;
+        this.methods = new ArrayList<>();
     }
 
     public String getName() {
@@ -19,4 +26,11 @@ public class ParsedClass {
         this.name = name;
     }
 
+    public List<ParsedMethod> getMethods() {
+        return methods;
+    }
+
+    public void setMethods(List<ParsedMethod> methods) {
+        this.methods = methods;
+    }
 }
