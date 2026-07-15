@@ -9,11 +9,14 @@ public class ParsedClass {
 
     private List<ParsedField> fields;
 
+    private List<ParsedConstructor> constructors;
+
     private List<ParsedMethod> methods;
 
     public ParsedClass() {
 
         fields = new ArrayList<>();
+        constructors = new ArrayList<>();
         methods = new ArrayList<>();
 
     }
@@ -23,6 +26,7 @@ public class ParsedClass {
         this.name = name;
 
         fields = new ArrayList<>();
+        constructors = new ArrayList<>();
         methods = new ArrayList<>();
 
     }
@@ -41,6 +45,14 @@ public class ParsedClass {
 
     public void setFields(List<ParsedField> fields) {
         this.fields = fields;
+    }
+
+    public List<ParsedConstructor> getConstructors() {
+        return constructors;
+    }
+
+    public void setConstructors(List<ParsedConstructor> constructors) {
+        this.constructors = constructors;
     }
 
     public List<ParsedMethod> getMethods() {

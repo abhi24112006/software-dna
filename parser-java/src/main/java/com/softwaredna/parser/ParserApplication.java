@@ -52,7 +52,28 @@ public class ParserApplication {
 
                 System.out.println();
 
-                System.out.println("Classes");
+    System.out.println("Interfaces");
+
+    if (file.getInterfaces().isEmpty()) {
+
+        System.out.println("  None");
+
+    } else {
+
+        for (ParsedInterface parsedInterface :
+                file.getInterfaces()) {
+
+            System.out.println(
+                    "  - " + parsedInterface.getName()
+            );
+
+        }
+
+}
+
+System.out.println();
+
+System.out.println("Classes");
 
                 for (ParsedClass clazz : file.getClasses()) {
 
@@ -60,6 +81,8 @@ public class ParserApplication {
                             + clazz.getName());
 
                     System.out.println();
+
+                    // ---------------- FIELDS ----------------
 
                     System.out.println("    Fields");
 
@@ -84,6 +107,35 @@ public class ParserApplication {
 
                     System.out.println();
 
+                    // ---------------- CONSTRUCTORS ----------------
+
+                    System.out.println("    Constructors");
+
+                    if (clazz.getConstructors().isEmpty()) {
+
+                        System.out.println("      None");
+
+                    } else {
+
+                        for (ParsedConstructor constructor :
+                                clazz.getConstructors()) {
+
+                            System.out.println(
+                                    "      - "
+                                            + constructor.getName()
+                                            + "()"
+                                            + "  Parameters : "
+                                            + constructor.getParameterCount()
+                            );
+
+                        }
+
+                    }
+
+                    System.out.println();
+
+                    // ---------------- METHODS ----------------
+
                     System.out.println("    Methods");
 
                     if (clazz.getMethods().isEmpty()) {
@@ -92,7 +144,8 @@ public class ParserApplication {
 
                     } else {
 
-                        for (ParsedMethod method : clazz.getMethods()) {
+                        for (ParsedMethod method :
+                                clazz.getMethods()) {
 
                             System.out.println(
                                     "      - "

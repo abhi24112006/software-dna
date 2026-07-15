@@ -11,10 +11,13 @@ public class ParsedFile {
 
     private List<ParsedClass> classes;
 
+    private List<ParsedInterface> interfaces;
+
     public ParsedFile() {
 
         imports = new ArrayList<>();
         classes = new ArrayList<>();
+        interfaces = new ArrayList<>();
 
     }
 
@@ -40,6 +43,14 @@ public class ParsedFile {
 
     public void setClasses(List<ParsedClass> classes) {
         this.classes = classes;
+    }
+
+    public List<ParsedInterface> getInterfaces() {
+        return interfaces;
+    }
+
+    public void setInterfaces(List<ParsedInterface> interfaces) {
+        this.interfaces = interfaces;
     }
 
 }

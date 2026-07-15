@@ -1,6 +1,6 @@
 package com.softwaredna.extractor;
 
-import com.github.javaparser.ast.CompilationUnit;
+import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration;
 import com.github.javaparser.ast.body.MethodDeclaration;
 import com.softwaredna.model.ParsedMethod;
 
@@ -9,21 +9,29 @@ import java.util.List;
 
 public class MethodExtractor {
 
-    public List<ParsedMethod> extractMethods(CompilationUnit cu) {
+    public List<ParsedMethod> extractMethods(
+            ClassOrInterfaceDeclaration classDeclaration) {
 
         List<ParsedMethod> methods = new ArrayList<>();
 
-        for (MethodDeclaration method : cu.findAll(MethodDeclaration.class)) {
+        for (MethodDeclaration method :
+                classDeclaration.getMethods()) {
 
-            ParsedMethod parsedMethod = new ParsedMethod(
-                    method.getNameAsString(),
-                    method.getType().asString()
-            );
+            ParsedMethod parsedMethod =
+                    new ParsedMethod(
+
+                            method.getNameAsString(),
+
+                            method.getType().asString()
+
+                    );
 
             methods.add(parsedMethod);
+
         }
 
         return methods;
+
     }
 
 }

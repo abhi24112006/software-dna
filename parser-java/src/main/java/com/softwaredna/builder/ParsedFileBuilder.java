@@ -1,11 +1,8 @@
 package com.softwaredna.builder;
 
 import com.github.javaparser.ast.CompilationUnit;
-import com.softwaredna.extractor.ClassExtractor;
-import com.softwaredna.extractor.FieldExtractor;
-import com.softwaredna.extractor.ImportExtractor;
-import com.softwaredna.extractor.MethodExtractor;
-import com.softwaredna.extractor.PackageExtractor;
+import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration;
+import com.softwaredna.extractor.*;
 import com.softwaredna.model.ParsedClass;
 import com.softwaredna.model.ParsedFile;
 
@@ -18,6 +15,8 @@ public class ParsedFileBuilder {
     private final ClassExtractor classExtractor;
     private final MethodExtractor methodExtractor;
     private final FieldExtractor fieldExtractor;
+    private final ConstructorExtractor constructorExtractor;
+    private final InterfaceExtractor interfaceExtractor;
 
     public ParsedFileBuilder() {
 
@@ -26,6 +25,8 @@ public class ParsedFileBuilder {
         classExtractor = new ClassExtractor();
         methodExtractor = new MethodExtractor();
         fieldExtractor = new FieldExtractor();
+        constructorExtractor = new ConstructorExtractor();
+        interfaceExtractor = new InterfaceExtractor();
 
     }
 
@@ -41,20 +42,39 @@ public class ParsedFileBuilder {
                 importExtractor.extractImports(cu)
         );
 
+        parsedFile.setInterfaces(
+                interfaceExtractor.extractInterfaces(cu)
+        );
+
         List<ParsedClass> classes =
                 classExtractor.extractClasses(cu);
 
-        // Temporary implementation:
-        // Works correctly because our demo project has one class per file.
-        if (!classes.isEmpty()) {
+        List<ClassOrInterfaceDeclaration> declarations =
+                cu.findAll(ClassOrInterfaceDeclaration.class);
 
-            classes.get(0).setFields(
-                    fieldExtractor.extractFields(cu)
-            );
+        int classIndex = 0;
 
-            classes.get(0).setMethods(
-                    methodExtractor.extractMethods(cu)
-            );
+        for (ClassOrInterfaceDeclaration declaration : declarations) {
+
+            if (!declaration.isInterface()) {
+
+                ParsedClass parsedClass = classes.get(classIndex);
+
+                parsedClass.setFields(
+                        fieldExtractor.extractFields(declaration)
+                );
+
+                parsedClass.setConstructors(
+                        constructorExtractor.extractConstructors(declaration)
+                );
+
+                parsedClass.setMethods(
+                        methodExtractor.extractMethods(declaration)
+                );
+
+                classIndex++;
+
+            }
 
         }
 

@@ -12,7 +12,10 @@ public class ClassExtractor {
 
         return cu.findAll(ClassOrInterfaceDeclaration.class)
                 .stream()
-                .map(clazz -> new ParsedClass(clazz.getNameAsString()))
+                .filter(declaration -> !declaration.isInterface())
+                .map(declaration -> new ParsedClass(
+                        declaration.getNameAsString()
+                ))
                 .toList();
 
     }
