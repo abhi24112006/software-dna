@@ -4,6 +4,8 @@ public class Teacher {
 
     private String subject;
 
+    private int experience;
+
     public Teacher() {
     }
 

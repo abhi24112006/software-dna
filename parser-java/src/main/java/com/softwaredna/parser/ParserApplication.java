@@ -1,9 +1,6 @@
 package com.softwaredna.parser;
 
-import com.softwaredna.model.ParsedClass;
-import com.softwaredna.model.ParsedFile;
-import com.softwaredna.model.ParsedMethod;
-import com.softwaredna.model.RepositoryModel;
+import com.softwaredna.model.*;
 
 public class ParserApplication {
 
@@ -25,8 +22,6 @@ public class ParserApplication {
             System.out.println("Repository : "
                     + repository.getRepositoryName());
 
-            System.out.println();
-
             System.out.println("Files Parsed : "
                     + repository.getFiles().size());
 
@@ -43,8 +38,17 @@ public class ParserApplication {
 
                 System.out.println("Imports");
 
-                file.getImports()
-                        .forEach(i -> System.out.println("  - " + i));
+                if (file.getImports().isEmpty()) {
+
+                    System.out.println("  None");
+
+                } else {
+
+                    file.getImports()
+                            .forEach(i ->
+                                    System.out.println("  - " + i));
+
+                }
 
                 System.out.println();
 
@@ -55,14 +59,49 @@ public class ParserApplication {
                     System.out.println("  Class : "
                             + clazz.getName());
 
+                    System.out.println();
+
+                    System.out.println("    Fields");
+
+                    if (clazz.getFields().isEmpty()) {
+
+                        System.out.println("      None");
+
+                    } else {
+
+                        for (ParsedField field : clazz.getFields()) {
+
+                            System.out.println(
+                                    "      - "
+                                            + field.getName()
+                                            + " : "
+                                            + field.getType()
+                            );
+
+                        }
+
+                    }
+
+                    System.out.println();
+
                     System.out.println("    Methods");
 
-                    for (ParsedMethod method : clazz.getMethods()) {
+                    if (clazz.getMethods().isEmpty()) {
 
-                        System.out.println("      - "
-                                + method.getName()
-                                + "() : "
-                                + method.getReturnType());
+                        System.out.println("      None");
+
+                    } else {
+
+                        for (ParsedMethod method : clazz.getMethods()) {
+
+                            System.out.println(
+                                    "      - "
+                                            + method.getName()
+                                            + "() : "
+                                            + method.getReturnType()
+                            );
+
+                        }
 
                     }
 

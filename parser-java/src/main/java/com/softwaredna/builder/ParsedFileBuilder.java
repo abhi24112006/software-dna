@@ -2,6 +2,7 @@ package com.softwaredna.builder;
 
 import com.github.javaparser.ast.CompilationUnit;
 import com.softwaredna.extractor.ClassExtractor;
+import com.softwaredna.extractor.FieldExtractor;
 import com.softwaredna.extractor.ImportExtractor;
 import com.softwaredna.extractor.MethodExtractor;
 import com.softwaredna.extractor.PackageExtractor;
@@ -16,6 +17,7 @@ public class ParsedFileBuilder {
     private final ImportExtractor importExtractor;
     private final ClassExtractor classExtractor;
     private final MethodExtractor methodExtractor;
+    private final FieldExtractor fieldExtractor;
 
     public ParsedFileBuilder() {
 
@@ -23,6 +25,7 @@ public class ParsedFileBuilder {
         importExtractor = new ImportExtractor();
         classExtractor = new ClassExtractor();
         methodExtractor = new MethodExtractor();
+        fieldExtractor = new FieldExtractor();
 
     }
 
@@ -42,12 +45,17 @@ public class ParsedFileBuilder {
                 classExtractor.extractClasses(cu);
 
         // Temporary implementation:
-        // Since our sample project has only one class,
-        // attach all methods to the first class.
+        // Works correctly because our demo project has one class per file.
         if (!classes.isEmpty()) {
+
+            classes.get(0).setFields(
+                    fieldExtractor.extractFields(cu)
+            );
+
             classes.get(0).setMethods(
                     methodExtractor.extractMethods(cu)
             );
+
         }
 
         parsedFile.setClasses(classes);
