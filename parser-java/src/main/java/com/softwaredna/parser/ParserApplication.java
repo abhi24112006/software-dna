@@ -16,7 +16,6 @@ public class ParserApplication {
             System.out.println("======================================");
             System.out.println("     Software DNA Repository Engine");
             System.out.println("======================================");
-
             System.out.println();
 
             System.out.println("Repository : "
@@ -36,6 +35,8 @@ public class ParserApplication {
 
                 System.out.println();
 
+                // ---------------- IMPORTS ----------------
+
                 System.out.println("Imports");
 
                 if (file.getImports().isEmpty()) {
@@ -44,77 +45,134 @@ public class ParserApplication {
 
                 } else {
 
-                    file.getImports()
-                            .forEach(i ->
-                                    System.out.println("  - " + i));
+                    file.getImports().forEach(importName ->
+                            System.out.println("  - " + importName));
 
                 }
 
                 System.out.println();
 
-    System.out.println("Interfaces");
+                // ---------------- INTERFACES ----------------
 
-    if (file.getInterfaces().isEmpty()) {
+                System.out.println("Interfaces");
 
-        System.out.println("  None");
+                if (file.getInterfaces().isEmpty()) {
+
+                    System.out.println("  None");
+
+                } else {
+
+                    for (ParsedInterface parsedInterface :
+                            file.getInterfaces()) {
+
+                        System.out.println(
+                                "  - " + parsedInterface.getName()
+                        );
+
+                        System.out.println("    Annotations");
+
+                        if (parsedInterface.getAnnotations().isEmpty()) {
+
+                            System.out.println("      None");
+
+                        } else {
+
+                            parsedInterface.getAnnotations().forEach(annotation ->
+                                    System.out.println(
+                                            "      - @" + annotation.getName()
+                                    )
+                            );
+
+                        }
+
+                        System.out.println();
+
+                    }
+
+                }
+
+                // ---------------- ENUMS ----------------
+
+                System.out.println("Enums");
+
+                if (file.getEnums().isEmpty()) {
+
+                    System.out.println("  None");
+
+                } else {
+
+                    for (ParsedEnum parsedEnum :
+                            file.getEnums()) {
+
+                        System.out.println(
+                                "  - " + parsedEnum.getName()
+                        );
+
+                        System.out.println("    Annotations");
+
+                        if (parsedEnum.getAnnotations().isEmpty()) {
+
+                            System.out.println("      None");
+
+                        } else {
+
+                            parsedEnum.getAnnotations().forEach(annotation ->
+                                    System.out.println(
+                                            "      - @" + annotation.getName()
+                                    )
+                            );
+
+                        }
+
+                        System.out.println();
+
+                    }
+
+                }
+
+                // ---------------- RECORDS ----------------
+
+                System.out.println("Records");
+
+                if (file.getRecords().isEmpty()) {
+
+                    System.out.println("  None");
+
+                } else {
+
+                    for (ParsedRecord parsedRecord : file.getRecords()) {
+
+    System.out.println(
+            "  - " + parsedRecord.getName()
+    );
+
+    System.out.println("    Annotations");
+
+    if (parsedRecord.getAnnotations().isEmpty()) {
+
+        System.out.println("      None");
 
     } else {
 
-        for (ParsedInterface parsedInterface :
-                file.getInterfaces()) {
-
-            System.out.println(
-                    "  - " + parsedInterface.getName()
-            );
-
-        }
-
-}
-
-
-System.out.println();
-
-System.out.println("Enums");
-
-if (file.getEnums().isEmpty()) {
-
-    System.out.println("  None");
-
-} else {
-
-    for (ParsedEnum parsedEnum : file.getEnums()) {
-
-        System.out.println(
-                "  - " + parsedEnum.getName()
+        parsedRecord.getAnnotations().forEach(annotation ->
+                System.out.println(
+                        "      - @" + annotation.getName()
+                )
         );
 
     }
 
-}
-
-System.out.println();
-
-System.out.println("Records");
-
-if (file.getRecords().isEmpty()) {
-
-    System.out.println("  None");
-
-} else {
-
-    for (ParsedRecord parsedRecord : file.getRecords()) {
-
-        System.out.println(
-                "  - " + parsedRecord.getName()
-        );
-
-    }
+    System.out.println();
 
 }
 
-System.out.println();
+                }
 
-System.out.println("Classes");
+                System.out.println();
+
+                // ---------------- CLASSES ----------------
+
+                System.out.println("Classes");
 
                 for (ParsedClass clazz : file.getClasses()) {
 
@@ -123,7 +181,27 @@ System.out.println("Classes");
 
                     System.out.println();
 
-                    // ---------------- FIELDS ----------------
+                    // ---------- ANNOTATIONS ----------
+
+                    System.out.println("    Annotations");
+
+                    if (clazz.getAnnotations().isEmpty()) {
+
+                        System.out.println("      None");
+
+                    } else {
+
+                        clazz.getAnnotations().forEach(annotation ->
+                                System.out.println(
+                                        "      - @" + annotation.getName()
+                                )
+                        );
+
+                    }
+
+                    System.out.println();
+
+                    // ---------- FIELDS ----------
 
                     System.out.println("    Fields");
 
@@ -133,7 +211,8 @@ System.out.println("Classes");
 
                     } else {
 
-                        for (ParsedField field : clazz.getFields()) {
+                        for (ParsedField field :
+                                clazz.getFields()) {
 
                             System.out.println(
                                     "      - "
@@ -148,7 +227,7 @@ System.out.println("Classes");
 
                     System.out.println();
 
-                    // ---------------- CONSTRUCTORS ----------------
+                    // ---------- CONSTRUCTORS ----------
 
                     System.out.println("    Constructors");
 
@@ -159,23 +238,38 @@ System.out.println("Classes");
                     } else {
 
                         for (ParsedConstructor constructor :
-                                clazz.getConstructors()) {
+        clazz.getConstructors()) {
 
-                            System.out.println(
-                                    "      - "
-                                            + constructor.getName()
-                                            + "()"
-                                            + "  Parameters : "
-                                            + constructor.getParameterCount()
-                            );
+    System.out.println(
+            "      - " + constructor.getName() + "()"
+    );
 
-                        }
+    if (constructor.getParameters().isEmpty()) {
+
+        System.out.println("        Parameters : None");
+
+    } else {
+
+        System.out.println("        Parameters");
+
+        constructor.getParameters().forEach(parameter ->
+                System.out.println(
+                        "          - "
+                                + parameter.getType()
+                                + " "
+                                + parameter.getName()
+                )
+        );
+
+    }
+
+}
 
                     }
 
                     System.out.println();
 
-                    // ---------------- METHODS ----------------
+                    // ---------- METHODS ----------
 
                     System.out.println("    Methods");
 
@@ -186,16 +280,35 @@ System.out.println("Classes");
                     } else {
 
                         for (ParsedMethod method :
-                                clazz.getMethods()) {
+        clazz.getMethods()) {
 
-                            System.out.println(
-                                    "      - "
-                                            + method.getName()
-                                            + "() : "
-                                            + method.getReturnType()
-                            );
+    System.out.println(
+            "      - "
+                    + method.getName()
+                    + "() : "
+                    + method.getReturnType()
+    );
 
-                        }
+    if (method.getParameters().isEmpty()) {
+
+        System.out.println("        Parameters : None");
+
+    } else {
+
+        System.out.println("        Parameters");
+
+        method.getParameters().forEach(parameter ->
+                System.out.println(
+                        "          - "
+                                + parameter.getType()
+                                + " "
+                                + parameter.getName()
+                )
+        );
+
+    }
+
+}
 
                     }
 
@@ -205,9 +318,7 @@ System.out.println("Classes");
 
             }
 
-        }
-
-        catch (Exception e) {
+        } catch (Exception e) {
 
             e.printStackTrace();
 
@@ -216,31 +327,3 @@ System.out.println("Classes");
     }
 
 }
-/*package com.softwaredna.parser;
-
-import com.softwaredna.ast.ASTGenerator;
-import com.github.javaparser.ast.CompilationUnit;
-
-public class ParserApplication {
-
-    public static void main(String[] args) {
-
-        String code = """
-                package com.demo;
-
-                public record User(
-                        String name,
-                        int age
-                ) {
-                }
-                """;
-
-        ASTGenerator generator = new ASTGenerator();
-
-        CompilationUnit cu = generator.generateAST(code);
-
-        System.out.println(cu);
-
-    }
-
-}*/

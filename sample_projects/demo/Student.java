@@ -1,7 +1,6 @@
 package com.demo;
-
 import java.util.List;
-
+@Deprecated
 public class Student {
 
     private String name;

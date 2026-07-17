@@ -1,4 +1,5 @@
 package com.demo;
+@Deprecated
 
 public interface Printable {
 

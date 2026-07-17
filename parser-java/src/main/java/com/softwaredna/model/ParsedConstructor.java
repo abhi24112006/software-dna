@@ -1,35 +1,63 @@
 package com.softwaredna.model;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class ParsedConstructor {
 
     private String name;
 
-    private int parameterCount;
+    private List<ParsedParameter> parameters =
+            new ArrayList<>();
+
+    private List<ParsedAnnotation> annotations =
+            new ArrayList<>();
 
     public ParsedConstructor() {
     }
 
-    public ParsedConstructor(String name, int parameterCount) {
+    public ParsedConstructor(String name) {
 
         this.name = name;
-        this.parameterCount = parameterCount;
 
     }
 
     public String getName() {
+
         return name;
+
     }
 
     public void setName(String name) {
+
         this.name = name;
+
     }
 
-    public int getParameterCount() {
-        return parameterCount;
+    public List<ParsedParameter> getParameters() {
+
+        return parameters;
+
     }
 
-    public void setParameterCount(int parameterCount) {
-        this.parameterCount = parameterCount;
+    public void setParameters(
+            List<ParsedParameter> parameters) {
+
+        this.parameters = parameters;
+
+    }
+
+    public List<ParsedAnnotation> getAnnotations() {
+
+        return annotations;
+
+    }
+
+    public void setAnnotations(
+            List<ParsedAnnotation> annotations) {
+
+        this.annotations = annotations;
+
     }
 
 }

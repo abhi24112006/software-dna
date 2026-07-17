@@ -9,22 +9,28 @@ import java.util.List;
 
 public class MethodExtractor {
 
+    private final ParameterExtractor parameterExtractor =
+            new ParameterExtractor();
+
     public List<ParsedMethod> extractMethods(
-            ClassOrInterfaceDeclaration classDeclaration) {
+            ClassOrInterfaceDeclaration clazz) {
 
-        List<ParsedMethod> methods = new ArrayList<>();
+        List<ParsedMethod> methods =
+                new ArrayList<>();
 
-        for (MethodDeclaration method :
-                classDeclaration.getMethods()) {
+        for (MethodDeclaration method : clazz.getMethods()) {
 
             ParsedMethod parsedMethod =
-                    new ParsedMethod(
+                    new ParsedMethod();
 
-                            method.getNameAsString(),
+            parsedMethod.setName(
+                    method.getNameAsString());
 
-                            method.getType().asString()
+            parsedMethod.setReturnType(
+                    method.getType().asString());
 
-                    );
+            parsedMethod.setParameters(
+                    parameterExtractor.extractParameters(method));
 
             methods.add(parsedMethod);
 

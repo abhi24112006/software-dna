@@ -9,22 +9,26 @@ import java.util.List;
 
 public class ConstructorExtractor {
 
-    public List<ParsedConstructor> extractConstructors(
-            ClassOrInterfaceDeclaration classDeclaration) {
+    private final ParameterExtractor parameterExtractor =
+            new ParameterExtractor();
 
-        List<ParsedConstructor> constructors = new ArrayList<>();
+    public List<ParsedConstructor> extractConstructors(
+            ClassOrInterfaceDeclaration clazz) {
+
+        List<ParsedConstructor> constructors =
+                new ArrayList<>();
 
         for (ConstructorDeclaration constructor :
-                classDeclaration.getConstructors()) {
+                clazz.getConstructors()) {
 
             ParsedConstructor parsedConstructor =
-                    new ParsedConstructor(
+                    new ParsedConstructor();
 
-                            constructor.getNameAsString(),
+            parsedConstructor.setName(
+                    constructor.getNameAsString());
 
-                            constructor.getParameters().size()
-
-                    );
+            parsedConstructor.setParameters(
+                    parameterExtractor.extractParameters(constructor));
 
             constructors.add(parsedConstructor);
 

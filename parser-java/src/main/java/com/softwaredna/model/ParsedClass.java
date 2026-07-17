@@ -1,5 +1,5 @@
 package com.softwaredna.model;
-
+import com.softwaredna.model.ParsedAnnotation;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -12,6 +12,8 @@ public class ParsedClass {
     private List<ParsedConstructor> constructors;
 
     private List<ParsedMethod> methods;
+
+    private List<ParsedAnnotation> annotations = new ArrayList<>();
 
     public ParsedClass() {
 
@@ -61,6 +63,14 @@ public class ParsedClass {
 
     public void setMethods(List<ParsedMethod> methods) {
         this.methods = methods;
+    }
+
+    public List<ParsedAnnotation> getAnnotations() {
+    return annotations;
+    }
+
+    public void setAnnotations(List<ParsedAnnotation> annotations) {
+        this.annotations = annotations;
     }
 
 }
