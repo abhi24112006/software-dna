@@ -6,11 +6,20 @@ import java.util.List;
 public class ParsedInterface {
 
     private String name;
+    private String id;
 
     private List<ParsedAnnotation> annotations =
             new ArrayList<>();
 
     public ParsedInterface() {
+    }
+
+    public String getId() {
+        return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
     }
 
     public ParsedInterface(String name) {

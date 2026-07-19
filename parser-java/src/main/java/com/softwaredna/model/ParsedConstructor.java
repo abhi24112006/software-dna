@@ -6,6 +6,7 @@ import java.util.List;
 public class ParsedConstructor {
 
     private String name;
+    private String id;
 
     private List<ParsedParameter> parameters =
             new ArrayList<>();
@@ -15,6 +16,14 @@ public class ParsedConstructor {
 
     public ParsedConstructor() {
     }
+
+    public String getId() {
+    return id;
+}
+
+public void setId(String id) {
+    this.id = id;
+}
 
     public ParsedConstructor(String name) {
 

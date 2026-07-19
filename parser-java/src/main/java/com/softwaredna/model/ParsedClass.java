@@ -5,7 +5,11 @@ import java.util.List;
 
 public class ParsedClass {
 
+    private String id;
+
     private String name;
+
+    private String superClass;
 
     private List<ParsedField> fields;
 
@@ -21,6 +25,22 @@ public class ParsedClass {
         constructors = new ArrayList<>();
         methods = new ArrayList<>();
 
+    }
+
+    public String getSuperClass() {
+        return superClass;
+    }
+
+    public void setSuperClass(String superClass) {
+         this.superClass = superClass;
+    }
+
+    public String getId() {
+    return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
     }
 
     public ParsedClass(String name) {

@@ -6,6 +6,7 @@ import java.util.List;
 public class ParsedParameter {
 
     private String name;
+    private String id;
 
     private String type;
 
@@ -14,6 +15,14 @@ public class ParsedParameter {
 
     public ParsedParameter() {
     }
+
+    public String getId() {
+    return id;
+}
+
+public void setId(String id) {
+    this.id = id;
+}
 
     public ParsedParameter(String name, String type) {
         this.name = name;

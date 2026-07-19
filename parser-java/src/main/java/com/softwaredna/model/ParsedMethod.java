@@ -6,6 +6,7 @@ import java.util.List;
 public class ParsedMethod {
 
     private String name;
+    private String id;
 
     private String returnType;
 
@@ -17,6 +18,14 @@ public class ParsedMethod {
 
     public ParsedMethod() {
     }
+
+    public String getId() {
+    return id;
+}
+
+public void setId(String id) {
+    this.id = id;
+}
 
     public ParsedMethod(String name, String returnType) {
 

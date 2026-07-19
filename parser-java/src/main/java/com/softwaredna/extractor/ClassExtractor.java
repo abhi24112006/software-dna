@@ -31,6 +31,15 @@ public class ClassExtractor {
             parsedClass.setName(
                     declaration.getNameAsString());
 
+        if (!declaration.getExtendedTypes().isEmpty()) {
+
+        parsedClass.setSuperClass(
+            declaration.getExtendedTypes()
+                    .get(0)
+                    .getNameAsString());
+
+        }
+
             parsedClass.setAnnotations(
                     annotationExtractor.extractAnnotations(
                             declaration));
