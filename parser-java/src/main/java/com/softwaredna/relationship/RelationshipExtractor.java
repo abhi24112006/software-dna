@@ -3,6 +3,7 @@ package com.softwaredna.relationship;
 import com.softwaredna.mapper.EntityReferenceMapper;
 import com.softwaredna.model.ParsedClass;
 import com.softwaredna.model.ParsedFile;
+import com.softwaredna.model.ParsedInterface;
 import com.softwaredna.model.Relationship;
 import com.softwaredna.model.RelationshipType;
 import com.softwaredna.model.RepositoryModel;
@@ -58,8 +59,7 @@ public class RelationshipExtractor {
                                 RelationshipType.EXTENDS
                         );
 
-                repository.getRelationships()
-                        .add(relationship);
+                repository.getRelationships().add(relationship);
 
             }
 
@@ -75,6 +75,37 @@ public class RelationshipExtractor {
 
     private void extractImplements(
             RepositoryModel repository) {
+
+        for (ParsedFile file : repository.getFiles()) {
+
+            for (ParsedClass parsedClass : file.getClasses()) {
+
+                for (String interfaceName :
+                        parsedClass.getImplementedInterfaces()) {
+
+                    ParsedInterface parsedInterface =
+                            resolver.resolveInterface(
+                                    interfaceName,
+                                    repository.getEntityRegistry());
+
+                    if (parsedInterface == null) {
+                        continue;
+                    }
+
+                    Relationship relationship =
+                            new Relationship(
+                                    EntityReferenceMapper.fromClass(parsedClass),
+                                    EntityReferenceMapper.fromInterface(parsedInterface),
+                                    RelationshipType.IMPLEMENTS
+                            );
+
+                    repository.getRelationships().add(relationship);
+
+                }
+
+            }
+
+        }
 
     }
 

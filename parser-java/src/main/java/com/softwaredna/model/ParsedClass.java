@@ -1,5 +1,5 @@
 package com.softwaredna.model;
-import com.softwaredna.model.ParsedAnnotation;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -11,46 +11,40 @@ public class ParsedClass {
 
     private String superClass;
 
+    private List<String> implementedInterfaces;
+
     private List<ParsedField> fields;
 
     private List<ParsedConstructor> constructors;
 
     private List<ParsedMethod> methods;
 
-    private List<ParsedAnnotation> annotations = new ArrayList<>();
+    private List<ParsedAnnotation> annotations;
 
     public ParsedClass() {
 
+        implementedInterfaces = new ArrayList<>();
         fields = new ArrayList<>();
         constructors = new ArrayList<>();
         methods = new ArrayList<>();
+        annotations = new ArrayList<>();
 
-    }
-
-    public String getSuperClass() {
-        return superClass;
-    }
-
-    public void setSuperClass(String superClass) {
-         this.superClass = superClass;
-    }
-
-    public String getId() {
-    return id;
-    }
-
-    public void setId(String id) {
-        this.id = id;
     }
 
     public ParsedClass(String name) {
 
+        this();
+
         this.name = name;
 
-        fields = new ArrayList<>();
-        constructors = new ArrayList<>();
-        methods = new ArrayList<>();
+    }
 
+    public String getId() {
+        return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
     }
 
     public String getName() {
@@ -59,6 +53,22 @@ public class ParsedClass {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public String getSuperClass() {
+        return superClass;
+    }
+
+    public void setSuperClass(String superClass) {
+        this.superClass = superClass;
+    }
+
+    public List<String> getImplementedInterfaces() {
+        return implementedInterfaces;
+    }
+
+    public void setImplementedInterfaces(List<String> implementedInterfaces) {
+        this.implementedInterfaces = implementedInterfaces;
     }
 
     public List<ParsedField> getFields() {
@@ -86,7 +96,7 @@ public class ParsedClass {
     }
 
     public List<ParsedAnnotation> getAnnotations() {
-    return annotations;
+        return annotations;
     }
 
     public void setAnnotations(List<ParsedAnnotation> annotations) {

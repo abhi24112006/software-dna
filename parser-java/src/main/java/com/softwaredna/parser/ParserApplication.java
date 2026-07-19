@@ -142,29 +142,29 @@ public class ParserApplication {
 
                     for (ParsedRecord parsedRecord : file.getRecords()) {
 
-    System.out.println(
-            "  - " + parsedRecord.getName()
-    );
+                        System.out.println(
+                                "  - " + parsedRecord.getName()
+                        );
 
-    System.out.println("    Annotations");
+                        System.out.println("    Annotations");
 
-    if (parsedRecord.getAnnotations().isEmpty()) {
+                        if (parsedRecord.getAnnotations().isEmpty()) {
 
-        System.out.println("      None");
+                            System.out.println("      None");
 
-    } else {
+                        } else {
 
-        parsedRecord.getAnnotations().forEach(annotation ->
-                System.out.println(
-                        "      - @" + annotation.getName()
-                )
-        );
+                            parsedRecord.getAnnotations().forEach(annotation ->
+                                    System.out.println(
+                                            "      - @" + annotation.getName()
+                                    )
+                            );
 
-    }
+                        }
 
-    System.out.println();
+                        System.out.println();
 
-}
+                    }
 
                 }
 
@@ -180,8 +180,6 @@ public class ParserApplication {
                             + clazz.getName());
 
                     System.out.println();
-
-                    // ---------- ANNOTATIONS ----------
 
                     System.out.println("    Annotations");
 
@@ -200,8 +198,6 @@ public class ParserApplication {
                     }
 
                     System.out.println();
-
-                    // ---------- FIELDS ----------
 
                     System.out.println("    Fields");
 
@@ -227,8 +223,6 @@ public class ParserApplication {
 
                     System.out.println();
 
-                    // ---------- CONSTRUCTORS ----------
-
                     System.out.println("    Constructors");
 
                     if (clazz.getConstructors().isEmpty()) {
@@ -238,38 +232,36 @@ public class ParserApplication {
                     } else {
 
                         for (ParsedConstructor constructor :
-        clazz.getConstructors()) {
+                                clazz.getConstructors()) {
 
-    System.out.println(
-            "      - " + constructor.getName() + "()"
-    );
+                            System.out.println(
+                                    "      - " + constructor.getName() + "()"
+                            );
 
-    if (constructor.getParameters().isEmpty()) {
+                            if (constructor.getParameters().isEmpty()) {
 
-        System.out.println("        Parameters : None");
+                                System.out.println("        Parameters : None");
 
-    } else {
+                            } else {
 
-        System.out.println("        Parameters");
+                                System.out.println("        Parameters");
 
-        constructor.getParameters().forEach(parameter ->
-                System.out.println(
-                        "          - "
-                                + parameter.getType()
-                                + " "
-                                + parameter.getName()
-                )
-        );
+                                constructor.getParameters().forEach(parameter ->
+                                        System.out.println(
+                                                "          - "
+                                                        + parameter.getType()
+                                                        + " "
+                                                        + parameter.getName()
+                                        )
+                                );
 
-    }
+                            }
 
-}
+                        }
 
                     }
 
                     System.out.println();
-
-                    // ---------- METHODS ----------
 
                     System.out.println("    Methods");
 
@@ -280,39 +272,70 @@ public class ParserApplication {
                     } else {
 
                         for (ParsedMethod method :
-        clazz.getMethods()) {
+                                clazz.getMethods()) {
 
-    System.out.println(
-            "      - "
-                    + method.getName()
-                    + "() : "
-                    + method.getReturnType()
-    );
+                            System.out.println(
+                                    "      - "
+                                            + method.getName()
+                                            + "() : "
+                                            + method.getReturnType()
+                            );
 
-    if (method.getParameters().isEmpty()) {
+                            if (method.getParameters().isEmpty()) {
 
-        System.out.println("        Parameters : None");
+                                System.out.println("        Parameters : None");
 
-    } else {
+                            } else {
 
-        System.out.println("        Parameters");
+                                System.out.println("        Parameters");
 
-        method.getParameters().forEach(parameter ->
-                System.out.println(
-                        "          - "
-                                + parameter.getType()
-                                + " "
-                                + parameter.getName()
-                )
-        );
+                                method.getParameters().forEach(parameter ->
+                                        System.out.println(
+                                                "          - "
+                                                        + parameter.getType()
+                                                        + " "
+                                                        + parameter.getName()
+                                        )
+                                );
 
-    }
+                            }
 
-}
+                        }
 
                     }
 
                     System.out.println();
+
+                }
+
+            }
+
+            // ================= RELATIONSHIPS =================
+
+            System.out.println();
+            System.out.println("======================================");
+            System.out.println("Relationships");
+            System.out.println("======================================");
+
+            System.out.println("Total Relationships : "
+                    + repository.getRelationships().size());
+
+            if (repository.getRelationships().isEmpty()) {
+
+                System.out.println("None");
+
+            } else {
+
+                for (Relationship relationship :
+                        repository.getRelationships()) {
+
+                    System.out.println(
+                            relationship.getSource().getName()
+                                    + " ---- "
+                                    + relationship.getType()
+                                    + " ----> "
+                                    + relationship.getTarget().getName()
+                    );
 
                 }
 

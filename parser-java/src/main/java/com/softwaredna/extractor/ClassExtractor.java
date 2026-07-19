@@ -40,6 +40,14 @@ public class ClassExtractor {
 
         }
 
+        List<String> interfaces = new ArrayList<>();
+
+declaration.getImplementedTypes()
+        .forEach(type ->
+                interfaces.add(type.getNameAsString()));
+
+parsedClass.setImplementedInterfaces(interfaces);
+
             parsedClass.setAnnotations(
                     annotationExtractor.extractAnnotations(
                             declaration));

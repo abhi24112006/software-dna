@@ -35,6 +35,9 @@ public class EntityRegistry {
     private final Map<String, ParsedClass> classesByName =
             new LinkedHashMap<>();
 
+    private final Map<String, ParsedInterface> interfacesByName =
+            new LinkedHashMap<>();
+
     /*
      * -------------------------------------------------------
      * Registration Methods
@@ -60,6 +63,11 @@ public class EntityRegistry {
 
         parsedEntitiesById.put(
                 parsedInterface.getId(),
+                parsedInterface
+        );
+
+        interfacesByName.put(
+                parsedInterface.getName(),
                 parsedInterface
         );
 
@@ -150,6 +158,12 @@ public class EntityRegistry {
     public ParsedClass findClassByName(String name) {
 
         return classesByName.get(name);
+
+    }
+
+    public ParsedInterface findInterfaceByName(String name) {
+
+        return interfacesByName.get(name);
 
     }
 

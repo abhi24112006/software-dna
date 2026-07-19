@@ -3,9 +3,12 @@ package com.softwaredna.parser;
 import com.github.javaparser.ast.CompilationUnit;
 import com.softwaredna.ast.ASTGenerator;
 import com.softwaredna.builder.ParsedFileBuilder;
+import com.softwaredna.identifier.IdentifierAssigner;
 import com.softwaredna.model.ParsedFile;
 import com.softwaredna.model.RepositoryModel;
 import com.softwaredna.reader.JavaFileReader;
+import com.softwaredna.registry.EntityRegistrar;
+import com.softwaredna.relationship.RelationshipExtractor;
 
 import java.io.IOException;
 import java.nio.file.*;
@@ -17,11 +20,19 @@ public class RepositoryParser {
     private final ASTGenerator generator;
     private final ParsedFileBuilder builder;
 
+    private final IdentifierAssigner identifierAssigner;
+    private final EntityRegistrar registrar;
+    private final RelationshipExtractor relationshipExtractor;
+
     public RepositoryParser() {
 
         reader = new JavaFileReader();
         generator = new ASTGenerator();
         builder = new ParsedFileBuilder();
+
+        identifierAssigner = new IdentifierAssigner();
+        registrar = new EntityRegistrar();
+        relationshipExtractor = new RelationshipExtractor();
 
     }
 
@@ -47,10 +58,6 @@ public class RepositoryParser {
                             String source =
                                     reader.readFile(path.toString());
 
-                            System.out.println("================================");
-                            System.out.println(path);
-                            System.out.println(source);
-
                             CompilationUnit cu =
                                     generator.generateAST(source);
 
@@ -67,6 +74,7 @@ public class RepositoryParser {
                                     "Failed to parse: "
                                             + path
                             );
+
                             e.printStackTrace();
 
                         }
@@ -74,6 +82,24 @@ public class RepositoryParser {
                     });
 
         }
+
+        /*
+         * Phase 1
+         * Assign IDs
+         */
+        identifierAssigner.assignIds(repository);
+
+        /*
+         * Phase 2
+         * Register entities
+         */
+        registrar.registerEntities(repository);
+
+        /*
+         * Phase 3
+         * Extract relationships
+         */
+        relationshipExtractor.extractRelationships(repository);
 
         return repository;
 

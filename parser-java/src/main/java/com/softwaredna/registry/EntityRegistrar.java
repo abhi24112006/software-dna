@@ -12,6 +12,10 @@ public class EntityRegistrar {
 
         for (ParsedFile file : repository.getFiles()) {
 
+            /*
+             * Classes
+             */
+
             for (ParsedClass parsedClass : file.getClasses()) {
 
                 registry.registerClass(parsedClass);
@@ -43,6 +47,39 @@ public class EntityRegistrar {
                     }
 
                 }
+
+            }
+
+            /*
+             * Interfaces
+             */
+
+            for (ParsedInterface parsedInterface :
+                    file.getInterfaces()) {
+
+                registry.registerInterface(parsedInterface);
+
+            }
+
+            /*
+             * Enums
+             */
+
+            for (ParsedEnum parsedEnum :
+                    file.getEnums()) {
+
+                registry.registerEnum(parsedEnum);
+
+            }
+
+            /*
+             * Records
+             */
+
+            for (ParsedRecord parsedRecord :
+                    file.getRecords()) {
+
+                registry.registerRecord(parsedRecord);
 
             }
 
