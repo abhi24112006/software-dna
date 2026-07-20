@@ -1,5 +1,7 @@
 package com.softwaredna.model;
 
+import java.util.Objects;
+
 public class Relationship {
 
     private EntityReference source;
@@ -59,6 +61,40 @@ public class Relationship {
             RelationshipType type) {
 
         this.type = type;
+
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+
+        if (this == obj) {
+
+            return true;
+
+        }
+
+        if (obj == null || getClass() != obj.getClass()) {
+
+            return false;
+
+        }
+
+        Relationship other = (Relationship) obj;
+
+        return Objects.equals(source.getId(), other.source.getId())
+                && Objects.equals(target.getId(), other.target.getId())
+                && type == other.type;
+
+    }
+
+    @Override
+    public int hashCode() {
+
+        return Objects.hash(
+                source.getId(),
+                target.getId(),
+                type
+        );
 
     }
 

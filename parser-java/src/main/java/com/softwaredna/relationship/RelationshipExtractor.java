@@ -1,27 +1,49 @@
 package com.softwaredna.relationship;
 
+import com.softwaredna.analysis.MethodAnalysisResult;
+import com.softwaredna.model.ParsedMethodCall;
+import com.softwaredna.resolver.MethodResolver;
+import com.softwaredna.resolver.ReceiverResolver;
+import com.softwaredna.graph.KnowledgeGraphBuilder;
 import com.softwaredna.mapper.EntityReferenceMapper;
+import com.softwaredna.model.EntityReference;
 import com.softwaredna.model.ParsedClass;
+import com.softwaredna.model.ParsedField;
 import com.softwaredna.model.ParsedFile;
 import com.softwaredna.model.ParsedInterface;
-import com.softwaredna.model.Relationship;
+import com.softwaredna.model.ParsedMethod;
+import com.softwaredna.model.ParsedParameter;
 import com.softwaredna.model.RelationshipType;
 import com.softwaredna.model.RepositoryModel;
 import com.softwaredna.resolver.EntityResolver;
+import com.softwaredna.type.TypeReferenceExtractor;
 
 public class RelationshipExtractor {
 
     private final EntityResolver resolver =
             new EntityResolver();
 
+    private final TypeReferenceExtractor typeExtractor =
+            new TypeReferenceExtractor();
+
+    private final KnowledgeGraphBuilder graphBuilder =
+            new KnowledgeGraphBuilder();
+
+        private final ReceiverResolver receiverResolver =
+                new ReceiverResolver();
+
+        private final MethodResolver methodResolver =
+                new MethodResolver();
+
     public void extractRelationships(
             RepositoryModel repository) {
 
-        extractExtends(repository);
-        extractImplements(repository);
-        extractFieldDependencies(repository);
-        extractParameterDependencies(repository);
-        extractReturnDependencies(repository);
+extractExtends(repository);
+extractImplements(repository);
+extractFieldDependencies(repository);
+extractParameterDependencies(repository);
+extractReturnDependencies(repository);
+extractMethodCalls(repository);
 
     }
 
@@ -52,14 +74,12 @@ public class RelationshipExtractor {
                     continue;
                 }
 
-                Relationship relationship =
-                        new Relationship(
-                                EntityReferenceMapper.fromClass(child),
-                                EntityReferenceMapper.fromClass(parent),
-                                RelationshipType.EXTENDS
-                        );
-
-                repository.getRelationships().add(relationship);
+                graphBuilder.addRelationship(
+                        repository,
+                        EntityReferenceMapper.fromClass(child),
+                        EntityReferenceMapper.fromClass(parent),
+                        RelationshipType.EXTENDS
+                );
 
             }
 
@@ -92,14 +112,12 @@ public class RelationshipExtractor {
                         continue;
                     }
 
-                    Relationship relationship =
-                            new Relationship(
-                                    EntityReferenceMapper.fromClass(parsedClass),
-                                    EntityReferenceMapper.fromInterface(parsedInterface),
-                                    RelationshipType.IMPLEMENTS
-                            );
-
-                    repository.getRelationships().add(relationship);
+                    graphBuilder.addRelationship(
+                            repository,
+                            EntityReferenceMapper.fromClass(parsedClass),
+                            EntityReferenceMapper.fromInterface(parsedInterface),
+                            RelationshipType.IMPLEMENTS
+                    );
 
                 }
 
@@ -118,6 +136,28 @@ public class RelationshipExtractor {
     private void extractFieldDependencies(
             RepositoryModel repository) {
 
+        for (ParsedFile file : repository.getFiles()) {
+
+            for (ParsedClass parsedClass : file.getClasses()) {
+
+                EntityReference source =
+                        EntityReferenceMapper.fromClass(parsedClass);
+
+                for (ParsedField field : parsedClass.getFields()) {
+
+                    addTypeDependencies(
+                            repository,
+                            source,
+                            field.getType(),
+                            RelationshipType.FIELD_DEPENDENCY
+                    );
+
+                }
+
+            }
+
+        }
+
     }
 
     /*
@@ -129,6 +169,33 @@ public class RelationshipExtractor {
     private void extractParameterDependencies(
             RepositoryModel repository) {
 
+        for (ParsedFile file : repository.getFiles()) {
+
+            for (ParsedClass parsedClass : file.getClasses()) {
+
+                EntityReference source =
+                        EntityReferenceMapper.fromClass(parsedClass);
+
+                for (ParsedMethod method : parsedClass.getMethods()) {
+
+                    for (ParsedParameter parameter :
+                            method.getParameters()) {
+
+                        addTypeDependencies(
+                                repository,
+                                source,
+                                parameter.getType(),
+                                RelationshipType.PARAMETER_DEPENDENCY
+                        );
+
+                    }
+
+                }
+
+            }
+
+        }
+
     }
 
     /*
@@ -139,6 +206,128 @@ public class RelationshipExtractor {
 
     private void extractReturnDependencies(
             RepositoryModel repository) {
+
+        for (ParsedFile file : repository.getFiles()) {
+
+            for (ParsedClass parsedClass : file.getClasses()) {
+
+                EntityReference source =
+                        EntityReferenceMapper.fromClass(parsedClass);
+
+                for (ParsedMethod method : parsedClass.getMethods()) {
+
+                    addTypeDependencies(
+                            repository,
+                            source,
+                            method.getReturnType(),
+                            RelationshipType.RETURN_DEPENDENCY
+                    );
+
+                }
+
+            }
+
+        }
+
+    }
+
+    /*
+     * ------------------------------------------
+     * METHOD CALLS
+     * ------------------------------------------
+     */
+
+    private void extractMethodCalls(
+            RepositoryModel repository) {
+
+        for (ParsedFile file : repository.getFiles()) {
+
+            for (ParsedClass parsedClass : file.getClasses()) {
+
+                for (ParsedMethod method : parsedClass.getMethods()) {
+
+                    MethodAnalysisResult analysisResult =
+                            method.getAnalysisResult();
+
+                    if (analysisResult == null) {
+                        continue;
+                    }
+
+                    for (ParsedMethodCall methodCall :
+                            analysisResult.getMethodCalls()) {
+
+                        String receiverType =
+                                receiverResolver.resolveReceiverType(
+                                        methodCall.getReceiverExpression(),
+                                        parsedClass,
+                                        analysisResult.getScope()
+                                );
+
+                        if (receiverType == null) {
+                            continue;
+                        }
+
+                        ParsedMethod targetMethod =
+                                methodResolver.resolveMethod(
+                                        receiverType,
+                                        methodCall,
+                                        repository.getEntityRegistry(),
+                                        parsedClass
+                                );
+
+                        if (targetMethod == null) {
+                            continue;
+                        }
+
+                        graphBuilder.addRelationship(
+                                repository,
+                                EntityReferenceMapper.fromMethod(method),
+                                EntityReferenceMapper.fromMethod(targetMethod),
+                                RelationshipType.METHOD_CALL
+                        );
+
+                    }
+
+                }
+
+            }
+
+        }
+
+    }
+
+    /*
+     * ------------------------------------------
+     * COMMON TYPE DEPENDENCY HELPER
+     * ------------------------------------------
+     */
+
+    private void addTypeDependencies(
+            RepositoryModel repository,
+            EntityReference source,
+            String type,
+            RelationshipType relationshipType) {
+
+        for (String referencedType :
+                typeExtractor.extractReferencedTypes(type)) {
+
+            EntityReference target =
+                    resolver.resolveType(
+                            referencedType,
+                            repository.getEntityRegistry());
+
+            if (target == null) {
+                continue;
+            }
+
+            graphBuilder.addRelationship(
+                    repository,
+                    source,
+                    target,
+                    relationshipType
+            );
+
+        }
 
     }
 

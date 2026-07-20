@@ -77,6 +77,8 @@ public class ParsedFileBuilder {
 
                 ParsedClass parsedClass = classes.get(classIndex);
 
+                parsedClass.setPackageName(parsedFile.getPackageName());
+
                 parsedClass.setFields(
                         fieldExtractor.extractFields(declaration)
                 );

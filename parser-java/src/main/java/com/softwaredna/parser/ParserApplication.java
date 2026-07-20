@@ -329,13 +329,25 @@ public class ParserApplication {
                 for (Relationship relationship :
                         repository.getRelationships()) {
 
-                    System.out.println(
-                            relationship.getSource().getName()
-                                    + " ---- "
-                                    + relationship.getType()
-                                    + " ----> "
-                                    + relationship.getTarget().getName()
-                    );
+                    if (relationship.getType() == com.softwaredna.model.RelationshipType.METHOD_CALL) {
+
+                        System.out.println(
+                                relationship.getSource().getName()
+                                        + " ---- METHOD_CALL ----> "
+                                        + relationship.getTarget().getName()
+                        );
+
+                    } else {
+
+                        System.out.println(
+                                relationship.getSource().getName()
+                                        + " ---- "
+                                        + relationship.getType()
+                                        + " ----> "
+                                        + relationship.getTarget().getName()
+                        );
+
+                    }
 
                 }
 

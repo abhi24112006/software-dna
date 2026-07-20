@@ -9,6 +9,8 @@ public class ParsedClass {
 
     private String name;
 
+    private String packageName;
+
     private String superClass;
 
     private List<String> implementedInterfaces;
@@ -53,6 +55,14 @@ public class ParsedClass {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public String getPackageName() {
+        return packageName;
+    }
+
+    public void setPackageName(String packageName) {
+        this.packageName = packageName;
     }
 
     public String getSuperClass() {

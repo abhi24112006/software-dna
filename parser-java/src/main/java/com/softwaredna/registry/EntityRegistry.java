@@ -4,6 +4,7 @@ import com.softwaredna.model.*;
 
 import java.util.Collection;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 public class EntityRegistry {
@@ -32,7 +33,7 @@ public class EntityRegistry {
      * -------------------------------------------------------
      */
 
-    private final Map<String, ParsedClass> classesByName =
+    private final Map<String, List<ParsedClass>> classesByName =
             new LinkedHashMap<>();
 
     private final Map<String, ParsedInterface> interfacesByName =
@@ -51,10 +52,10 @@ public class EntityRegistry {
                 parsedClass
         );
 
-        classesByName.put(
+        classesByName.computeIfAbsent(
                 parsedClass.getName(),
-                parsedClass
-        );
+                ignored -> new java.util.ArrayList<>()
+        ).add(parsedClass);
 
     }
 
@@ -155,9 +156,53 @@ public class EntityRegistry {
      * -------------------------------------------------------
      */
 
+    public List<ParsedClass> findClassesByName(String name) {
+
+        List<ParsedClass> candidates = classesByName.get(name);
+
+        if (candidates == null || candidates.isEmpty()) {
+            return java.util.Collections.emptyList();
+        }
+
+        return candidates;
+
+    }
+
     public ParsedClass findClassByName(String name) {
 
-        return classesByName.get(name);
+        List<ParsedClass> candidates = findClassesByName(name);
+
+        if (candidates.isEmpty()) {
+            return null;
+        }
+
+        return candidates.get(candidates.size() - 1);
+
+    }
+
+    public ParsedClass findClassByName(String name, String packageName) {
+
+        List<ParsedClass> candidates = classesByName.get(name);
+
+        if (candidates == null || candidates.isEmpty()) {
+            return null;
+        }
+
+        if (packageName != null && !packageName.isBlank()) {
+            for (ParsedClass candidate : candidates) {
+                if (packageName.equals(candidate.getPackageName())) {
+                    return candidate;
+                }
+            }
+        }
+
+        for (ParsedClass candidate : candidates) {
+            if (candidate.getPackageName() == null || candidate.getPackageName().isBlank()) {
+                return candidate;
+            }
+        }
+
+        return candidates.get(candidates.size() - 1);
 
     }
 

@@ -10,6 +10,8 @@ public enum RelationshipType {
 
     PARAMETER_DEPENDENCY,
 
-    RETURN_DEPENDENCY
+    RETURN_DEPENDENCY,
+
+    METHOD_CALL
 
 }

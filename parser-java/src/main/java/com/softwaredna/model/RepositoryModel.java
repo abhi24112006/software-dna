@@ -3,7 +3,9 @@ package com.softwaredna.model;
 import com.softwaredna.registry.EntityRegistry;
 
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 
 public class RepositoryModel {
 
@@ -13,13 +15,13 @@ public class RepositoryModel {
 
     private EntityRegistry entityRegistry;
 
-    private List<Relationship> relationships;
+    private Set<Relationship> relationships;
 
     public RepositoryModel() {
 
         files = new ArrayList<>();
         entityRegistry = new EntityRegistry();
-        relationships = new ArrayList<>();
+        relationships = new LinkedHashSet<>();
 
     }
 
@@ -59,13 +61,13 @@ public class RepositoryModel {
 
     }
 
-    public List<Relationship> getRelationships() {
+    public Set<Relationship> getRelationships() {
 
         return relationships;
 
     }
 
-    public void setRelationships(List<Relationship> relationships) {
+    public void setRelationships(Set<Relationship> relationships) {
 
         this.relationships = relationships;
 
