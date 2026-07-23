@@ -315,6 +315,58 @@ public class ParserApplication {
                             }
 
                         }
+                        System.out.println();
+
+System.out.println("    Class Metrics");
+
+ClassMetrics metrics = clazz.getMetrics();
+
+if (metrics == null) {
+
+    System.out.println("      None");
+
+} else {
+
+    System.out.println("      Fields               : "
+            + metrics.getFieldCount());
+
+    System.out.println("      Constructors         : "
+            + metrics.getConstructorCount());
+
+    System.out.println("      Methods              : "
+            + metrics.getMethodCount());
+
+    System.out.println("      Public Methods       : "
+            + metrics.getPublicMethodCount());
+
+    System.out.println("      Private Methods      : "
+            + metrics.getPrivateMethodCount());
+
+    System.out.println("      Protected Methods    : "
+            + metrics.getProtectedMethodCount());
+
+    System.out.println("      Total Method LOC     : "
+            + metrics.getTotalLinesOfCode());
+
+    System.out.println("      Average Method LOC   : "
+            + metrics.getAverageMethodLinesOfCode());
+
+    System.out.println("      Total Parameters     : "
+            + metrics.getTotalParameters());
+
+    System.out.println("      Total Local Variables: "
+            + metrics.getTotalLocalVariables());
+
+    System.out.println("      Total Method Calls   : "
+            + metrics.getTotalMethodCalls());
+
+    System.out.println("      Object Creations     : "
+            + metrics.getTotalObjectCreations());
+
+    System.out.println("      Return Statements    : "
+            + metrics.getTotalReturnStatements());
+
+}
 
                     }
 

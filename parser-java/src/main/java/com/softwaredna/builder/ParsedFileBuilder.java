@@ -1,5 +1,6 @@
 package com.softwaredna.builder;
 
+import com.softwaredna.analysis.ClassMetricsExtractor;
 import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration;
 import com.github.javaparser.ast.body.EnumDeclaration;
@@ -21,6 +22,7 @@ public class ParsedFileBuilder {
     private final EnumExtractor enumExtractor;
     private final RecordExtractor recordExtractor;
     private final AnnotationExtractor annotationExtractor;
+    private final ClassMetricsExtractor classMetricsExtractor;
 
     public ParsedFileBuilder() {
 
@@ -34,6 +36,7 @@ public class ParsedFileBuilder {
         enumExtractor = new EnumExtractor();
         recordExtractor = new RecordExtractor();
         annotationExtractor = new AnnotationExtractor();
+        classMetricsExtractor = new ClassMetricsExtractor();
 
     }
 
@@ -60,6 +63,7 @@ public class ParsedFileBuilder {
         parsedFile.setRecords(
                 recordExtractor.extractRecords(cu)
         );
+        
 
         // ---------------- CLASSES ----------------
 
@@ -89,6 +93,10 @@ public class ParsedFileBuilder {
 
                 parsedClass.setMethods(
                         methodExtractor.extractMethods(declaration)
+                );
+
+                parsedClass.setMetrics(
+                        classMetricsExtractor.extract(parsedClass)
                 );
 
                 classIndex++;

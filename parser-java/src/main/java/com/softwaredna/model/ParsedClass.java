@@ -23,6 +23,8 @@ public class ParsedClass {
 
     private List<ParsedAnnotation> annotations;
 
+    private ClassMetrics metrics;
+
     public ParsedClass() {
 
         implementedInterfaces = new ArrayList<>();
@@ -111,6 +113,14 @@ public class ParsedClass {
 
     public void setAnnotations(List<ParsedAnnotation> annotations) {
         this.annotations = annotations;
+    }
+
+    public ClassMetrics getMetrics() {
+        return metrics;
+    }
+
+    public void setMetrics(ClassMetrics metrics) {
+        this.metrics = metrics;
     }
 
 }
