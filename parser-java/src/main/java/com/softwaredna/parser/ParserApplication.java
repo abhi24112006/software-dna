@@ -1,5 +1,5 @@
 package com.softwaredna.parser;
-
+import com.softwaredna.util.IdentifierFormatter;
 import com.softwaredna.model.*;
 
 public class ParserApplication {
@@ -300,6 +300,20 @@ public class ParserApplication {
 
                             }
 
+                            if (method.getMetrics() != null) {
+
+                                MethodMetrics metrics = method.getMetrics();
+
+                                System.out.println();
+                                System.out.println("        Metrics");
+                                System.out.println("          Lines of Code : " + metrics.getLinesOfCode());
+                                System.out.println("          Parameter Count : " + metrics.getParameterCount());
+                                System.out.println("          Local Variables : " + metrics.getLocalVariableCount());
+                                System.out.println("          Method Calls : " + metrics.getMethodCallCount());
+                                System.out.println("          Object Creations : " + metrics.getObjectCreationCount());
+                                System.out.println("          Return Statements : " + metrics.getReturnCount());
+                            }
+
                         }
 
                     }
@@ -332,19 +346,23 @@ public class ParserApplication {
                     if (relationship.getType() == com.softwaredna.model.RelationshipType.METHOD_CALL) {
 
                         System.out.println(
-                                relationship.getSource().getName()
-                                        + " ---- METHOD_CALL ----> "
-                                        + relationship.getTarget().getName()
+                                IdentifierFormatter.format(
+                                    relationship.getSource())
+                                    + " ---- METHOD_CALL ----> "
+                                    + IdentifierFormatter.format(
+                                    relationship.getTarget())
                         );
 
                     } else {
 
                         System.out.println(
-                                relationship.getSource().getName()
+                                IdentifierFormatter.format(
+                                    relationship.getSource())
                                         + " ---- "
                                         + relationship.getType()
                                         + " ----> "
-                                        + relationship.getTarget().getName()
+                                        + IdentifierFormatter.format(
+                                            relationship.getTarget())
                         );
 
                     }

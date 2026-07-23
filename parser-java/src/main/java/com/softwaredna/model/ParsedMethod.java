@@ -13,6 +13,8 @@ public class ParsedMethod {
 
     private String returnType;
 
+    private MethodMetrics metrics;
+
     private List<ParsedParameter> parameters =
             new ArrayList<>();
 
@@ -113,6 +115,14 @@ public class ParsedMethod {
 
         this.analysisResult = analysisResult;
 
+    }
+
+    public MethodMetrics getMetrics() {
+        return metrics;
+    }
+
+    public void setMetrics(MethodMetrics metrics) {
+        this.metrics = metrics;
     }
 
 }

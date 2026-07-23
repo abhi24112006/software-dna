@@ -4,6 +4,7 @@ import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration;
 import com.github.javaparser.ast.body.MethodDeclaration;
 import com.softwaredna.analysis.MethodAnalysisResult;
 import com.softwaredna.analysis.MethodBodyAnalyzer;
+import com.softwaredna.analysis.MethodMetricsExtractor;
 import com.softwaredna.model.ParsedMethod;
 
 import java.util.ArrayList;
@@ -16,6 +17,9 @@ public class MethodExtractor {
 
     private final MethodBodyAnalyzer methodBodyAnalyzer =
             new MethodBodyAnalyzer();
+
+    private final MethodMetricsExtractor metricsExtractor =
+            new MethodMetricsExtractor();
 
     public List<ParsedMethod> extractMethods(
             ClassOrInterfaceDeclaration clazz) {
@@ -43,12 +47,12 @@ public class MethodExtractor {
             parsedMethod.setAnalysisResult(
                     analysisResult);
 
-            methods.add(parsedMethod);
+            parsedMethod.setMetrics(
+                    metricsExtractor.extract(method));
 
+            methods.add(parsedMethod);
         }
 
         return methods;
-
     }
-
 }

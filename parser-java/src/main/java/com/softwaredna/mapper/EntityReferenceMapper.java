@@ -34,7 +34,7 @@ public class EntityReferenceMapper {
 
     }
 
-    public static EntityReference fromMethod(
+    /*public static EntityReference fromMethod(
             ParsedMethod parsedMethod) {
 
         return new EntityReference(
@@ -43,6 +43,19 @@ public class EntityReferenceMapper {
                 EntityType.METHOD
         );
 
-    }
+    }*/
+   public static EntityReference fromMethod(ParsedMethod method) {
+
+    System.out.println("================================");
+    System.out.println("Method Name : " + method.getName());
+    System.out.println("Method ID   : " + method.getId());
+    System.out.println("================================");
+
+    return new EntityReference(
+            method.getId(),
+            method.getName(),
+            EntityType.METHOD
+    );
+}
 
 }
