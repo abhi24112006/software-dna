@@ -9,6 +9,7 @@ import com.softwaredna.model.RepositoryModel;
 import com.softwaredna.reader.JavaFileReader;
 import com.softwaredna.registry.EntityRegistrar;
 import com.softwaredna.relationship.RelationshipExtractor;
+import com.softwaredna.analysis.repository.RepositoryAnalyzer;
 
 import java.io.IOException;
 import java.nio.file.*;
@@ -23,6 +24,7 @@ public class RepositoryParser {
     private final IdentifierAssigner identifierAssigner;
     private final EntityRegistrar registrar;
     private final RelationshipExtractor relationshipExtractor;
+    private final RepositoryAnalyzer repositoryAnalyzer;
 
     public RepositoryParser() {
 
@@ -33,6 +35,7 @@ public class RepositoryParser {
         identifierAssigner = new IdentifierAssigner();
         registrar = new EntityRegistrar();
         relationshipExtractor = new RelationshipExtractor();
+        repositoryAnalyzer = new RepositoryAnalyzer();
 
     }
 
@@ -101,6 +104,12 @@ public class RepositoryParser {
          */
         relationshipExtractor.extractRelationships(repository);
 
+
+        /*
+            * Phase 4
+            * Analyze repository
+        */
+        repositoryAnalyzer.analyze(repository);
         return repository;
 
     }

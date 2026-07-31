@@ -10,10 +10,16 @@ import com.softwaredna.model.MethodMetrics;
 public class MethodMetricsExtractor {
 
     private final CyclomaticComplexityExtractor cyclomaticComplexityExtractor;
+    private final MaximumNestingDepthExtractor maximumNestingDepthExtractor;
+    private final LoopCountExtractor loopCountExtractor;
+    private final ConditionalCountExtractor conditionalCountExtractor;
 
     public MethodMetricsExtractor() {
 
         cyclomaticComplexityExtractor = new CyclomaticComplexityExtractor();
+        maximumNestingDepthExtractor = new MaximumNestingDepthExtractor();
+        loopCountExtractor = new LoopCountExtractor();
+        conditionalCountExtractor = new ConditionalCountExtractor();
 
     }
 
@@ -53,6 +59,15 @@ public class MethodMetricsExtractor {
         // Cyclomatic Complexity
         metrics.setCyclomaticComplexity(
                 cyclomaticComplexityExtractor.extract(method));
+
+        metrics.setMaximumNestingDepth(
+        maximumNestingDepthExtractor.extract(method));
+
+        metrics.setLoopCount(
+        loopCountExtractor.extract(method));
+
+        metrics.setConditionalCount(
+        conditionalCountExtractor.extract(method));
 
         return metrics;
     }

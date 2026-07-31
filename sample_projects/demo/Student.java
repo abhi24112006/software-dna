@@ -21,6 +21,9 @@ public class Student {
     public void study() {
 
         System.out.println("Studying...");
+        for (int i = 0; i < 5; i++) {
+            System.out.println("Iteration: " + i);
+        }
 
     }
 

@@ -12,14 +12,9 @@ public class ClassMetricsExtractor {
         ClassMetrics metrics = new ClassMetrics();
 
         // Basic Counts
-        metrics.setFieldCount(
-                parsedClass.getFields().size());
-
-        metrics.setConstructorCount(
-                parsedClass.getConstructors().size());
-
-        metrics.setMethodCount(
-                parsedClass.getMethods().size());
+        metrics.setFieldCount(parsedClass.getFields().size());
+        metrics.setConstructorCount(parsedClass.getConstructors().size());
+        metrics.setMethodCount(parsedClass.getMethods().size());
 
         int publicMethods = 0;
         int privateMethods = 0;
@@ -32,36 +27,76 @@ public class ClassMetricsExtractor {
         int totalObjectCreations = 0;
         int totalReturnStatements = 0;
 
+        // ==========================
+        // Aggregated Method Metrics
+        // ==========================
+
+        int totalCyclomaticComplexity = 0;
+        int maximumCyclomaticComplexity = 0;
+
+        int totalLoopCount = 0;
+        int maximumLoopCount = 0;
+
+        int totalConditionalCount = 0;
+        int maximumConditionalCount = 0;
+
+        int maximumNestingDepth = 0;
+
         for (ParsedMethod method : parsedClass.getMethods()) {
 
-            /*
-             * Skip methods that somehow do not
-             * have metrics attached.
-             */
             if (method.getMetrics() == null) {
                 continue;
             }
 
-            MethodMetrics methodMetrics =
-                    method.getMetrics();
+            MethodMetrics methodMetrics = method.getMetrics();
 
-            totalLinesOfCode +=
-                    methodMetrics.getLinesOfCode();
+            totalLinesOfCode += methodMetrics.getLinesOfCode();
+            totalParameters += methodMetrics.getParameterCount();
+            totalLocalVariables += methodMetrics.getLocalVariableCount();
+            totalMethodCalls += methodMetrics.getMethodCallCount();
+            totalObjectCreations += methodMetrics.getObjectCreationCount();
+            totalReturnStatements += methodMetrics.getReturnCount();
 
-            totalParameters +=
-                    methodMetrics.getParameterCount();
+            // ==========================
+            // Cyclomatic Complexity
+            // ==========================
 
-            totalLocalVariables +=
-                    methodMetrics.getLocalVariableCount();
+            totalCyclomaticComplexity +=
+                    methodMetrics.getCyclomaticComplexity();
 
-            totalMethodCalls +=
-                    methodMetrics.getMethodCallCount();
+            maximumCyclomaticComplexity =
+                    Math.max(maximumCyclomaticComplexity,
+                            methodMetrics.getCyclomaticComplexity());
 
-            totalObjectCreations +=
-                    methodMetrics.getObjectCreationCount();
+            // ==========================
+            // Loop Count
+            // ==========================
 
-            totalReturnStatements +=
-                    methodMetrics.getReturnCount();
+            totalLoopCount +=
+                    methodMetrics.getLoopCount();
+
+            maximumLoopCount =
+                    Math.max(maximumLoopCount,
+                            methodMetrics.getLoopCount());
+
+            // ==========================
+            // Conditional Count
+            // ==========================
+
+            totalConditionalCount +=
+                    methodMetrics.getConditionalCount();
+
+            maximumConditionalCount =
+                    Math.max(maximumConditionalCount,
+                            methodMetrics.getConditionalCount());
+
+            // ==========================
+            // Maximum Nesting Depth
+            // ==========================
+
+            maximumNestingDepth =
+                    Math.max(maximumNestingDepth,
+                            methodMetrics.getMaximumNestingDepth());
 
             /*
              * Visibility counts
@@ -84,26 +119,41 @@ public class ClassMetricsExtractor {
         metrics.setProtectedMethodCount(protectedMethods);
 
         metrics.setTotalLinesOfCode(totalLinesOfCode);
-
         metrics.setTotalParameters(totalParameters);
-
         metrics.setTotalLocalVariables(totalLocalVariables);
-
         metrics.setTotalMethodCalls(totalMethodCalls);
-
         metrics.setTotalObjectCreations(totalObjectCreations);
-
         metrics.setTotalReturnStatements(totalReturnStatements);
+
+        metrics.setTotalCyclomaticComplexity(totalCyclomaticComplexity);
+        metrics.setMaximumCyclomaticComplexity(maximumCyclomaticComplexity);
+
+        metrics.setTotalLoopCount(totalLoopCount);
+        metrics.setMaximumLoopCount(maximumLoopCount);
+
+        metrics.setTotalConditionalCount(totalConditionalCount);
+        metrics.setMaximumConditionalCount(maximumConditionalCount);
+
+        metrics.setMaximumNestingDepth(maximumNestingDepth);
 
         if (metrics.getMethodCount() > 0) {
 
             metrics.setAverageMethodLinesOfCode(
-                    totalLinesOfCode /
-                    metrics.getMethodCount());
+                    totalLinesOfCode / metrics.getMethodCount());
 
+            metrics.setAverageCyclomaticComplexity(
+                    (double) totalCyclomaticComplexity /
+                            metrics.getMethodCount());
+
+            metrics.setAverageLoopCount(
+                    (double) totalLoopCount /
+                            metrics.getMethodCount());
+
+            metrics.setAverageConditionalCount(
+                    (double) totalConditionalCount /
+                            metrics.getMethodCount());
         }
 
         return metrics;
     }
-
 }
