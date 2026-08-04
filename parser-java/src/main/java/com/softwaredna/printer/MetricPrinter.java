@@ -197,5 +197,9 @@ System.out.printf(
 System.out.printf(
         "        NOC                       : %d%n",
         metrics.getNoc());
+
+        System.out.printf(
+        "        RFC                       : %d%n",
+        metrics.getRfc());
     }
 }

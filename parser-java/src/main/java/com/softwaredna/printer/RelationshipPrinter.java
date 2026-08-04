@@ -38,14 +38,24 @@ public class RelationshipPrinter {
                             relationship.getTarget());
 
             if (relationship.getType()
-                    == RelationshipType.METHOD_CALL) {
+                    == RelationshipType.METHOD_CALL_INTERNAL) {
 
                 System.out.println(
                         source
-                                + " ---- METHOD_CALL ----> "
+                                + " ---- METHOD_CALL_INTERNAL ----> "
                                 + target);
 
-            } else {
+            }
+            else if (relationship.getType()
+                    == RelationshipType.METHOD_CALL_EXTERNAL) {
+
+                System.out.println(
+                        source
+                                + " ---- METHOD_CALL_EXTERNAL ----> "
+                                + target);
+
+            }
+            else {
 
                 System.out.println(
                         source

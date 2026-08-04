@@ -92,4 +92,19 @@ public class GraphQueryService {
 
     }
 
+    /*
+ * ============================
+ * Method Queries
+ * ============================
+ */
+
+public Collection<TypedDependency> getCalledMethods(
+        String methodId) {
+
+    return graph.getOutgoingEdges(
+            methodId,
+            RelationshipType.METHOD_CALL_INTERNAL);
+
+}
+
 }

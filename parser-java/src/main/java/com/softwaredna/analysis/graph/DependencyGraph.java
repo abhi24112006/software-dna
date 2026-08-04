@@ -8,12 +8,6 @@ public class DependencyGraph {
 
     /*
      * Outgoing dependencies.
-     *
-     * source class
-     *      ↓
-     * target class
-     *      ↓
-     * TypedDependency
      */
     private final Map<String, Map<String, TypedDependency>> outgoingDependencies;
 

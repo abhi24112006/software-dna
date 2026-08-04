@@ -12,6 +12,8 @@ public enum RelationshipType {
 
     RETURN_DEPENDENCY,
 
-    METHOD_CALL
+    METHOD_CALL_INTERNAL,
+    
+    METHOD_CALL_EXTERNAL
 
 }

@@ -54,6 +54,7 @@ public class ClassMetrics {
     private int cbo;
     private int dit;
     private int noc;
+    private int rfc;
 
     public int getFieldCount() {
         return fieldCount;
@@ -277,5 +278,13 @@ public int getNoc() {
 
 public void setNoc(int noc) {
     this.noc = noc;
+}
+
+public int getRfc() {
+    return rfc;
+}
+
+public void setRfc(int rfc) {
+    this.rfc = rfc;
 }
 }

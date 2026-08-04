@@ -283,7 +283,7 @@ extractMethodCalls(repository);
                                 repository,
                                 EntityReferenceMapper.fromMethod(method),
                                 EntityReferenceMapper.fromMethod(targetMethod),
-                                RelationshipType.METHOD_CALL
+                                RelationshipType.METHOD_CALL_INTERNAL
                         );
 
                     }
