@@ -29,46 +29,66 @@ public class RelationshipExtractor {
     private final KnowledgeGraphBuilder graphBuilder =
             new KnowledgeGraphBuilder();
 
-        private final ReceiverResolver receiverResolver =
-                new ReceiverResolver();
+    private final ReceiverResolver receiverResolver =
+            new ReceiverResolver();
 
-        private final MethodResolver methodResolver =
-                new MethodResolver();
+    private final MethodResolver methodResolver =
+            new MethodResolver();
+
+
+    /*
+     * -------------------------------------------------------
+     * Extract All Relationships
+     * -------------------------------------------------------
+     */
 
     public void extractRelationships(
             RepositoryModel repository) {
 
-extractExtends(repository);
-extractImplements(repository);
-extractFieldDependencies(repository);
-extractParameterDependencies(repository);
-extractReturnDependencies(repository);
-extractMethodCalls(repository);
+        extractExtends(repository);
+
+        extractImplements(repository);
+
+        extractFieldDependencies(repository);
+
+        extractParameterDependencies(repository);
+
+        extractReturnDependencies(repository);
+
+        extractMethodCalls(repository);
 
     }
 
+
     /*
-     * ------------------------------------------
+     * -------------------------------------------------------
      * EXTENDS
-     * ------------------------------------------
+     * -------------------------------------------------------
      */
 
     private void extractExtends(
             RepositoryModel repository) {
 
-        for (ParsedFile file : repository.getFiles()) {
+        for (ParsedFile file :
+                repository.getFiles()) {
 
-            for (ParsedClass child : file.getClasses()) {
+            for (ParsedClass child :
+                    file.getClasses()) {
 
                 if (child.getSuperClass() == null
                         || child.getSuperClass().isBlank()) {
+
                     continue;
+
                 }
 
                 ParsedClass parent =
                         resolver.resolveClass(
                                 child.getSuperClass(),
-                                repository.getEntityRegistry());
+                                file.getPackageName(),
+                                file.getImports(),
+                                repository.getEntityRegistry()
+                        );
 
                 if (parent == null) {
                     continue;
@@ -87,18 +107,28 @@ extractMethodCalls(repository);
 
     }
 
+
     /*
-     * ------------------------------------------
+     * -------------------------------------------------------
      * IMPLEMENTS
-     * ------------------------------------------
+     * -------------------------------------------------------
      */
 
     private void extractImplements(
             RepositoryModel repository) {
 
-        for (ParsedFile file : repository.getFiles()) {
+        for (ParsedFile file :
+                repository.getFiles()) {
 
-            for (ParsedClass parsedClass : file.getClasses()) {
+            String packageName =
+                    file.getPackageName();
+
+            for (ParsedClass parsedClass :
+                    file.getClasses()) {
+
+                EntityReference source =
+                        EntityReferenceMapper.fromClass(
+                                parsedClass);
 
                 for (String interfaceName :
                         parsedClass.getImplementedInterfaces()) {
@@ -106,7 +136,16 @@ extractMethodCalls(repository);
                     ParsedInterface parsedInterface =
                             resolver.resolveInterface(
                                     interfaceName,
-                                    repository.getEntityRegistry());
+                                    packageName,
+                                    file.getImports(),
+                                    repository.getEntityRegistry()
+                            );
+
+                    /*
+                     * If interface cannot be resolved
+                     * unambiguously, do not create a
+                     * false relationship.
+                     */
 
                     if (parsedInterface == null) {
                         continue;
@@ -114,8 +153,9 @@ extractMethodCalls(repository);
 
                     graphBuilder.addRelationship(
                             repository,
-                            EntityReferenceMapper.fromClass(parsedClass),
-                            EntityReferenceMapper.fromInterface(parsedInterface),
+                            source,
+                            EntityReferenceMapper.fromInterface(
+                                    parsedInterface),
                             RelationshipType.IMPLEMENTS
                     );
 
@@ -127,28 +167,35 @@ extractMethodCalls(repository);
 
     }
 
+
     /*
-     * ------------------------------------------
+     * -------------------------------------------------------
      * FIELD DEPENDENCIES
-     * ------------------------------------------
+     * -------------------------------------------------------
      */
 
     private void extractFieldDependencies(
             RepositoryModel repository) {
 
-        for (ParsedFile file : repository.getFiles()) {
+        for (ParsedFile file :
+                repository.getFiles()) {
 
-            for (ParsedClass parsedClass : file.getClasses()) {
+            for (ParsedClass parsedClass :
+                    file.getClasses()) {
 
                 EntityReference source =
-                        EntityReferenceMapper.fromClass(parsedClass);
+                        EntityReferenceMapper.fromClass(
+                                parsedClass);
 
-                for (ParsedField field : parsedClass.getFields()) {
+                for (ParsedField field :
+                        parsedClass.getFields()) {
 
                     addTypeDependencies(
                             repository,
                             source,
                             field.getType(),
+                            file.getPackageName(),
+                            file.getImports(),
                             RelationshipType.FIELD_DEPENDENCY
                     );
 
@@ -160,23 +207,28 @@ extractMethodCalls(repository);
 
     }
 
+
     /*
-     * ------------------------------------------
+     * -------------------------------------------------------
      * PARAMETER DEPENDENCIES
-     * ------------------------------------------
+     * -------------------------------------------------------
      */
 
     private void extractParameterDependencies(
             RepositoryModel repository) {
 
-        for (ParsedFile file : repository.getFiles()) {
+        for (ParsedFile file :
+                repository.getFiles()) {
 
-            for (ParsedClass parsedClass : file.getClasses()) {
+            for (ParsedClass parsedClass :
+                    file.getClasses()) {
 
                 EntityReference source =
-                        EntityReferenceMapper.fromClass(parsedClass);
+                        EntityReferenceMapper.fromClass(
+                                parsedClass);
 
-                for (ParsedMethod method : parsedClass.getMethods()) {
+                for (ParsedMethod method :
+                        parsedClass.getMethods()) {
 
                     for (ParsedParameter parameter :
                             method.getParameters()) {
@@ -185,6 +237,8 @@ extractMethodCalls(repository);
                                 repository,
                                 source,
                                 parameter.getType(),
+                                file.getPackageName(),
+                                file.getImports(),
                                 RelationshipType.PARAMETER_DEPENDENCY
                         );
 
@@ -198,28 +252,35 @@ extractMethodCalls(repository);
 
     }
 
+
     /*
-     * ------------------------------------------
+     * -------------------------------------------------------
      * RETURN DEPENDENCIES
-     * ------------------------------------------
+     * -------------------------------------------------------
      */
 
     private void extractReturnDependencies(
             RepositoryModel repository) {
 
-        for (ParsedFile file : repository.getFiles()) {
+        for (ParsedFile file :
+                repository.getFiles()) {
 
-            for (ParsedClass parsedClass : file.getClasses()) {
+            for (ParsedClass parsedClass :
+                    file.getClasses()) {
 
                 EntityReference source =
-                        EntityReferenceMapper.fromClass(parsedClass);
+                        EntityReferenceMapper.fromClass(
+                                parsedClass);
 
-                for (ParsedMethod method : parsedClass.getMethods()) {
+                for (ParsedMethod method :
+                        parsedClass.getMethods()) {
 
                     addTypeDependencies(
                             repository,
                             source,
                             method.getReturnType(),
+                            file.getPackageName(),
+                            file.getImports(),
                             RelationshipType.RETURN_DEPENDENCY
                     );
 
@@ -231,20 +292,24 @@ extractMethodCalls(repository);
 
     }
 
+
     /*
-     * ------------------------------------------
+     * -------------------------------------------------------
      * METHOD CALLS
-     * ------------------------------------------
+     * -------------------------------------------------------
      */
 
     private void extractMethodCalls(
             RepositoryModel repository) {
 
-        for (ParsedFile file : repository.getFiles()) {
+        for (ParsedFile file :
+                repository.getFiles()) {
 
-            for (ParsedClass parsedClass : file.getClasses()) {
+            for (ParsedClass parsedClass :
+                    file.getClasses()) {
 
-                for (ParsedMethod method : parsedClass.getMethods()) {
+                for (ParsedMethod method :
+                        parsedClass.getMethods()) {
 
                     MethodAnalysisResult analysisResult =
                             method.getAnalysisResult();
@@ -281,8 +346,10 @@ extractMethodCalls(repository);
 
                         graphBuilder.addRelationship(
                                 repository,
-                                EntityReferenceMapper.fromMethod(method),
-                                EntityReferenceMapper.fromMethod(targetMethod),
+                                EntityReferenceMapper.fromMethod(
+                                        method),
+                                EntityReferenceMapper.fromMethod(
+                                        targetMethod),
                                 RelationshipType.METHOD_CALL_INTERNAL
                         );
 
@@ -296,16 +363,19 @@ extractMethodCalls(repository);
 
     }
 
+
     /*
-     * ------------------------------------------
+     * -------------------------------------------------------
      * COMMON TYPE DEPENDENCY HELPER
-     * ------------------------------------------
+     * -------------------------------------------------------
      */
 
     private void addTypeDependencies(
             RepositoryModel repository,
             EntityReference source,
             String type,
+            String packageName,
+            java.util.List<String> imports,
             RelationshipType relationshipType) {
 
         for (String referencedType :
@@ -314,7 +384,10 @@ extractMethodCalls(repository);
             EntityReference target =
                     resolver.resolveType(
                             referencedType,
-                            repository.getEntityRegistry());
+                            packageName,
+                            imports,
+                            repository.getEntityRegistry()
+                    );
 
             if (target == null) {
                 continue;

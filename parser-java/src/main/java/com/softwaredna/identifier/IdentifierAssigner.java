@@ -11,6 +11,7 @@ public class IdentifierAssigner {
         for (ParsedFile file : repository.getFiles()) {
 
             assignClassIds(file);
+            assignInterfaceIds(file);
 
         }
 
@@ -39,6 +40,29 @@ public class IdentifierAssigner {
             assignConstructorIds(parsedClass);
 
             assignMethodIds(parsedClass);
+
+        }
+
+    }
+
+    /*
+     * -------------------------------------------------------
+     * Interfaces
+     * -------------------------------------------------------
+     */
+
+    private void assignInterfaceIds(
+            ParsedFile file) {
+
+        for (ParsedInterface parsedInterface :
+                file.getInterfaces()) {
+
+            String interfaceId =
+                    IdentifierGenerator.interfaceId(
+                            file.getPackageName(),
+                            parsedInterface.getName());
+
+            parsedInterface.setId(interfaceId);
 
         }
 
@@ -125,7 +149,8 @@ public class IdentifierAssigner {
             String ownerId,
             java.util.List<ParsedParameter> parameters) {
 
-        for (ParsedParameter parameter : parameters) {
+        for (ParsedParameter parameter :
+                parameters) {
 
             parameter.setId(
                     IdentifierGenerator.parameterId(

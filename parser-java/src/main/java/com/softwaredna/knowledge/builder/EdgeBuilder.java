@@ -6,11 +6,13 @@ import com.softwaredna.knowledge.GraphNode;
 import com.softwaredna.knowledge.KnowledgeGraph;
 import com.softwaredna.knowledge.NodeType;
 import com.softwaredna.model.ParsedClass;
-import com.softwaredna.model.ParsedFile;
-import com.softwaredna.model.RepositoryModel;
-import com.softwaredna.model.ParsedMethod;
-import com.softwaredna.model.ParsedField;
 import com.softwaredna.model.ParsedConstructor;
+import com.softwaredna.model.ParsedField;
+import com.softwaredna.model.ParsedFile;
+import com.softwaredna.model.ParsedMethod;
+import com.softwaredna.model.Relationship;
+import com.softwaredna.model.RelationshipType;
+import com.softwaredna.model.RepositoryModel;
 
 public class EdgeBuilder {
 
@@ -23,16 +25,24 @@ public class EdgeBuilder {
                 graph);
 
         buildClassMethodEdges(
-            repository,
-            graph);
+                repository,
+                graph);
 
         buildClassFieldEdges(
-            repository,
-            graph);
+                repository,
+                graph);
 
         buildClassConstructorEdges(
-            repository,
-            graph);
+                repository,
+                graph);
+
+        buildMethodCallEdges(
+                repository,
+                graph);
+
+        buildInheritanceEdges(
+                repository,
+                graph);
 
     }
 
@@ -79,17 +89,11 @@ public class EdgeBuilder {
                 }
 
                 graph.addEdge(
-
                         new GraphEdge(
-
                                 packageNode,
-
                                 classNode,
-
                                 EdgeType.DECLARES
-
                         )
-
                 );
 
             }
@@ -97,49 +101,51 @@ public class EdgeBuilder {
         }
 
     }
+
+    /*
+     * --------------------------
+     * Class -> Method
+     * --------------------------
+     */
 
     private void buildClassMethodEdges(
-        RepositoryModel repository,
-        KnowledgeGraph graph) {
+            RepositoryModel repository,
+            KnowledgeGraph graph) {
 
-    for (ParsedFile file :
-            repository.getFiles()) {
+        for (ParsedFile file :
+                repository.getFiles()) {
 
-        for (ParsedClass parsedClass :
-                file.getClasses()) {
+            for (ParsedClass parsedClass :
+                    file.getClasses()) {
 
-            GraphNode classNode =
-                    graph.getNode(
-                            parsedClass.getId());
-
-            if (classNode == null) {
-                continue;
-            }
-
-            for (ParsedMethod method :
-                    parsedClass.getMethods()) {
-
-                GraphNode methodNode =
+                GraphNode classNode =
                         graph.getNode(
-                                method.getId());
+                                parsedClass.getId());
 
-                if (methodNode == null) {
+                if (classNode == null) {
                     continue;
                 }
 
-                graph.addEdge(
+                for (ParsedMethod method :
+                        parsedClass.getMethods()) {
 
-                        new GraphEdge(
+                    GraphNode methodNode =
+                            graph.getNode(
+                                    method.getId());
 
-                                classNode,
+                    if (methodNode == null) {
+                        continue;
+                    }
 
-                                methodNode,
+                    graph.addEdge(
+                            new GraphEdge(
+                                    classNode,
+                                    methodNode,
+                                    EdgeType.HAS_METHOD
+                            )
+                    );
 
-                                EdgeType.HAS_METHOD
-
-                        )
-
-                );
+                }
 
             }
 
@@ -147,50 +153,50 @@ public class EdgeBuilder {
 
     }
 
-}
+    /*
+     * --------------------------
+     * Class -> Field
+     * --------------------------
+     */
 
-private void buildClassFieldEdges(
-        RepositoryModel repository,
-        KnowledgeGraph graph) {
+    private void buildClassFieldEdges(
+            RepositoryModel repository,
+            KnowledgeGraph graph) {
 
-    for (ParsedFile file :
-            repository.getFiles()) {
+        for (ParsedFile file :
+                repository.getFiles()) {
 
-        for (ParsedClass parsedClass :
-                file.getClasses()) {
+            for (ParsedClass parsedClass :
+                    file.getClasses()) {
 
-            GraphNode classNode =
-                    graph.getNode(
-                            parsedClass.getId());
-
-            if (classNode == null) {
-                continue;
-            }
-
-            for (ParsedField field :
-                    parsedClass.getFields()) {
-
-                GraphNode fieldNode =
+                GraphNode classNode =
                         graph.getNode(
-                                field.getId());
+                                parsedClass.getId());
 
-                if (fieldNode == null) {
+                if (classNode == null) {
                     continue;
                 }
 
-                graph.addEdge(
+                for (ParsedField field :
+                        parsedClass.getFields()) {
 
-                        new GraphEdge(
+                    GraphNode fieldNode =
+                            graph.getNode(
+                                    field.getId());
 
-                                classNode,
+                    if (fieldNode == null) {
+                        continue;
+                    }
 
-                                fieldNode,
+                    graph.addEdge(
+                            new GraphEdge(
+                                    classNode,
+                                    fieldNode,
+                                    EdgeType.HAS_FIELD
+                            )
+                    );
 
-                                EdgeType.HAS_FIELD
-
-                        )
-
-                );
+                }
 
             }
 
@@ -198,50 +204,50 @@ private void buildClassFieldEdges(
 
     }
 
-}
+    /*
+     * --------------------------
+     * Class -> Constructor
+     * --------------------------
+     */
 
-private void buildClassConstructorEdges(
-        RepositoryModel repository,
-        KnowledgeGraph graph) {
+    private void buildClassConstructorEdges(
+            RepositoryModel repository,
+            KnowledgeGraph graph) {
 
-    for (ParsedFile file :
-            repository.getFiles()) {
+        for (ParsedFile file :
+                repository.getFiles()) {
 
-        for (ParsedClass parsedClass :
-                file.getClasses()) {
+            for (ParsedClass parsedClass :
+                    file.getClasses()) {
 
-            GraphNode classNode =
-                    graph.getNode(
-                            parsedClass.getId());
-
-            if (classNode == null) {
-                continue;
-            }
-
-            for (ParsedConstructor constructor :
-                    parsedClass.getConstructors()) {
-
-                GraphNode constructorNode =
+                GraphNode classNode =
                         graph.getNode(
-                                constructor.getId());
+                                parsedClass.getId());
 
-                if (constructorNode == null) {
+                if (classNode == null) {
                     continue;
                 }
 
-                graph.addEdge(
+                for (ParsedConstructor constructor :
+                        parsedClass.getConstructors()) {
 
-                        new GraphEdge(
+                    GraphNode constructorNode =
+                            graph.getNode(
+                                    constructor.getId());
 
-                                classNode,
+                    if (constructorNode == null) {
+                        continue;
+                    }
 
-                                constructorNode,
+                    graph.addEdge(
+                            new GraphEdge(
+                                    classNode,
+                                    constructorNode,
+                                    EdgeType.HAS_CONSTRUCTOR
+                            )
+                    );
 
-                                EdgeType.HAS_CONSTRUCTOR
-
-                        )
-
-                );
+                }
 
             }
 
@@ -249,6 +255,151 @@ private void buildClassConstructorEdges(
 
     }
 
-}
+    /*
+     * --------------------------
+     * Method -> Method
+     * CALLS
+     * --------------------------
+     */
+
+    private void buildMethodCallEdges(
+            RepositoryModel repository,
+            KnowledgeGraph graph) {
+
+        for (Relationship relationship :
+                repository.getRelationships()) {
+
+            if (relationship.getType()
+                    != RelationshipType.METHOD_CALL_INTERNAL) {
+
+                continue;
+            }
+
+            GraphNode sourceNode =
+                    graph.getNode(
+                            relationship
+                                    .getSource()
+                                    .getId());
+
+            GraphNode targetNode =
+                    graph.getNode(
+                            relationship
+                                    .getTarget()
+                                    .getId());
+
+            if (sourceNode == null
+                    || targetNode == null) {
+
+                continue;
+            }
+
+            if (sourceNode.getType()
+                    != NodeType.METHOD) {
+
+                continue;
+            }
+
+            if (targetNode.getType()
+                    != NodeType.METHOD) {
+
+                continue;
+            }
+
+            graph.addEdge(
+                    new GraphEdge(
+                            sourceNode,
+                            targetNode,
+                            EdgeType.CALLS
+                    )
+            );
+
+        }
+
+    }
+
+    /*
+     * --------------------------
+     * Inheritance
+     * --------------------------
+     *
+     * EXTENDS:
+     *
+     * Child Class
+     *      |
+     *      | EXTENDS
+     *      ▼
+     * Parent Class
+     *
+     * IMPLEMENTS:
+     *
+     * Class
+     *   |
+     *   | IMPLEMENTS
+     *   ▼
+     * Interface
+     */
+
+    private void buildInheritanceEdges(
+            RepositoryModel repository,
+            KnowledgeGraph graph) {
+
+        for (Relationship relationship :
+                repository.getRelationships()) {
+
+            RelationshipType relationshipType =
+                    relationship.getType();
+
+            if (relationshipType
+                    != RelationshipType.EXTENDS
+                    && relationshipType
+                    != RelationshipType.IMPLEMENTS) {
+
+                continue;
+            }
+
+            GraphNode sourceNode =
+                    graph.getNode(
+                            relationship
+                                    .getSource()
+                                    .getId());
+
+            GraphNode targetNode =
+                    graph.getNode(
+                            relationship
+                                    .getTarget()
+                                    .getId());
+
+            if (sourceNode == null
+                    || targetNode == null) {
+
+                continue;
+            }
+
+            EdgeType edgeType;
+
+            if (relationshipType
+                    == RelationshipType.EXTENDS) {
+
+                edgeType =
+                        EdgeType.EXTENDS;
+
+            } else {
+
+                edgeType =
+                        EdgeType.IMPLEMENTS;
+
+            }
+
+            graph.addEdge(
+                    new GraphEdge(
+                            sourceNode,
+                            targetNode,
+                            edgeType
+                    )
+            );
+
+        }
+
+    }
 
 }

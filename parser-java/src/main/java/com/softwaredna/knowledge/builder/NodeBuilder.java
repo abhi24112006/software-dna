@@ -3,12 +3,13 @@ package com.softwaredna.knowledge.builder;
 import com.softwaredna.knowledge.GraphNode;
 import com.softwaredna.knowledge.KnowledgeGraph;
 import com.softwaredna.knowledge.NodeType;
-import com.softwaredna.model.ParsedFile;
-import com.softwaredna.model.RepositoryModel;
 import com.softwaredna.model.ParsedClass;
-import com.softwaredna.model.ParsedMethod;
-import com.softwaredna.model.ParsedField;
 import com.softwaredna.model.ParsedConstructor;
+import com.softwaredna.model.ParsedField;
+import com.softwaredna.model.ParsedFile;
+import com.softwaredna.model.ParsedInterface;
+import com.softwaredna.model.ParsedMethod;
+import com.softwaredna.model.RepositoryModel;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -24,22 +25,24 @@ public class NodeBuilder {
                 graph);
 
         buildClassNodes(
-            repository,
-            graph);
+                repository,
+                graph);
+
+        buildInterfaceNodes(
+                repository,
+                graph);
 
         buildMethodNodes(
-            repository,
-            graph);
+                repository,
+                graph);
 
         buildFieldNodes(
-            repository,
-            graph);
+                repository,
+                graph);
 
         buildConstructorNodes(
-            repository,
-            graph);
-
-
+                repository,
+                graph);
 
     }
 
@@ -62,7 +65,8 @@ public class NodeBuilder {
             String packageName =
                     file.getPackageName();
 
-            if (packageName == null) {
+            if (packageName == null
+                    || packageName.isBlank()) {
 
                 packageName =
                         "Default Package";
@@ -82,6 +86,7 @@ public class NodeBuilder {
                             packageName,
 
                             NodeType.PACKAGE
+
                     )
 
             );
@@ -89,62 +94,32 @@ public class NodeBuilder {
         }
 
     }
+
+    /*
+     * --------------------------
+     * Classes
+     * --------------------------
+     */
 
     private void buildClassNodes(
-        RepositoryModel repository,
-        KnowledgeGraph graph) {
+            RepositoryModel repository,
+            KnowledgeGraph graph) {
 
-    for (ParsedFile file :
-            repository.getFiles()) {
+        for (ParsedFile file :
+                repository.getFiles()) {
 
-        for (ParsedClass parsedClass :
-                file.getClasses()) {
-
-            graph.addNode(
-
-                    new GraphNode(
-
-                            parsedClass.getId(),
-
-                            parsedClass.getName(),
-
-                            NodeType.CLASS
-
-                    )
-
-            );
-
-        }
-
-    }
-
-}
-
-private void buildMethodNodes(
-        RepositoryModel repository,
-        KnowledgeGraph graph) {
-
-    for (ParsedFile file :
-            repository.getFiles()) {
-
-        for (ParsedClass parsedClass :
-                file.getClasses()) {
-
-            for (ParsedMethod method :
-                    parsedClass.getMethods()) {
+            for (ParsedClass parsedClass :
+                    file.getClasses()) {
 
                 graph.addNode(
 
                         new GraphNode(
 
-                                method.getId(),
+                                parsedClass.getId(),
 
-                                parsedClass.getName()
-                                        + "."
-                                        + method.getName()
-                                        + "()",
+                                parsedClass.getName(),
 
-                                NodeType.METHOD
+                                NodeType.CLASS
 
                         )
 
@@ -156,32 +131,35 @@ private void buildMethodNodes(
 
     }
 
-}
+    /*
+     * --------------------------
+     * Interfaces
+     * --------------------------
+     */
 
-private void buildFieldNodes(
-        RepositoryModel repository,
-        KnowledgeGraph graph) {
+    private void buildInterfaceNodes(
+            RepositoryModel repository,
+            KnowledgeGraph graph) {
 
-    for (ParsedFile file :
-            repository.getFiles()) {
+        for (ParsedFile file :
+                repository.getFiles()) {
 
-        for (ParsedClass parsedClass :
-                file.getClasses()) {
+            for (ParsedInterface parsedInterface :
+                    file.getInterfaces()) {
 
-            for (ParsedField field :
-                    parsedClass.getFields()) {
+                if (parsedInterface.getId() == null) {
+                    continue;
+                }
 
                 graph.addNode(
 
                         new GraphNode(
 
-                                field.getId(),
+                                parsedInterface.getId(),
 
-                                parsedClass.getName()
-                                        + "."
-                                        + field.getName(),
+                                parsedInterface.getName(),
 
-                                NodeType.FIELD
+                                NodeType.INTERFACE
 
                         )
 
@@ -193,35 +171,43 @@ private void buildFieldNodes(
 
     }
 
-}
+    /*
+     * --------------------------
+     * Methods
+     * --------------------------
+     */
 
-private void buildConstructorNodes(
-        RepositoryModel repository,
-        KnowledgeGraph graph) {
+    private void buildMethodNodes(
+            RepositoryModel repository,
+            KnowledgeGraph graph) {
 
-    for (ParsedFile file :
-            repository.getFiles()) {
+        for (ParsedFile file :
+                repository.getFiles()) {
 
-        for (ParsedClass parsedClass :
-                file.getClasses()) {
+            for (ParsedClass parsedClass :
+                    file.getClasses()) {
 
-            for (ParsedConstructor constructor :
-                    parsedClass.getConstructors()) {
+                for (ParsedMethod method :
+                        parsedClass.getMethods()) {
 
-                graph.addNode(
+                    graph.addNode(
 
-                        new GraphNode(
+                            new GraphNode(
 
-                                constructor.getId(),
+                                    method.getId(),
 
-                                parsedClass.getName()
-                                        + "()",
+                                    parsedClass.getName()
+                                            + "."
+                                            + method.getName()
+                                            + "()",
 
-                                NodeType.CONSTRUCTOR
+                                    NodeType.METHOD
 
-                        )
+                            )
 
-                );
+                    );
+
+                }
 
             }
 
@@ -229,6 +215,89 @@ private void buildConstructorNodes(
 
     }
 
-}
+    /*
+     * --------------------------
+     * Fields
+     * --------------------------
+     */
+
+    private void buildFieldNodes(
+            RepositoryModel repository,
+            KnowledgeGraph graph) {
+
+        for (ParsedFile file :
+                repository.getFiles()) {
+
+            for (ParsedClass parsedClass :
+                    file.getClasses()) {
+
+                for (ParsedField field :
+                        parsedClass.getFields()) {
+
+                    graph.addNode(
+
+                            new GraphNode(
+
+                                    field.getId(),
+
+                                    parsedClass.getName()
+                                            + "."
+                                            + field.getName(),
+
+                                    NodeType.FIELD
+
+                            )
+
+                    );
+
+                }
+
+            }
+
+        }
+
+    }
+
+    /*
+     * --------------------------
+     * Constructors
+     * --------------------------
+     */
+
+    private void buildConstructorNodes(
+            RepositoryModel repository,
+            KnowledgeGraph graph) {
+
+        for (ParsedFile file :
+                repository.getFiles()) {
+
+            for (ParsedClass parsedClass :
+                    file.getClasses()) {
+
+                for (ParsedConstructor constructor :
+                        parsedClass.getConstructors()) {
+
+                    graph.addNode(
+
+                            new GraphNode(
+
+                                    constructor.getId(),
+
+                                    parsedClass.getName()
+                                            + "()",
+
+                                    NodeType.CONSTRUCTOR
+
+                            )
+
+                    );
+
+                }
+
+            }
+
+        }
+
+    }
 
 }

@@ -1,5 +1,7 @@
 package demo;
 
+import com.demo.Printable;
+
 public class Report implements Printable {
 
     @Override

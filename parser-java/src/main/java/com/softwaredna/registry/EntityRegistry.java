@@ -2,7 +2,9 @@ package com.softwaredna.registry;
 
 import com.softwaredna.model.*;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -18,6 +20,7 @@ public class EntityRegistry {
     private final Map<String, Object> parsedEntitiesById =
             new LinkedHashMap<>();
 
+
     /*
      * -------------------------------------------------------
      * Graph Entity Storage
@@ -26,6 +29,7 @@ public class EntityRegistry {
 
     private final Map<String, EntityReference> entityReferences =
             new LinkedHashMap<>();
+
 
     /*
      * -------------------------------------------------------
@@ -36,8 +40,9 @@ public class EntityRegistry {
     private final Map<String, List<ParsedClass>> classesByName =
             new LinkedHashMap<>();
 
-    private final Map<String, ParsedInterface> interfacesByName =
+    private final Map<String, List<ParsedInterface>> interfacesByName =
             new LinkedHashMap<>();
+
 
     /*
      * -------------------------------------------------------
@@ -45,7 +50,8 @@ public class EntityRegistry {
      * -------------------------------------------------------
      */
 
-    public void registerClass(ParsedClass parsedClass) {
+    public void registerClass(
+            ParsedClass parsedClass) {
 
         parsedEntitiesById.put(
                 parsedClass.getId(),
@@ -54,10 +60,11 @@ public class EntityRegistry {
 
         classesByName.computeIfAbsent(
                 parsedClass.getName(),
-                ignored -> new java.util.ArrayList<>()
+                ignored -> new ArrayList<>()
         ).add(parsedClass);
 
     }
+
 
     public void registerInterface(
             ParsedInterface parsedInterface) {
@@ -67,12 +74,13 @@ public class EntityRegistry {
                 parsedInterface
         );
 
-        interfacesByName.put(
+        interfacesByName.computeIfAbsent(
                 parsedInterface.getName(),
-                parsedInterface
-        );
+                ignored -> new ArrayList<>()
+        ).add(parsedInterface);
 
     }
+
 
     public void registerEnum(
             ParsedEnum parsedEnum) {
@@ -84,6 +92,7 @@ public class EntityRegistry {
 
     }
 
+
     public void registerRecord(
             ParsedRecord parsedRecord) {
 
@@ -93,6 +102,7 @@ public class EntityRegistry {
         );
 
     }
+
 
     public void registerField(
             ParsedField parsedField) {
@@ -104,6 +114,7 @@ public class EntityRegistry {
 
     }
 
+
     public void registerMethod(
             ParsedMethod parsedMethod) {
 
@@ -113,6 +124,7 @@ public class EntityRegistry {
         );
 
     }
+
 
     public void registerConstructor(
             ParsedConstructor parsedConstructor) {
@@ -124,6 +136,7 @@ public class EntityRegistry {
 
     }
 
+
     public void registerParameter(
             ParsedParameter parsedParameter) {
 
@@ -133,6 +146,7 @@ public class EntityRegistry {
         );
 
     }
+
 
     /*
      * -------------------------------------------------------
@@ -150,85 +164,383 @@ public class EntityRegistry {
 
     }
 
+
     /*
      * -------------------------------------------------------
-     * Lookup Methods
+     * Class Lookup
      * -------------------------------------------------------
      */
 
-    public List<ParsedClass> findClassesByName(String name) {
+    public List<ParsedClass> findClassesByName(
+            String name) {
 
-        List<ParsedClass> candidates = classesByName.get(name);
+        List<ParsedClass> candidates =
+                classesByName.get(name);
 
-        if (candidates == null || candidates.isEmpty()) {
-            return java.util.Collections.emptyList();
+        if (candidates == null
+                || candidates.isEmpty()) {
+
+            return Collections.emptyList();
+
         }
 
         return candidates;
 
     }
 
-    public ParsedClass findClassByName(String name) {
 
-        List<ParsedClass> candidates = findClassesByName(name);
+    /*
+     * Simple lookup.
+     *
+     * Only succeeds when unambiguous.
+     */
 
-        if (candidates.isEmpty()) {
-            return null;
+    public ParsedClass findClassByName(
+            String name) {
+
+        List<ParsedClass> candidates =
+                findClassesByName(name);
+
+        if (candidates.size() == 1) {
+
+            return candidates.get(0);
+
         }
 
-        return candidates.get(candidates.size() - 1);
+        return null;
 
     }
 
-    public ParsedClass findClassByName(String name, String packageName) {
 
-        List<ParsedClass> candidates = classesByName.get(name);
+    /*
+     * Package-aware lookup.
+     *
+     * Resolution:
+     *
+     * 1. Same package
+     * 2. Exactly one candidate
+     * 3. Default package
+     * 4. Ambiguous -> null
+     */
 
-        if (candidates == null || candidates.isEmpty()) {
+    public ParsedClass findClassByName(
+            String name,
+            String packageName) {
+
+        List<ParsedClass> candidates =
+                classesByName.get(name);
+
+        if (candidates == null
+                || candidates.isEmpty()) {
+
             return null;
+
         }
 
-        if (packageName != null && !packageName.isBlank()) {
-            for (ParsedClass candidate : candidates) {
-                if (packageName.equals(candidate.getPackageName())) {
+
+        /*
+         * 1. Same package.
+         */
+
+        if (packageName != null
+                && !packageName.isBlank()) {
+
+            for (ParsedClass candidate :
+                    candidates) {
+
+                if (packageName.equals(
+                        candidate.getPackageName())) {
+
                     return candidate;
+
                 }
+
             }
+
         }
 
-        for (ParsedClass candidate : candidates) {
-            if (candidate.getPackageName() == null || candidate.getPackageName().isBlank()) {
+
+        /*
+         * 2. Exactly one candidate.
+         */
+
+        if (candidates.size() == 1) {
+
+            return candidates.get(0);
+
+        }
+
+
+        /*
+         * 3. Default package candidate.
+         */
+
+        ParsedClass defaultPackageCandidate = null;
+
+        for (ParsedClass candidate :
+                candidates) {
+
+            String candidatePackage =
+                    candidate.getPackageName();
+
+            if (candidatePackage == null
+                    || candidatePackage.isBlank()) {
+
+                if (defaultPackageCandidate != null) {
+
+                    return null;
+
+                }
+
+                defaultPackageCandidate = candidate;
+
+            }
+
+        }
+
+        if (defaultPackageCandidate != null) {
+
+            return defaultPackageCandidate;
+
+        }
+
+
+        /*
+         * 4. Ambiguous.
+         */
+
+        return null;
+
+    }
+
+
+    /*
+     * -------------------------------------------------------
+     * Fully Qualified Class Lookup
+     * -------------------------------------------------------
+     */
+
+    public ParsedClass findClassByQualifiedName(
+            String qualifiedName) {
+
+        if (qualifiedName == null
+                || qualifiedName.isBlank()) {
+
+            return null;
+
+        }
+
+        List<ParsedClass> candidates =
+                findClassesByName(
+                        simpleName(qualifiedName));
+
+        for (ParsedClass candidate :
+                candidates) {
+
+            if (qualifiedName.equals(
+                    candidate.getId())) {
+
                 return candidate;
+
             }
+
         }
 
-        return candidates.get(candidates.size() - 1);
+        return null;
 
     }
 
-    public ParsedInterface findInterfaceByName(String name) {
 
-        return interfacesByName.get(name);
+    /*
+     * -------------------------------------------------------
+     * Interface Lookup
+     * -------------------------------------------------------
+     */
+
+    public List<ParsedInterface> findInterfacesByName(
+            String name) {
+
+        List<ParsedInterface> candidates =
+                interfacesByName.get(name);
+
+        if (candidates == null
+                || candidates.isEmpty()) {
+
+            return Collections.emptyList();
+
+        }
+
+        return candidates;
 
     }
 
-    public EntityReference findEntityReferenceById(String id) {
+
+    /*
+     * Simple interface lookup.
+     *
+     * Only succeeds when unambiguous.
+     */
+
+    public ParsedInterface findInterfaceByName(
+            String name) {
+
+        List<ParsedInterface> candidates =
+                findInterfacesByName(name);
+
+        if (candidates.size() == 1) {
+
+            return candidates.get(0);
+
+        }
+
+        return null;
+
+    }
+
+
+    /*
+     * Package-aware interface lookup.
+     */
+
+    public ParsedInterface findInterfaceByName(
+            String name,
+            String packageName) {
+
+        List<ParsedInterface> candidates =
+                interfacesByName.get(name);
+
+        if (candidates == null
+                || candidates.isEmpty()) {
+
+            return null;
+
+        }
+
+
+        /*
+         * 1. Same package.
+         */
+
+        if (packageName != null
+                && !packageName.isBlank()) {
+
+            for (ParsedInterface candidate :
+                    candidates) {
+
+                String candidateId =
+                        candidate.getId();
+
+                if (candidateId == null) {
+                    continue;
+                }
+
+                String expectedPrefix =
+                        packageName + ".";
+
+                if (candidateId.startsWith(
+                        expectedPrefix)) {
+
+                    return candidate;
+
+                }
+
+            }
+
+        }
+
+
+        /*
+         * 2. Exactly one candidate.
+         */
+
+        if (candidates.size() == 1) {
+
+            return candidates.get(0);
+
+        }
+
+
+        /*
+         * 3. Ambiguous.
+         */
+
+        return null;
+
+    }
+
+
+    /*
+     * -------------------------------------------------------
+     * Fully Qualified Interface Lookup
+     * -------------------------------------------------------
+     */
+
+    public ParsedInterface findInterfaceByQualifiedName(
+            String qualifiedName) {
+
+        if (qualifiedName == null
+                || qualifiedName.isBlank()) {
+
+            return null;
+
+        }
+
+        List<ParsedInterface> candidates =
+                findInterfacesByName(
+                        simpleName(qualifiedName));
+
+        for (ParsedInterface candidate :
+                candidates) {
+
+            if (qualifiedName.equals(
+                    candidate.getId())) {
+
+                return candidate;
+
+            }
+
+        }
+
+        return null;
+
+    }
+
+
+    /*
+     * -------------------------------------------------------
+     * Entity Reference Lookup
+     * -------------------------------------------------------
+     */
+
+    public EntityReference findEntityReferenceById(
+            String id) {
 
         return entityReferences.get(id);
 
     }
 
-    public EntityReference findClassEntityByName(String className) {
 
-        ParsedClass parsedClass = findClassByName(className);
+    public EntityReference findClassEntityByName(
+            String className) {
+
+        ParsedClass parsedClass =
+                findClassByName(className);
 
         if (parsedClass == null) {
             return null;
         }
 
-        return findEntityReferenceById(parsedClass.getId());
+        return findEntityReferenceById(
+                parsedClass.getId());
 
     }
+
+
+    /*
+     * -------------------------------------------------------
+     * Collection Access
+     * -------------------------------------------------------
+     */
 
     public Collection<Object> getAllParsedEntities() {
 
@@ -236,9 +548,32 @@ public class EntityRegistry {
 
     }
 
+
     public Collection<EntityReference> getAllEntityReferences() {
 
         return entityReferences.values();
+
+    }
+
+
+    /*
+     * -------------------------------------------------------
+     * Utility
+     * -------------------------------------------------------
+     */
+
+    private String simpleName(
+            String qualifiedName) {
+
+        int index =
+                qualifiedName.lastIndexOf('.');
+
+        if (index < 0) {
+            return qualifiedName;
+        }
+
+        return qualifiedName.substring(
+                index + 1);
 
     }
 
