@@ -12,12 +12,14 @@ public class KnowledgeGraphQuery {
 
     private final KnowledgeGraph graph;
 
+
     public KnowledgeGraphQuery(
             KnowledgeGraph graph) {
 
         this.graph = graph;
 
     }
+
 
     /*
      * -------------------------------------------------------
@@ -36,14 +38,6 @@ public class KnowledgeGraphQuery {
     /*
      * -------------------------------------------------------
      * Outgoing Edges
-     *
-     * Example:
-     *
-     * StudentService
-     *      |
-     *      | DEPENDS_ON
-     *      v
-     * Student
      * -------------------------------------------------------
      */
 
@@ -179,7 +173,9 @@ public class KnowledgeGraphQuery {
                 new ArrayList<>();
 
         for (GraphEdge edge :
-                getOutgoingEdges(nodeId, type)) {
+                getOutgoingEdges(
+                        nodeId,
+                        type)) {
 
             result.add(
                     edge.getTarget()
@@ -206,7 +202,9 @@ public class KnowledgeGraphQuery {
                 new ArrayList<>();
 
         for (GraphEdge edge :
-                getIncomingEdges(nodeId, type)) {
+                getIncomingEdges(
+                        nodeId,
+                        type)) {
 
             result.add(
                     edge.getSource()
@@ -215,6 +213,227 @@ public class KnowledgeGraphQuery {
         }
 
         return result;
+
+    }
+
+
+    /*
+     * =======================================================
+     * SEMANTIC QUERIES
+     * =======================================================
+     */
+
+
+    /*
+     * -------------------------------------------------------
+     * Dependencies
+     *
+     * Example:
+     *
+     * StudentService
+     *       |
+     *       | DEPENDS_ON
+     *       v
+     *    Student
+     * -------------------------------------------------------
+     */
+
+    public List<GraphNode> getDependencies(
+            String nodeId) {
+
+        return getOutgoingNodes(
+                nodeId,
+                EdgeType.DEPENDS_ON
+        );
+
+    }
+
+
+    /*
+     * -------------------------------------------------------
+     * Dependents
+     *
+     * Reverse of DEPENDS_ON.
+     *
+     * Example:
+     *
+     * StudentService
+     *       |
+     *       | DEPENDS_ON
+     *       v
+     *    Student
+     *
+     * getDependents(Student)
+     *
+     * -> StudentService
+     * -------------------------------------------------------
+     */
+
+    public List<GraphNode> getDependents(
+            String nodeId) {
+
+        return getIncomingNodes(
+                nodeId,
+                EdgeType.DEPENDS_ON
+        );
+
+    }
+
+
+    /*
+     * -------------------------------------------------------
+     * Methods Called By A Method
+     *
+     * Example:
+     *
+     * Student.study()
+     *       |
+     *       | CALLS
+     *       v
+     * Teacher.teach()
+     * -------------------------------------------------------
+     */
+
+    public List<GraphNode> getCallees(
+            String methodId) {
+
+        return getOutgoingNodes(
+                methodId,
+                EdgeType.CALLS
+        );
+
+    }
+
+
+    /*
+     * -------------------------------------------------------
+     * Methods Calling A Method
+     *
+     * Reverse of CALLS.
+     *
+     * Example:
+     *
+     * Student.study()
+     *       |
+     *       | CALLS
+     *       v
+     * Teacher.teach()
+     *
+     * getCallers(Teacher.teach())
+     *
+     * -> Student.study()
+     * -------------------------------------------------------
+     */
+
+    public List<GraphNode> getCallers(
+            String methodId) {
+
+        return getIncomingNodes(
+                methodId,
+                EdgeType.CALLS
+        );
+
+    }
+
+
+    /*
+     * -------------------------------------------------------
+     * Subclasses
+     *
+     * Example:
+     *
+     * Mammal ---- EXTENDS ----> Animal
+     *
+     * getSubclasses(Animal)
+     *
+     * -> Mammal
+     * -------------------------------------------------------
+     */
+
+    public List<GraphNode> getSubclasses(
+            String classId) {
+
+        return getIncomingNodes(
+                classId,
+                EdgeType.EXTENDS
+        );
+
+    }
+
+
+    /*
+     * -------------------------------------------------------
+     * Superclass
+     *
+     * Example:
+     *
+     * Mammal ---- EXTENDS ----> Animal
+     *
+     * getSuperclass(Mammal)
+     *
+     * -> Animal
+     * -------------------------------------------------------
+     */
+
+    public List<GraphNode> getSuperclass(
+            String classId) {
+
+        return getOutgoingNodes(
+                classId,
+                EdgeType.EXTENDS
+        );
+
+    }
+
+
+    /*
+     * -------------------------------------------------------
+     * Implemented Interfaces
+     *
+     * Example:
+     *
+     * Report ---- IMPLEMENTS ----> Printable
+     *
+     * getImplementedInterfaces(Report)
+     *
+     * -> Printable
+     * -------------------------------------------------------
+     */
+
+    public List<GraphNode> getImplementedInterfaces(
+            String classId) {
+
+        return getOutgoingNodes(
+                classId,
+                EdgeType.IMPLEMENTS
+        );
+
+    }
+
+
+    /*
+     * -------------------------------------------------------
+     * Implementing Classes
+     *
+     * Reverse of IMPLEMENTS.
+     *
+     * Example:
+     *
+     * Report ---- IMPLEMENTS ----> Printable
+     *
+     * getImplementations(Printable)
+     *
+     * -> Report
+     * -------------------------------------------------------
+     */
+
+    public List<GraphNode> getImplementations(
+            String interfaceId) {
+
+        return getIncomingNodes(
+                interfaceId,
+                EdgeType.IMPLEMENTS
+        );
 
     }
 
