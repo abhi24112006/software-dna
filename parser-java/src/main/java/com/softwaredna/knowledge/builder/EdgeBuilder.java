@@ -17,34 +17,37 @@ import com.softwaredna.model.RepositoryModel;
 public class EdgeBuilder {
 
     public void buildEdges(
-            RepositoryModel repository,
-            KnowledgeGraph graph) {
+        RepositoryModel repository,
+        KnowledgeGraph graph) {
 
-        buildPackageClassEdges(
-                repository,
-                graph);
+    buildPackageClassEdges(
+            repository,
+            graph);
 
-        buildClassMethodEdges(
-                repository,
-                graph);
+    buildClassMethodEdges(
+            repository,
+            graph);
 
-        buildClassFieldEdges(
-                repository,
-                graph);
+    buildClassFieldEdges(
+            repository,
+            graph);
 
-        buildClassConstructorEdges(
-                repository,
-                graph);
+    buildClassConstructorEdges(
+            repository,
+            graph);
 
-        buildMethodCallEdges(
-                repository,
-                graph);
+    buildMethodCallEdges(
+            repository,
+            graph);
 
-        buildInheritanceEdges(
-                repository,
-                graph);
+    buildInheritanceEdges(
+            repository,
+            graph);
 
-    }
+    buildDependencyEdges(
+            repository,
+            graph);
+}
 
     /*
      * --------------------------
@@ -401,5 +404,111 @@ public class EdgeBuilder {
         }
 
     }
+
+    /*
+ * --------------------------
+ * Class -> Class / Interface
+ * DEPENDS_ON
+ * --------------------------
+ *
+ * Converts detailed dependency
+ * relationships into high-level
+ * architectural dependency edges.
+ *
+ * FIELD_DEPENDENCY
+ * PARAMETER_DEPENDENCY
+ * RETURN_DEPENDENCY
+ *
+ *        |
+ *        v
+ *
+ *      DEPENDS_ON
+ */
+
+/*
+ * --------------------------
+ * Class -> Class / Interface
+ * DEPENDS_ON
+ * --------------------------
+ *
+ * FIELD_DEPENDENCY
+ * PARAMETER_DEPENDENCY
+ * RETURN_DEPENDENCY
+ *
+ * are converted into a single
+ * high-level DEPENDS_ON graph edge.
+ */
+
+private void buildDependencyEdges(
+        RepositoryModel repository,
+        KnowledgeGraph graph) {
+
+    for (Relationship relationship :
+            repository.getRelationships()) {
+
+        RelationshipType relationshipType =
+                relationship.getType();
+
+        /*
+         * Only these relationship types
+         * represent type dependencies.
+         */
+
+        if (relationshipType
+                != RelationshipType.FIELD_DEPENDENCY
+                && relationshipType
+                != RelationshipType.PARAMETER_DEPENDENCY
+                && relationshipType
+                != RelationshipType.RETURN_DEPENDENCY) {
+
+            continue;
+        }
+
+        GraphNode sourceNode =
+                graph.getNode(
+                        relationship
+                                .getSource()
+                                .getId());
+
+        GraphNode targetNode =
+                graph.getNode(
+                        relationship
+                                .getTarget()
+                                .getId());
+
+        if (sourceNode == null
+                || targetNode == null) {
+
+            continue;
+        }
+
+        /*
+         * DEPENDS_ON is a high-level
+         * class/interface relationship.
+         */
+
+        if (sourceNode.getType()
+                != NodeType.CLASS) {
+
+            continue;
+        }
+
+        if (targetNode.getType()
+                != NodeType.CLASS
+                && targetNode.getType()
+                != NodeType.INTERFACE) {
+
+            continue;
+        }
+
+        graph.addEdge(
+                new GraphEdge(
+                        sourceNode,
+                        targetNode,
+                        EdgeType.DEPENDS_ON
+                )
+        );
+    }
+}
 
 }
