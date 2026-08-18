@@ -62,3 +62,4 @@ neo4j/logs/
 
 *.tmp
 *.bak
+cp.txt
