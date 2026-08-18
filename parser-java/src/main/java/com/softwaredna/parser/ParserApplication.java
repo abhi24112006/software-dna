@@ -6,10 +6,11 @@ import com.softwaredna.knowledge.GraphNode;
 import com.softwaredna.knowledge.KnowledgeGraph;
 import com.softwaredna.knowledge.KnowledgeGraphBuilder;
 import com.softwaredna.knowledge.printer.KnowledgeGraphPrinter;
+import com.softwaredna.knowledge.query.ImpactAnalyzer;
 import com.softwaredna.knowledge.query.KnowledgeGraphQuery;
 import com.softwaredna.model.RepositoryModel;
+import com.softwaredna.neo4j.Neo4jService;
 import com.softwaredna.printer.RepositoryPrinter;
-import com.softwaredna.knowledge.query.ImpactAnalyzer;
 
 public class ParserApplication {
 
@@ -39,6 +40,61 @@ public class ParserApplication {
 
             KnowledgeGraph graph =
                     graphBuilder.build(repository);
+                    
+        
+        /*
+ * -------------------------------------------------
+ * Neo4j Integration
+ * -------------------------------------------------
+ */
+
+String neo4jUri =
+        "bolt://localhost:7687";
+
+String neo4jUsername =
+        "neo4j";
+
+String neo4jPassword =
+        System.getenv("NEO4J_PASSWORD");
+
+String neo4jDatabase =
+        "neo4j";
+
+
+try (
+        Neo4jService neo4j =
+                new Neo4jService(
+                        neo4jUri,
+                        neo4jUsername,
+                        neo4jPassword,
+                        neo4jDatabase
+                )
+) {
+
+    /*
+     * Verify Neo4j connection
+     */
+
+    neo4j.verifyConnection();
+
+
+    /*
+     * Export Knowledge Graph
+     */
+
+    neo4j.export(graph);
+
+
+    /*
+     * Neo4j queries can now be performed
+     * through:
+     *
+     * neo4j.getQueryService()
+     *
+     * neo4j.getImpactAnalyzer()
+     */
+
+}
 
             /*
  * -------------------------------------------------
