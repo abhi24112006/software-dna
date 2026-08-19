@@ -1,6 +1,8 @@
 package com.softwaredna.parser;
 
 import com.softwaredna.analysis.repository.RepositoryAnalyzer;
+import com.softwaredna.graph.GraphRepository;
+import com.softwaredna.graph.Neo4jGraphRepository;
 import com.softwaredna.knowledge.EdgeType;
 import com.softwaredna.knowledge.GraphNode;
 import com.softwaredna.knowledge.KnowledgeGraph;
@@ -9,8 +11,6 @@ import com.softwaredna.knowledge.printer.KnowledgeGraphPrinter;
 import com.softwaredna.knowledge.query.ImpactAnalyzer;
 import com.softwaredna.knowledge.query.KnowledgeGraphQuery;
 import com.softwaredna.model.RepositoryModel;
-import com.softwaredna.neo4j.Neo4jImpactAnalyzer;
-import com.softwaredna.neo4j.Neo4jQueryService;
 import com.softwaredna.neo4j.Neo4jService;
 import com.softwaredna.printer.RepositoryPrinter;
 
@@ -107,13 +107,27 @@ public class ParserApplication {
 
                 /*
                  * =================================================
+                 * Graph Repository
+                 * =================================================
+                 *
+                 * ParserApplication now talks to the
+                 * GraphRepository abstraction instead of
+                 * directly talking to Neo4jQueryService and
+                 * Neo4jImpactAnalyzer.
+                 */
+
+                GraphRepository graphRepository =
+                        new Neo4jGraphRepository(
+                                neo4j.getQueryService(),
+                                neo4j.getImpactAnalyzer()
+                        );
+
+
+                /*
+                 * =================================================
                  * Neo4j Graph Queries
                  * =================================================
                  */
-
-                Neo4jQueryService neo4jQuery =
-                        neo4j.getQueryService();
-
 
                 System.out.println();
                 System.out.println(
@@ -142,7 +156,7 @@ public class ParserApplication {
                 );
 
                 for (String name :
-                        neo4jQuery.getDependencies(
+                        graphRepository.getDependencies(
                                 "Default Package.StudentService")) {
 
                     System.out.println(
@@ -165,7 +179,7 @@ public class ParserApplication {
                 );
 
                 for (String name :
-                        neo4jQuery.getDependents(
+                        graphRepository.getDependents(
                                 "Default Package.Student")) {
 
                     System.out.println(
@@ -188,7 +202,7 @@ public class ParserApplication {
                 );
 
                 for (String name :
-                        neo4jQuery.getCallees(
+                        graphRepository.getCallees(
                                 "Default Package.Student#study()")) {
 
                     System.out.println(
@@ -211,7 +225,7 @@ public class ParserApplication {
                 );
 
                 for (String name :
-                        neo4jQuery.getCallers(
+                        graphRepository.getCallers(
                                 "Default Package.Teacher#teach()")) {
 
                     System.out.println(
@@ -234,7 +248,7 @@ public class ParserApplication {
                 );
 
                 for (String name :
-                        neo4jQuery.getSubclasses(
+                        graphRepository.getSubclasses(
                                 "Default Package.Animal")) {
 
                     System.out.println(
@@ -257,7 +271,7 @@ public class ParserApplication {
                 );
 
                 for (String name :
-                        neo4jQuery.getSuperclass(
+                        graphRepository.getSuperclass(
                                 "Default Package.Mammal")) {
 
                     System.out.println(
@@ -280,7 +294,7 @@ public class ParserApplication {
                 );
 
                 for (String name :
-                        neo4jQuery.getImplementedInterfaces(
+                        graphRepository.getImplementedInterfaces(
                                 "demo.Report")) {
 
                     System.out.println(
@@ -303,7 +317,7 @@ public class ParserApplication {
                 );
 
                 for (String name :
-                        neo4jQuery.getImplementations(
+                        graphRepository.getImplementations(
                                 "com.demo.Printable")) {
 
                     System.out.println(
@@ -318,10 +332,6 @@ public class ParserApplication {
                  * Neo4j Impact Analysis
                  * =================================================
                  */
-
-                Neo4jImpactAnalyzer neo4jImpact =
-                        neo4j.getImpactAnalyzer();
-
 
                 System.out.println();
                 System.out.println(
@@ -349,7 +359,7 @@ public class ParserApplication {
                 );
 
                 for (String name :
-                        neo4jImpact.getImpact(
+                        graphRepository.getImpact(
                                 "Default Package.Student")) {
 
                     System.out.println(
@@ -371,7 +381,7 @@ public class ParserApplication {
                 );
 
                 for (String name :
-                        neo4jImpact.getMethodImpact(
+                        graphRepository.getMethodImpact(
                                 "Default Package.Teacher#teach()")) {
 
                     System.out.println(
@@ -392,14 +402,13 @@ public class ParserApplication {
                         "Containment-Aware Impact Analysis"
                 );
 
-
                 System.out.println();
                 System.out.println(
                         "Impact of changing Teacher:"
                 );
 
                 for (String name :
-                        neo4jImpact.getContainmentAwareImpact(
+                        graphRepository.getContainmentAwareImpact(
                                 "Default Package.Teacher")) {
 
                     System.out.println(
