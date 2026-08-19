@@ -14,16 +14,13 @@ public class Neo4jService implements AutoCloseable {
 
 
     public Neo4jService(
-            String uri,
-            String username,
-            String password,
-            String database) {
+            Neo4jConfig config) {
 
         connection =
                 new Neo4jConnection(
-                        uri,
-                        username,
-                        password
+                        config.getUri(),
+                        config.getUsername(),
+                        config.getPassword()
                 );
 
         exporter =
@@ -34,13 +31,13 @@ public class Neo4jService implements AutoCloseable {
         queryService =
                 new Neo4jQueryService(
                         connection.getDriver(),
-                        database
+                        config.getDatabase()
                 );
 
         impactAnalyzer =
                 new Neo4jImpactAnalyzer(
                         connection.getDriver(),
-                        database
+                        config.getDatabase()
                 );
 
     }

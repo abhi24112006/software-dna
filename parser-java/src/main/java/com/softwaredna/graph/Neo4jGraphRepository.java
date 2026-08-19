@@ -2,43 +2,35 @@ package com.softwaredna.graph;
 
 import java.util.List;
 
-import com.softwaredna.neo4j.Neo4jImpactAnalyzer;
-import com.softwaredna.neo4j.Neo4jQueryService;
+import com.softwaredna.knowledge.KnowledgeGraph;
+import com.softwaredna.neo4j.Neo4jService;
 
 public class Neo4jGraphRepository
         implements GraphRepository {
 
-    private final Neo4jQueryService queryService;
-
-    private final Neo4jImpactAnalyzer impactAnalyzer;
+    private final Neo4jService neo4j;
 
 
     public Neo4jGraphRepository(
-            Neo4jQueryService queryService,
-            Neo4jImpactAnalyzer impactAnalyzer) {
+            Neo4jService neo4j) {
 
-        this.queryService =
-                queryService;
-
-        this.impactAnalyzer =
-                impactAnalyzer;
+        this.neo4j = neo4j;
 
     }
 
 
     /*
-     * -------------------------------------------------------
+     * =======================================================
      * Graph Queries
-     * -------------------------------------------------------
+     * =======================================================
      */
 
     @Override
     public List<String> getDependencies(
             String nodeId) {
 
-        return queryService.getDependencies(
-                nodeId
-        );
+        return neo4j.getQueryService()
+                .getDependencies(nodeId);
 
     }
 
@@ -47,9 +39,8 @@ public class Neo4jGraphRepository
     public List<String> getDependents(
             String nodeId) {
 
-        return queryService.getDependents(
-                nodeId
-        );
+        return neo4j.getQueryService()
+                .getDependents(nodeId);
 
     }
 
@@ -58,9 +49,8 @@ public class Neo4jGraphRepository
     public List<String> getCallees(
             String methodId) {
 
-        return queryService.getCallees(
-                methodId
-        );
+        return neo4j.getQueryService()
+                .getCallees(methodId);
 
     }
 
@@ -69,9 +59,8 @@ public class Neo4jGraphRepository
     public List<String> getCallers(
             String methodId) {
 
-        return queryService.getCallers(
-                methodId
-        );
+        return neo4j.getQueryService()
+                .getCallers(methodId);
 
     }
 
@@ -80,9 +69,8 @@ public class Neo4jGraphRepository
     public List<String> getSubclasses(
             String classId) {
 
-        return queryService.getSubclasses(
-                classId
-        );
+        return neo4j.getQueryService()
+                .getSubclasses(classId);
 
     }
 
@@ -91,9 +79,8 @@ public class Neo4jGraphRepository
     public List<String> getSuperclass(
             String classId) {
 
-        return queryService.getSuperclass(
-                classId
-        );
+        return neo4j.getQueryService()
+                .getSuperclass(classId);
 
     }
 
@@ -102,9 +89,8 @@ public class Neo4jGraphRepository
     public List<String> getImplementedInterfaces(
             String classId) {
 
-        return queryService.getImplementedInterfaces(
-                classId
-        );
+        return neo4j.getQueryService()
+                .getImplementedInterfaces(classId);
 
     }
 
@@ -113,26 +99,31 @@ public class Neo4jGraphRepository
     public List<String> getImplementations(
             String interfaceId) {
 
-        return queryService.getImplementations(
-                interfaceId
-        );
+        return neo4j.getQueryService()
+                .getImplementations(interfaceId);
 
     }
 
+    @Override
+    public void save(KnowledgeGraph graph) {
+
+        neo4j.export(graph);
+
+}
+
 
     /*
-     * -------------------------------------------------------
+     * =======================================================
      * Impact Analysis
-     * -------------------------------------------------------
+     * =======================================================
      */
 
     @Override
     public List<String> getImpact(
             String nodeId) {
 
-        return impactAnalyzer.getImpact(
-                nodeId
-        );
+        return neo4j.getImpactAnalyzer()
+                .getImpact(nodeId);
 
     }
 
@@ -141,9 +132,8 @@ public class Neo4jGraphRepository
     public List<String> getMethodImpact(
             String methodId) {
 
-        return impactAnalyzer.getMethodImpact(
-                methodId
-        );
+        return neo4j.getImpactAnalyzer()
+                .getMethodImpact(methodId);
 
     }
 
@@ -152,9 +142,8 @@ public class Neo4jGraphRepository
     public List<String> getContainmentAwareImpact(
             String nodeId) {
 
-        return impactAnalyzer.getContainmentAwareImpact(
-                nodeId
-        );
+        return neo4j.getImpactAnalyzer()
+                .getContainmentAwareImpact(nodeId);
 
     }
 

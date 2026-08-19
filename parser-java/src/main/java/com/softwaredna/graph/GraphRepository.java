@@ -2,7 +2,11 @@ package com.softwaredna.graph;
 
 import java.util.List;
 
+import com.softwaredna.knowledge.KnowledgeGraph;
+
 public interface GraphRepository {
+
+    void save(KnowledgeGraph graph);
 
     List<String> getDependencies(String nodeId);
 

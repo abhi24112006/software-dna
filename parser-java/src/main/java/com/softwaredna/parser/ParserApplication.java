@@ -11,6 +11,7 @@ import com.softwaredna.knowledge.printer.KnowledgeGraphPrinter;
 import com.softwaredna.knowledge.query.ImpactAnalyzer;
 import com.softwaredna.knowledge.query.KnowledgeGraphQuery;
 import com.softwaredna.model.RepositoryModel;
+import com.softwaredna.neo4j.Neo4jConfig;
 import com.softwaredna.neo4j.Neo4jService;
 import com.softwaredna.printer.RepositoryPrinter;
 
@@ -64,26 +65,14 @@ public class ParserApplication {
              * =================================================
              */
 
-            String neo4jUri =
-                    "bolt://localhost:7687";
-
-            String neo4jUsername =
-                    "neo4j";
-
-            String neo4jPassword =
-                    System.getenv("NEO4J_PASSWORD");
-
-            String neo4jDatabase =
-                    "neo4j";
+            Neo4jConfig neo4jConfig =
+                Neo4jConfig.fromEnvironment();
 
 
             try (
                     Neo4jService neo4j =
                             new Neo4jService(
-                                    neo4jUri,
-                                    neo4jUsername,
-                                    neo4jPassword,
-                                    neo4jDatabase
+                                    neo4jConfig
                             )
             ) {
 
@@ -102,7 +91,6 @@ public class ParserApplication {
                  * -------------------------------------------------
                  */
 
-                neo4j.export(graph);
 
 
                 /*
@@ -117,10 +105,9 @@ public class ParserApplication {
                  */
 
                 GraphRepository graphRepository =
-                        new Neo4jGraphRepository(
-                                neo4j.getQueryService(),
-                                neo4j.getImpactAnalyzer()
-                        );
+                        new Neo4jGraphRepository(neo4j);
+
+                graphRepository.save(graph);
 
 
                 /*
