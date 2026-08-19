@@ -1,16 +1,20 @@
 package com.softwaredna.neo4j;
 
+import java.util.ArrayList;
+import java.util.LinkedHashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Queue;
+import java.util.Set;
+import java.util.stream.Collectors;
+
 import org.neo4j.driver.Driver;
 import org.neo4j.driver.Session;
 import org.neo4j.driver.SessionConfig;
 
-import java.util.ArrayList;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Queue;
-import java.util.LinkedList;
-import java.util.Set;
+import com.softwaredna.knowledge.EdgeType;
+
 
 public class Neo4jImpactAnalyzer {
 
@@ -33,18 +37,6 @@ public class Neo4jImpactAnalyzer {
      * -------------------------------------------------------
      * Standard Impact Analysis
      * -------------------------------------------------------
-     *
-     * Uses DEPENDS_ON relationships.
-     *
-     * Example:
-     *
-     * StudentService
-     *       |
-     *       | DEPENDS_ON
-     *       v
-     *    Student
-     *
-     * Changing Student affects StudentService.
      */
 
     public List<String> getImpact(
@@ -60,7 +52,6 @@ public class Neo4jImpactAnalyzer {
                 ORDER BY source.name
                 """;
 
-
         return executeNameQuery(
                 cypher,
                 nodeId
@@ -73,17 +64,6 @@ public class Neo4jImpactAnalyzer {
      * -------------------------------------------------------
      * Method Impact Analysis
      * -------------------------------------------------------
-     *
-     * Finds methods that call the changed method.
-     *
-     * Example:
-     *
-     * Teacher.teach()
-     *       ↑
-     *       |
-     *     CALLS
-     *       |
-     * Student.study()
      */
 
     public List<String> getMethodImpact(
@@ -99,7 +79,6 @@ public class Neo4jImpactAnalyzer {
                 ORDER BY caller.name
                 """;
 
-
         return executeNameQuery(
                 cypher,
                 methodId
@@ -110,37 +89,104 @@ public class Neo4jImpactAnalyzer {
 
     /*
      * -------------------------------------------------------
-     * Containment-Aware Impact Analysis
+     * Explainable Impact Paths
      * -------------------------------------------------------
      *
-     * Understands:
+     * Finds paths leading INTO the changed node.
      *
-     * Class
-     *   |
-     *   | HAS_METHOD
-     *   v
-     * Method
+     * Example:
      *
-     * Method
-     *   ^
-     *   |
-     * CALLS
-     *   |
-     * Caller Method
+     * Student.study()
+     *       |
+     *       | CALLS
+     *       v
+     * Teacher.teach()
      *
-     * Caller Method
-     *   |
-     *   | HAS_METHOD
-     *   v
-     * Caller Class
+     * If Teacher.teach() changes:
      *
-     * Caller Class
-     *   ^
-     *   |
-     * DEPENDS_ON
-     *   |
-     * Dependent Class
+     * Teacher.teach()
+     *       ^
+     *       |
+     *     CALLS
+     *       |
+     * Student.study()
      *
+     */
+
+    public List<String> getImpactPaths(
+            String nodeId,
+            int depth,
+            Set<EdgeType> relationshipTypes) {
+
+        if (nodeId == null
+                || nodeId.isBlank()
+                || depth <= 0) {
+
+            return new ArrayList<>();
+
+        }
+
+
+        if (relationshipTypes == null
+                || relationshipTypes.isEmpty()) {
+
+            return new ArrayList<>();
+
+        }
+
+
+        String relationshipPattern =
+                relationshipTypes
+                        .stream()
+                        .map(EdgeType::name)
+                        .map(type -> ":" + type)
+                        .collect(
+                                Collectors.joining("|")
+                        );
+
+
+        String cypher =
+                """
+                MATCH path =
+                    (start:Entity {id: $nodeId})
+                    <-[%s*1..%d]-
+                    (target:Entity)
+
+                WHERE target.id <> $nodeId
+
+                WITH
+                    [node IN nodes(path) |
+                        node.name] AS nodes,
+
+                    [relationship IN relationships(path) |
+                        type(relationship)] AS relationships,
+
+                    length(path) AS pathLength
+
+                RETURN DISTINCT
+                    nodes,
+                    relationships,
+                    pathLength
+
+                ORDER BY pathLength
+                """.formatted(
+                        relationshipPattern,
+                        depth
+                );
+
+
+        return executeImpactPathQuery(
+                cypher,
+                nodeId
+        );
+
+    }
+
+
+    /*
+     * -------------------------------------------------------
+     * Containment-Aware Impact Analysis
+     * -------------------------------------------------------
      */
 
     public List<String> getContainmentAwareImpact(
@@ -151,13 +197,12 @@ public class Neo4jImpactAnalyzer {
 
 
         /*
-         * ---------------------------------------------------
          * Verify starting node exists.
-         * ---------------------------------------------------
          */
 
         GraphEntity startNode =
                 findNode(nodeId);
+
 
         if (startNode == null) {
 
@@ -167,9 +212,7 @@ public class Neo4jImpactAnalyzer {
 
 
         /*
-         * ---------------------------------------------------
          * BFS structures.
-         * ---------------------------------------------------
          */
 
         Queue<GraphEntity> queue =
@@ -187,9 +230,7 @@ public class Neo4jImpactAnalyzer {
 
 
         /*
-         * ---------------------------------------------------
          * BFS
-         * ---------------------------------------------------
          */
 
         while (!queue.isEmpty()) {
@@ -207,11 +248,8 @@ public class Neo4jImpactAnalyzer {
             if ("CLASS".equals(
                     current.type)) {
 
-
                 /*
-                 * ---------------------------------------------
                  * Find classes that depend on this class.
-                 * ---------------------------------------------
                  */
 
                 List<GraphEntity> dependents =
@@ -230,13 +268,8 @@ public class Neo4jImpactAnalyzer {
 
 
                 /*
-                 * ---------------------------------------------
-                 * Only expand the ORIGINAL changed class into
-                 * its methods.
-                 *
-                 * This preserves the behaviour of the
-                 * existing ImpactAnalyzer.
-                 * ---------------------------------------------
+                 * Only expand the ORIGINAL changed class
+                 * into its methods.
                  */
 
                 if (current.id.equals(nodeId)) {
@@ -269,11 +302,8 @@ public class Neo4jImpactAnalyzer {
             else if ("METHOD".equals(
                     current.type)) {
 
-
                 /*
-                 * ---------------------------------------------
                  * Find methods that call this method.
-                 * ---------------------------------------------
                  */
 
                 List<GraphEntity> callers =
@@ -292,13 +322,11 @@ public class Neo4jImpactAnalyzer {
 
 
                 /*
-                 * ---------------------------------------------
                  * Find the class containing this method.
                  *
                  * Class -> HAS_METHOD -> Method
                  *
-                 * Therefore we traverse backwards.
-                 * ---------------------------------------------
+                 * Therefore traverse backwards.
                  */
 
                 List<GraphEntity> ownerClasses =
@@ -376,6 +404,128 @@ public class Neo4jImpactAnalyzer {
                         record.get("name").asString(),
                         record.get("type").asString()
                 );
+
+            });
+
+        }
+
+    }
+
+
+    /*
+     * -------------------------------------------------------
+     * Execute Impact Path Query
+     * -------------------------------------------------------
+     */
+
+    private List<String> executeImpactPathQuery(
+            String cypher,
+            String nodeId) {
+
+        try (
+                Session session =
+                        createSession()
+        ) {
+
+            return session.executeRead(tx -> {
+
+                var result =
+                        tx.run(
+                                cypher,
+                                Map.of(
+                                        "nodeId",
+                                        nodeId
+                                )
+                        );
+
+
+                Set<String> paths =
+                        new LinkedHashSet<>();
+
+
+                result.forEachRemaining(
+                        record -> {
+
+                            List<String> nodes =
+                                    record
+                                            .get("nodes")
+                                            .asList(
+                                                    value ->
+                                                            value.asString()
+                                            );
+
+
+                            List<String> relationships =
+                                    record
+                                            .get("relationships")
+                                            .asList(
+                                                    value ->
+                                                            value.asString()
+                                            );
+
+
+                            if (nodes.size() < 2) {
+
+                                return;
+
+                            }
+
+
+                            StringBuilder path =
+                                    new StringBuilder();
+
+
+                            /*
+                             * Since this is impact analysis,
+                             * display the changed node first.
+                             *
+                             * Neo4j returns the path in the
+                             * traversal direction, so reverse
+                             * the representation.
+                             */
+
+                            path.append(
+                                    nodes.get(
+                                            nodes.size() - 1
+                                    )
+                            );
+
+
+                            for (
+                                    int i =
+                                            relationships.size() - 1;
+                                    i >= 0;
+                                    i--
+                            ) {
+
+                                path.append(
+                                        " <--"
+                                );
+
+                                path.append(
+                                        relationships.get(i)
+                                );
+
+                                path.append(
+                                        "-- "
+                                );
+
+                                path.append(
+                                        nodes.get(i)
+                                );
+
+                            }
+
+
+                            paths.add(
+                                    path.toString()
+                            );
+
+                        }
+                );
+
+
+                return new ArrayList<>(paths);
 
             });
 

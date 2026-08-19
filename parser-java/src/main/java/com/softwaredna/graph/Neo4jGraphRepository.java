@@ -4,6 +4,9 @@ import java.util.List;
 
 import com.softwaredna.knowledge.KnowledgeGraph;
 import com.softwaredna.neo4j.Neo4jService;
+import com.softwaredna.knowledge.EdgeType;
+import java.util.Set;
+
 
 public class Neo4jGraphRepository
         implements GraphRepository {
@@ -15,6 +18,21 @@ public class Neo4jGraphRepository
             Neo4jService neo4j) {
 
         this.neo4j = neo4j;
+
+    }
+
+
+    /*
+     * =======================================================
+     * Graph Persistence
+     * =======================================================
+     */
+
+    @Override
+    public void save(
+            KnowledgeGraph graph) {
+
+        neo4j.export(graph);
 
     }
 
@@ -104,13 +122,6 @@ public class Neo4jGraphRepository
 
     }
 
-    @Override
-    public void save(KnowledgeGraph graph) {
-
-        neo4j.export(graph);
-
-}
-
 
     /*
      * =======================================================
@@ -146,5 +157,66 @@ public class Neo4jGraphRepository
                 .getContainmentAwareImpact(nodeId);
 
     }
+
+
+    /*
+     * =======================================================
+     * Architecture Exploration
+     * =======================================================
+     */
+
+    @Override
+    public List<String> getReachableNodes(
+            String nodeId,
+            int depth) {
+
+        return neo4j.getQueryService()
+                .getReachableNodes(
+                        nodeId,
+                        depth
+                );
+
+    }
+
+    @Override
+    public List<String> getArchitecturePaths(
+        String nodeId,
+        int depth) {
+
+    return neo4j.getQueryService()
+            .getArchitecturePaths(
+                    nodeId,
+                    depth
+            );
+
+}
+
+        @Override
+public List<String> getArchitecturePaths(
+        String nodeId,
+        int depth,
+        Set<EdgeType> relationshipTypes) {
+
+    return neo4j.getQueryService()
+            .getArchitecturePaths(
+                    nodeId,
+                    depth,
+                    relationshipTypes
+            );
+}
+
+@Override
+public List<String> getImpactPaths(
+        String nodeId,
+        int depth,
+        Set<EdgeType> relationshipTypes) {
+
+    return neo4j.getImpactAnalyzer()
+            .getImpactPaths(
+                    nodeId,
+                    depth,
+                    relationshipTypes
+            );
+}
 
 }

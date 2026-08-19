@@ -404,7 +404,172 @@ public class ParserApplication {
 
                 }
 
-            }
+                /*
+ * =================================================
+ * Architecture Exploration
+ * =================================================
+ */
+
+System.out.println();
+System.out.println(
+        "======================================"
+);
+
+System.out.println(
+        "Architecture Exploration"
+);
+
+System.out.println(
+        "======================================"
+);
+
+
+/*
+ * -------------------------------------------------
+ * Reachable nodes from StudentService
+ * Depth 1
+ * -------------------------------------------------
+ */
+
+System.out.println();
+System.out.println(
+        "Reachable from StudentService (depth 1):"
+);
+
+for (String name :
+        graphRepository.getReachableNodes(
+                "Default Package.StudentService",
+                1)) {
+
+    System.out.println(
+            "  -> " + name
+    );
+
+}
+
+
+/*
+ * -------------------------------------------------
+ * Reachable nodes from StudentService
+ * Depth 2
+ * -------------------------------------------------
+ */
+
+System.out.println();
+System.out.println(
+        "Reachable from StudentService (depth 2):"
+);
+
+for (String name :
+        graphRepository.getReachableNodes(
+                "Default Package.StudentService",
+                2)) {
+
+    System.out.println(
+            "  -> " + name
+    );
+
+}
+
+/*
+ * =================================================
+ * Architecture Paths
+ * =================================================
+ */
+
+System.out.println();
+System.out.println(
+        "======================================"
+);
+
+System.out.println(
+        "Architecture Paths"
+);
+
+System.out.println(
+        "======================================"
+);
+
+
+System.out.println();
+System.out.println(
+        "Paths from StudentService (depth 2):"
+);
+
+
+for (String path :
+        graphRepository.getArchitecturePaths(
+                "Default Package.StudentService",
+                2)) {
+
+    System.out.println(
+            "  -> " + path
+    );
+
+}
+
+               System.out.println();
+System.out.println(
+        "======================================"
+);
+
+System.out.println(
+        "Dependency Architecture Paths"
+);
+
+System.out.println(
+        "======================================"
+);
+
+for (String path :
+        graphRepository.getArchitecturePaths(
+                "Default Package.StudentService",
+                2,
+                java.util.Set.of(
+                        EdgeType.DEPENDS_ON
+                ))) {
+
+    System.out.println(
+            "  -> " + path
+    );
+
+}
+
+System.out.println();
+System.out.println(
+        "======================================"
+);
+
+System.out.println(
+        "Explainable Impact Analysis"
+);
+
+System.out.println(
+        "======================================"
+);
+
+
+System.out.println();
+System.out.println(
+        "Impact paths of changing Teacher.teach():"
+);
+
+
+for (String path :
+        graphRepository.getImpactPaths(
+                "Default Package.Teacher#teach()",
+                2,
+                java.util.Set.of(
+                        EdgeType.CALLS
+                ))) {
+
+    System.out.println(
+            "  -> " + path
+    );
+
+}
+
+}
 
 
             /*
@@ -690,6 +855,8 @@ public class ParserApplication {
                 System.out.println(
                         "  -> " + node.getName()
                 );
+
+                
 
             }
 

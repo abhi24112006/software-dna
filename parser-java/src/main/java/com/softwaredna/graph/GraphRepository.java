@@ -1,33 +1,106 @@
 package com.softwaredna.graph;
 
 import java.util.List;
+import java.util.Set;
 
+import com.softwaredna.knowledge.EdgeType;
 import com.softwaredna.knowledge.KnowledgeGraph;
 
 public interface GraphRepository {
 
-    void save(KnowledgeGraph graph);
+    /*
+     * =======================================================
+     * Graph Persistence
+     * =======================================================
+     */
 
-    List<String> getDependencies(String nodeId);
+    void save(
+            KnowledgeGraph graph
+    );
 
-    List<String> getDependents(String nodeId);
 
-    List<String> getCallees(String methodId);
+    /*
+     * =======================================================
+     * Graph Queries
+     * =======================================================
+     */
 
-    List<String> getCallers(String methodId);
+    List<String> getDependencies(
+            String nodeId
+    );
 
-    List<String> getSubclasses(String classId);
+    List<String> getDependents(
+            String nodeId
+    );
 
-    List<String> getSuperclass(String classId);
+    List<String> getCallees(
+            String methodId
+    );
 
-    List<String> getImplementedInterfaces(String classId);
+    List<String> getCallers(
+            String methodId
+    );
 
-    List<String> getImplementations(String interfaceId);
+    List<String> getSubclasses(
+            String classId
+    );
 
-    List<String> getImpact(String nodeId);
+    List<String> getSuperclass(
+            String classId
+    );
 
-    List<String> getMethodImpact(String methodId);
+    List<String> getImplementedInterfaces(
+            String classId
+    );
 
-    List<String> getContainmentAwareImpact(String nodeId);
+    List<String> getImplementations(
+            String interfaceId
+    );
+
+
+    /*
+     * =======================================================
+     * Impact Analysis
+     * =======================================================
+     */
+
+    List<String> getImpact(
+            String nodeId
+    );
+
+    List<String> getMethodImpact(
+            String methodId
+    );
+
+    List<String> getContainmentAwareImpact(
+            String nodeId
+    );
+
+
+    /*
+     * =======================================================
+     * Architecture Exploration
+     * =======================================================
+     */
+
+    List<String> getReachableNodes(
+            String nodeId,
+            int depth
+    );
+
+    List<String> getArchitecturePaths(
+            String nodeId,
+            int depth
+    );
+
+        List<String> getArchitecturePaths(
+        String nodeId,
+        int depth,
+        Set<EdgeType> relationshipTypes);
+
+        List<String> getImpactPaths(
+        String nodeId,
+        int depth,
+        Set<EdgeType> relationshipTypes);
 
 }

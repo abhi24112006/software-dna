@@ -1,11 +1,17 @@
 package com.softwaredna.neo4j;
 
+import java.util.ArrayList;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
+
 import org.neo4j.driver.Driver;
 import org.neo4j.driver.Session;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import com.softwaredna.knowledge.EdgeType;
+
 
 public class Neo4jQueryService {
 
@@ -28,14 +34,6 @@ public class Neo4jQueryService {
      * -------------------------------------------------------
      * Get Dependencies
      * -------------------------------------------------------
-     *
-     * Example:
-     *
-     * StudentService
-     *      |
-     *      | DEPENDS_ON
-     *      v
-     * Student
      */
 
     public List<String> getDependencies(
@@ -50,7 +48,6 @@ public class Neo4jQueryService {
                 ORDER BY name
                 """;
 
-
         return executeNameQuery(
                 cypher,
                 nodeId
@@ -63,16 +60,6 @@ public class Neo4jQueryService {
      * -------------------------------------------------------
      * Get Dependents
      * -------------------------------------------------------
-     *
-     * Example:
-     *
-     * StudentService
-     *      |
-     *      | DEPENDS_ON
-     *      v
-     * Student
-     *
-     * Query direction is reversed.
      */
 
     public List<String> getDependents(
@@ -87,7 +74,6 @@ public class Neo4jQueryService {
                 ORDER BY name
                 """;
 
-
         return executeNameQuery(
                 cypher,
                 nodeId
@@ -100,8 +86,6 @@ public class Neo4jQueryService {
      * -------------------------------------------------------
      * Get Callees
      * -------------------------------------------------------
-     *
-     * Method that the given method calls.
      */
 
     public List<String> getCallees(
@@ -116,7 +100,6 @@ public class Neo4jQueryService {
                 ORDER BY name
                 """;
 
-
         return executeNameQuery(
                 cypher,
                 methodId
@@ -129,8 +112,6 @@ public class Neo4jQueryService {
      * -------------------------------------------------------
      * Get Callers
      * -------------------------------------------------------
-     *
-     * Methods that call the given method.
      */
 
     public List<String> getCallers(
@@ -144,7 +125,6 @@ public class Neo4jQueryService {
                 RETURN source.name AS name
                 ORDER BY name
                 """;
-
 
         return executeNameQuery(
                 cypher,
@@ -172,7 +152,6 @@ public class Neo4jQueryService {
                 ORDER BY name
                 """;
 
-
         return executeNameQuery(
                 cypher,
                 classId
@@ -198,7 +177,6 @@ public class Neo4jQueryService {
                 RETURN target.name AS name
                 ORDER BY name
                 """;
-
 
         return executeNameQuery(
                 cypher,
@@ -226,7 +204,6 @@ public class Neo4jQueryService {
                 ORDER BY name
                 """;
 
-
         return executeNameQuery(
                 cypher,
                 classId
@@ -253,7 +230,6 @@ public class Neo4jQueryService {
                 ORDER BY name
                 """;
 
-
         return executeNameQuery(
                 cypher,
                 interfaceId
@@ -264,11 +240,324 @@ public class Neo4jQueryService {
 
     /*
      * -------------------------------------------------------
-     * Generic Name Query
+     * Get Reachable Nodes
+     * -------------------------------------------------------
+     */
+
+    public List<String> getReachableNodes(
+            String nodeId,
+            int depth) {
+
+        if (depth <= 0) {
+
+            return new ArrayList<>();
+
+        }
+
+
+        String cypher =
+                """
+                MATCH (start:Entity {id: $nodeId})
+                      -[*1..%d]->
+                      (target:Entity)
+
+                WHERE target.id <> $nodeId
+
+                RETURN DISTINCT target.name AS name
+                ORDER BY name
+                """.formatted(depth);
+
+
+        return executeNameQuery(
+                cypher,
+                nodeId
+        );
+
+    }
+
+
+    /*
+     * -------------------------------------------------------
+     * Get Architecture Paths
      * -------------------------------------------------------
      *
-     * Executes a Cypher query and extracts the "name"
-     * property from every returned record.
+     * Traverses all relationship types.
+     *
+     * Example:
+     *
+     * StudentService
+     *      |
+     *      | DEPENDS_ON
+     *      v
+     *    Teacher
+     *      |
+     *      | HAS_METHOD
+     *      v
+     * Teacher.teach()
+     *
+     */
+
+    public List<String> getArchitecturePaths(
+            String nodeId,
+            int depth) {
+
+        if (depth <= 0) {
+
+            return new ArrayList<>();
+
+        }
+
+
+        String cypher =
+                """
+                MATCH path =
+                    (start:Entity {id: $nodeId})
+                    -[*1..%d]->
+                    (target:Entity)
+
+                WHERE target.id <> $nodeId
+
+                WITH
+                    [node IN nodes(path) |
+                        node.name] AS nodes,
+
+                    [relationship IN relationships(path) |
+                        type(relationship)] AS relationships,
+
+                    length(path) AS pathLength
+
+                RETURN DISTINCT
+                    nodes,
+                    relationships,
+                    pathLength
+
+                ORDER BY pathLength
+                """.formatted(depth);
+
+
+        return executeArchitecturePathQuery(
+                cypher,
+                nodeId
+        );
+
+    }
+
+
+    /*
+     * -------------------------------------------------------
+     * Get Relationship-Aware Architecture Paths
+     * -------------------------------------------------------
+     *
+     * Traverses only the relationship types supplied.
+     *
+     * Example:
+     *
+     * Set.of(EdgeType.DEPENDS_ON)
+     *
+     * will only traverse DEPENDS_ON relationships.
+     *
+     */
+
+    public List<String> getArchitecturePaths(
+            String nodeId,
+            int depth,
+            Set<EdgeType> relationshipTypes) {
+
+        if (depth <= 0) {
+
+            return new ArrayList<>();
+
+        }
+
+
+        /*
+         * If no relationship types were supplied,
+         * fall back to the all-relationship traversal.
+         */
+
+        if (relationshipTypes == null
+                || relationshipTypes.isEmpty()) {
+
+            return getArchitecturePaths(
+                    nodeId,
+                    depth
+            );
+
+        }
+
+
+        /*
+         * Build the Cypher relationship pattern
+         * from our controlled EdgeType enum.
+         */
+
+        String relationshipPattern =
+                relationshipTypes
+                        .stream()
+                        .map(EdgeType::name)
+                        .map(type -> ":" + type)
+                        .collect(
+                                Collectors.joining("|")
+                        );
+
+
+        String cypher =
+                """
+                MATCH path =
+                    (start:Entity {id: $nodeId})
+                    -[%s*1..%d]->
+                    (target:Entity)
+
+                WHERE target.id <> $nodeId
+
+                WITH
+                    [node IN nodes(path) |
+                        node.name] AS nodes,
+
+                    [relationship IN relationships(path) |
+                        type(relationship)] AS relationships,
+
+                    length(path) AS pathLength
+
+                RETURN DISTINCT
+                    nodes,
+                    relationships,
+                    pathLength
+
+                ORDER BY pathLength
+                """.formatted(
+                        relationshipPattern,
+                        depth
+                );
+
+
+        return executeArchitecturePathQuery(
+                cypher,
+                nodeId
+        );
+
+    }
+
+
+    /*
+     * -------------------------------------------------------
+     * Execute Architecture Path Query
+     * -------------------------------------------------------
+     */
+
+    private List<String> executeArchitecturePathQuery(
+            String cypher,
+            String nodeId) {
+
+        try (
+                Session session =
+                        driver.session(
+                                org.neo4j.driver.SessionConfig
+                                        .builder()
+                                        .withDatabase(database)
+                                        .build()
+                        )
+        ) {
+
+            return session.executeRead(tx -> {
+
+                var result =
+                        tx.run(
+                                cypher,
+                                Map.of(
+                                        "nodeId",
+                                        nodeId
+                                )
+                        );
+
+
+                Set<String> paths =
+                        new LinkedHashSet<>();
+
+
+                result.forEachRemaining(
+                        record -> {
+
+                            List<String> nodes =
+                                    record
+                                            .get("nodes")
+                                            .asList(
+                                                    value ->
+                                                            value.asString()
+                                            );
+
+
+                            List<String> relationships =
+                                    record
+                                            .get("relationships")
+                                            .asList(
+                                                    value ->
+                                                            value.asString()
+                                            );
+
+
+                            if (nodes.size() < 2) {
+
+                                return;
+
+                            }
+
+
+                            StringBuilder path =
+                                    new StringBuilder();
+
+
+                            path.append(
+                                    nodes.get(0)
+                            );
+
+
+                            for (
+                                    int i = 0;
+                                    i < relationships.size();
+                                    i++
+                            ) {
+
+                                path.append(
+                                        " --"
+                                );
+
+                                path.append(
+                                        relationships.get(i)
+                                );
+
+                                path.append(
+                                        "--> "
+                                );
+
+                                path.append(
+                                        nodes.get(i + 1)
+                                );
+
+                            }
+
+
+                            paths.add(
+                                    path.toString()
+                            );
+
+                        }
+                );
+
+
+                return new ArrayList<>(paths);
+
+            });
+
+        }
+
+    }
+
+
+    /*
+     * -------------------------------------------------------
+     * Generic Name Query
+     * -------------------------------------------------------
      */
 
     private List<String> executeNameQuery(
