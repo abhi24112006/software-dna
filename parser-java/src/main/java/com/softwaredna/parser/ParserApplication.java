@@ -1,6 +1,7 @@
 package com.softwaredna.parser;
 
 import com.softwaredna.analysis.architecture.ArchitectureAnalyzer;
+import com.softwaredna.analysis.architecture.ArchitectureReport;
 import com.softwaredna.analysis.repository.RepositoryAnalyzer;
 import com.softwaredna.graph.GraphRepository;
 import com.softwaredna.graph.Neo4jGraphRepository;
@@ -23,22 +24,24 @@ public class ParserApplication {
         try {
 
             /*
-             * -------------------------------------------------
+             * =================================================
              * Parse Repository
-             * -------------------------------------------------
+             * =================================================
              */
 
             RepositoryParser parser =
                     new RepositoryParser();
 
             RepositoryModel repository =
-                    parser.parseRepository("../sample_projects/architecture_test");
+                    parser.parseRepository(
+                            "../sample_projects/architecture_test"
+                    );
 
 
             /*
-             * -------------------------------------------------
+             * =================================================
              * Run Repository Analyses
-             * -------------------------------------------------
+             * =================================================
              */
 
             RepositoryAnalyzer analyzer =
@@ -48,9 +51,9 @@ public class ParserApplication {
 
 
             /*
-             * -------------------------------------------------
+             * =================================================
              * Build Knowledge Graph
-             * -------------------------------------------------
+             * =================================================
              */
 
             KnowledgeGraphBuilder graphBuilder =
@@ -67,7 +70,7 @@ public class ParserApplication {
              */
 
             Neo4jConfig neo4jConfig =
-                Neo4jConfig.fromEnvironment();
+                    Neo4jConfig.fromEnvironment();
 
 
             try (
@@ -87,51 +90,60 @@ public class ParserApplication {
 
 
                 /*
-                 * -------------------------------------------------
-                 * Export Knowledge Graph to Neo4j
-                 * -------------------------------------------------
+                 * =================================================
+                 * Graph Repository
+                 * =================================================
                  */
 
+                GraphRepository graphRepository =
+                        new Neo4jGraphRepository(
+                                neo4j
+                        );
 
 
                 /*
                  * =================================================
-                 * Graph Repository
+                 * Export Knowledge Graph
                  * =================================================
-                 *
-                 * ParserApplication now talks to the
-                 * GraphRepository abstraction instead of
-                 * directly talking to Neo4jQueryService and
-                 * Neo4jImpactAnalyzer.
                  */
-
-                GraphRepository graphRepository =
-                        new Neo4jGraphRepository(neo4j);
-
-                ArchitectureAnalyzer architectureAnalyzer =
-                        new ArchitectureAnalyzer(
-                        graphRepository
-                );
 
                 graphRepository.save(graph);
 
-                System.out.println();
-        System.out.println(
-                "======================================"
-        );
-        System.out.println(
-                "Architecture Recovery"
-        );
-        System.out.println(
-                "======================================"
-        );
 
-        ArchitectureReport architectureReport =
-                architectureAnalyzer.analyze(
-                        graphRepository.getAllNodes()
+                /*
+                 * =================================================
+                 * Architecture Recovery
+                 * =================================================
+                 */
+
+                ArchitectureAnalyzer architectureAnalyzer =
+                        new ArchitectureAnalyzer(
+                                graphRepository
+                        );
+
+
+                System.out.println();
+
+                System.out.println(
+                        "======================================"
                 );
 
-        architectureReport.print();
+                System.out.println(
+                        "Architecture Recovery"
+                );
+
+                System.out.println(
+                        "======================================"
+                );
+
+
+                ArchitectureReport architectureReport =
+                        architectureAnalyzer.analyze(
+                                graphRepository.getClassNodes()
+                        );
+
+
+                architectureReport.print();
 
 
                 /*
@@ -141,6 +153,7 @@ public class ParserApplication {
                  */
 
                 System.out.println();
+
                 System.out.println(
                         "======================================"
                 );
@@ -156,19 +169,20 @@ public class ParserApplication {
 
                 /*
                  * -------------------------------------------------
-                 * Query 1
-                 * Dependencies of StudentService
+                 * Dependencies
                  * -------------------------------------------------
                  */
 
                 System.out.println();
+
                 System.out.println(
                         "Dependencies of StudentService:"
                 );
 
                 for (String name :
                         graphRepository.getDependencies(
-                                "Default Package.StudentService")) {
+                                "Default Package.StudentService"
+                        )) {
 
                     System.out.println(
                             "  -> " + name
@@ -179,19 +193,20 @@ public class ParserApplication {
 
                 /*
                  * -------------------------------------------------
-                 * Query 2
-                 * Dependents of Student
+                 * Dependents
                  * -------------------------------------------------
                  */
 
                 System.out.println();
+
                 System.out.println(
                         "Dependents of Student:"
                 );
 
                 for (String name :
                         graphRepository.getDependents(
-                                "Default Package.Student")) {
+                                "Default Package.Student"
+                        )) {
 
                     System.out.println(
                             "  -> " + name
@@ -202,19 +217,20 @@ public class ParserApplication {
 
                 /*
                  * -------------------------------------------------
-                 * Query 3
-                 * Callees of Student.study()
+                 * Callees
                  * -------------------------------------------------
                  */
 
                 System.out.println();
+
                 System.out.println(
                         "Callees of Student.study():"
                 );
 
                 for (String name :
                         graphRepository.getCallees(
-                                "Default Package.Student#study()")) {
+                                "Default Package.Student#study()"
+                        )) {
 
                     System.out.println(
                             "  -> " + name
@@ -225,19 +241,20 @@ public class ParserApplication {
 
                 /*
                  * -------------------------------------------------
-                 * Query 4
-                 * Callers of Teacher.teach()
+                 * Callers
                  * -------------------------------------------------
                  */
 
                 System.out.println();
+
                 System.out.println(
                         "Callers of Teacher.teach():"
                 );
 
                 for (String name :
                         graphRepository.getCallers(
-                                "Default Package.Teacher#teach()")) {
+                                "Default Package.Teacher#teach()"
+                        )) {
 
                     System.out.println(
                             "  -> " + name
@@ -248,19 +265,20 @@ public class ParserApplication {
 
                 /*
                  * -------------------------------------------------
-                 * Query 5
-                 * Subclasses of Animal
+                 * Subclasses
                  * -------------------------------------------------
                  */
 
                 System.out.println();
+
                 System.out.println(
                         "Subclasses of Animal:"
                 );
 
                 for (String name :
                         graphRepository.getSubclasses(
-                                "Default Package.Animal")) {
+                                "Default Package.Animal"
+                        )) {
 
                     System.out.println(
                             "  -> " + name
@@ -271,19 +289,20 @@ public class ParserApplication {
 
                 /*
                  * -------------------------------------------------
-                 * Query 6
-                 * Superclass of Mammal
+                 * Superclass
                  * -------------------------------------------------
                  */
 
                 System.out.println();
+
                 System.out.println(
                         "Superclass of Mammal:"
                 );
 
                 for (String name :
                         graphRepository.getSuperclass(
-                                "Default Package.Mammal")) {
+                                "Default Package.Mammal"
+                        )) {
 
                     System.out.println(
                             "  -> " + name
@@ -294,19 +313,20 @@ public class ParserApplication {
 
                 /*
                  * -------------------------------------------------
-                 * Query 7
-                 * Interfaces implemented by Report
+                 * Implemented Interfaces
                  * -------------------------------------------------
                  */
 
                 System.out.println();
+
                 System.out.println(
                         "Interfaces implemented by Report:"
                 );
 
                 for (String name :
                         graphRepository.getImplementedInterfaces(
-                                "demo.Report")) {
+                                "demo.Report"
+                        )) {
 
                     System.out.println(
                             "  -> " + name
@@ -317,19 +337,20 @@ public class ParserApplication {
 
                 /*
                  * -------------------------------------------------
-                 * Query 8
-                 * Implementations of Printable
+                 * Implementations
                  * -------------------------------------------------
                  */
 
                 System.out.println();
+
                 System.out.println(
                         "Implementations of Printable:"
                 );
 
                 for (String name :
                         graphRepository.getImplementations(
-                                "com.demo.Printable")) {
+                                "com.demo.Printable"
+                        )) {
 
                     System.out.println(
                             "  -> " + name
@@ -345,6 +366,7 @@ public class ParserApplication {
                  */
 
                 System.out.println();
+
                 System.out.println(
                         "======================================"
                 );
@@ -360,18 +382,20 @@ public class ParserApplication {
 
                 /*
                  * -------------------------------------------------
-                 * Impact of changing Student
+                 * Student Impact
                  * -------------------------------------------------
                  */
 
                 System.out.println();
+
                 System.out.println(
                         "Impact of changing Student:"
                 );
 
                 for (String name :
                         graphRepository.getImpact(
-                                "Default Package.Student")) {
+                                "Default Package.Student"
+                        )) {
 
                     System.out.println(
                             "  -> " + name
@@ -382,18 +406,20 @@ public class ParserApplication {
 
                 /*
                  * -------------------------------------------------
-                 * Impact of changing Teacher.teach()
+                 * Method Impact
                  * -------------------------------------------------
                  */
 
                 System.out.println();
+
                 System.out.println(
                         "Impact of changing Teacher.teach():"
                 );
 
                 for (String name :
                         graphRepository.getMethodImpact(
-                                "Default Package.Teacher#teach()")) {
+                                "Default Package.Teacher#teach()"
+                        )) {
 
                     System.out.println(
                             "  -> " + name
@@ -404,23 +430,26 @@ public class ParserApplication {
 
                 /*
                  * -------------------------------------------------
-                 * Containment-Aware Impact Analysis
+                 * Containment-Aware Impact
                  * -------------------------------------------------
                  */
 
                 System.out.println();
+
                 System.out.println(
                         "Containment-Aware Impact Analysis"
                 );
 
                 System.out.println();
+
                 System.out.println(
                         "Impact of changing Teacher:"
                 );
 
                 for (String name :
                         graphRepository.getContainmentAwareImpact(
-                                "Default Package.Teacher")) {
+                                "Default Package.Teacher"
+                        )) {
 
                     System.out.println(
                             "  -> " + name
@@ -428,172 +457,200 @@ public class ParserApplication {
 
                 }
 
+
                 /*
- * =================================================
- * Architecture Exploration
- * =================================================
- */
+                 * =================================================
+                 * Architecture Exploration
+                 * =================================================
+                 */
 
-System.out.println();
-System.out.println(
-        "======================================"
-);
+                System.out.println();
 
-System.out.println(
-        "Architecture Exploration"
-);
+                System.out.println(
+                        "======================================"
+                );
 
-System.out.println(
-        "======================================"
-);
+                System.out.println(
+                        "Architecture Exploration"
+                );
 
-
-/*
- * -------------------------------------------------
- * Reachable nodes from StudentService
- * Depth 1
- * -------------------------------------------------
- */
-
-System.out.println();
-System.out.println(
-        "Reachable from StudentService (depth 1):"
-);
-
-for (String name :
-        graphRepository.getReachableNodes(
-                "Default Package.StudentService",
-                1)) {
-
-    System.out.println(
-            "  -> " + name
-    );
-
-}
+                System.out.println(
+                        "======================================"
+                );
 
 
-/*
- * -------------------------------------------------
- * Reachable nodes from StudentService
- * Depth 2
- * -------------------------------------------------
- */
+                /*
+                 * -------------------------------------------------
+                 * Reachable Nodes - Depth 1
+                 * -------------------------------------------------
+                 */
 
-System.out.println();
-System.out.println(
-        "Reachable from StudentService (depth 2):"
-);
+                System.out.println();
 
-for (String name :
-        graphRepository.getReachableNodes(
-                "Default Package.StudentService",
-                2)) {
+                System.out.println(
+                        "Reachable from StudentService (depth 1):"
+                );
 
-    System.out.println(
-            "  -> " + name
-    );
+                for (String name :
+                        graphRepository.getReachableNodes(
+                                "Default Package.StudentService",
+                                1
+                        )) {
 
-}
+                    System.out.println(
+                            "  -> " + name
+                    );
 
-/*
- * =================================================
- * Architecture Paths
- * =================================================
- */
-
-System.out.println();
-System.out.println(
-        "======================================"
-);
-
-System.out.println(
-        "Architecture Paths"
-);
-
-System.out.println(
-        "======================================"
-);
+                }
 
 
-System.out.println();
-System.out.println(
-        "Paths from StudentService (depth 2):"
-);
+                /*
+                 * -------------------------------------------------
+                 * Reachable Nodes - Depth 2
+                 * -------------------------------------------------
+                 */
+
+                System.out.println();
+
+                System.out.println(
+                        "Reachable from StudentService (depth 2):"
+                );
+
+                for (String name :
+                        graphRepository.getReachableNodes(
+                                "Default Package.StudentService",
+                                2
+                        )) {
+
+                    System.out.println(
+                            "  -> " + name
+                    );
+
+                }
 
 
-for (String path :
-        graphRepository.getArchitecturePaths(
-                "Default Package.StudentService",
-                2)) {
+                /*
+                 * =================================================
+                 * Architecture Paths
+                 * =================================================
+                 */
 
-    System.out.println(
-            "  -> " + path
-    );
+                System.out.println();
 
-}
+                System.out.println(
+                        "======================================"
+                );
 
-               System.out.println();
-System.out.println(
-        "======================================"
-);
+                System.out.println(
+                        "Architecture Paths"
+                );
 
-System.out.println(
-        "Dependency Architecture Paths"
-);
-
-System.out.println(
-        "======================================"
-);
-
-for (String path :
-        graphRepository.getArchitecturePaths(
-                "Default Package.StudentService",
-                2,
-                java.util.Set.of(
-                        EdgeType.DEPENDS_ON
-                ))) {
-
-    System.out.println(
-            "  -> " + path
-    );
-
-}
-
-System.out.println();
-System.out.println(
-        "======================================"
-);
-
-System.out.println(
-        "Explainable Impact Analysis"
-);
-
-System.out.println(
-        "======================================"
-);
+                System.out.println(
+                        "======================================"
+                );
 
 
-System.out.println();
-System.out.println(
-        "Impact paths of changing Teacher.teach():"
-);
+                System.out.println();
+
+                System.out.println(
+                        "Paths from StudentService (depth 2):"
+                );
 
 
-for (String path :
-        graphRepository.getImpactPaths(
-                "Default Package.Teacher#teach()",
-                2,
-                java.util.Set.of(
-                        EdgeType.CALLS
-                ))) {
+                for (String path :
+                        graphRepository.getArchitecturePaths(
+                                "Default Package.StudentService",
+                                2
+                        )) {
 
-    System.out.println(
-            "  -> " + path
-    );
+                    System.out.println(
+                            "  -> " + path
+                    );
 
-}
+                }
 
-}
+
+                /*
+                 * =================================================
+                 * Dependency Architecture Paths
+                 * =================================================
+                 */
+
+                System.out.println();
+
+                System.out.println(
+                        "======================================"
+                );
+
+                System.out.println(
+                        "Dependency Architecture Paths"
+                );
+
+                System.out.println(
+                        "======================================"
+                );
+
+
+                for (String path :
+                        graphRepository.getArchitecturePaths(
+                                "Default Package.StudentService",
+                                2,
+                                java.util.Set.of(
+                                        EdgeType.DEPENDS_ON
+                                )
+                        )) {
+
+                    System.out.println(
+                            "  -> " + path
+                    );
+
+                }
+
+
+                /*
+                 * =================================================
+                 * Explainable Impact Analysis
+                 * =================================================
+                 */
+
+                System.out.println();
+
+                System.out.println(
+                        "======================================"
+                );
+
+                System.out.println(
+                        "Explainable Impact Analysis"
+                );
+
+                System.out.println(
+                        "======================================"
+                );
+
+
+                System.out.println();
+
+                System.out.println(
+                        "Impact paths of changing Teacher.teach():"
+                );
+
+
+                for (String path :
+                        graphRepository.getImpactPaths(
+                                "Default Package.Teacher#teach()",
+                                2,
+                                java.util.Set.of(
+                                        EdgeType.CALLS
+                                )
+                        )) {
+
+                    System.out.println(
+                            "  -> " + path
+                    );
+
+                }
+
+            }
 
 
             /*
@@ -610,6 +667,7 @@ for (String path :
 
 
             System.out.println();
+
             System.out.println(
                     "======================================"
             );
@@ -624,18 +682,21 @@ for (String path :
 
 
             /*
-             * Query 1
-             * Dependencies of StudentService
+             * -------------------------------------------------
+             * Dependencies
+             * -------------------------------------------------
              */
 
             System.out.println();
+
             System.out.println(
                     "Dependencies of StudentService:"
             );
 
             for (GraphNode node :
                     query.getDependencies(
-                            "Default Package.StudentService")) {
+                            "Default Package.StudentService"
+                    )) {
 
                 System.out.println(
                         "  -> " + node.getName()
@@ -645,18 +706,21 @@ for (String path :
 
 
             /*
-             * Query 2
-             * Dependents of Student
+             * -------------------------------------------------
+             * Dependents
+             * -------------------------------------------------
              */
 
             System.out.println();
+
             System.out.println(
                     "Dependents of Student:"
             );
 
             for (GraphNode node :
                     query.getDependents(
-                            "Default Package.Student")) {
+                            "Default Package.Student"
+                    )) {
 
                 System.out.println(
                         "  -> " + node.getName()
@@ -666,18 +730,21 @@ for (String path :
 
 
             /*
-             * Query 3
-             * Callees of Student.study()
+             * -------------------------------------------------
+             * Callees
+             * -------------------------------------------------
              */
 
             System.out.println();
+
             System.out.println(
                     "Callees of Student.study():"
             );
 
             for (GraphNode node :
                     query.getCallees(
-                            "Default Package.Student#study()")) {
+                            "Default Package.Student#study()"
+                    )) {
 
                 System.out.println(
                         "  -> " + node.getName()
@@ -685,19 +752,23 @@ for (String path :
 
             }
 
+
             /*
-             * Query 4
-             * Callers of Teacher.teach()
+             * -------------------------------------------------
+             * Callers
+             * -------------------------------------------------
              */
 
             System.out.println();
+
             System.out.println(
                     "Callers of Teacher.teach():"
             );
 
             for (GraphNode node :
                     query.getCallers(
-                            "Default Package.Teacher#teach()")) {
+                            "Default Package.Teacher#teach()"
+                    )) {
 
                 System.out.println(
                         "  -> " + node.getName()
@@ -707,18 +778,21 @@ for (String path :
 
 
             /*
-             * Query 5
-             * Subclasses of Animal
+             * -------------------------------------------------
+             * Subclasses
+             * -------------------------------------------------
              */
 
             System.out.println();
+
             System.out.println(
                     "Subclasses of Animal:"
             );
 
             for (GraphNode node :
                     query.getSubclasses(
-                            "Default Package.Animal")) {
+                            "Default Package.Animal"
+                    )) {
 
                 System.out.println(
                         "  -> " + node.getName()
@@ -728,18 +802,21 @@ for (String path :
 
 
             /*
-             * Query 6
-             * Superclass of Mammal
+             * -------------------------------------------------
+             * Superclass
+             * -------------------------------------------------
              */
 
             System.out.println();
+
             System.out.println(
                     "Superclass of Mammal:"
             );
 
             for (GraphNode node :
                     query.getSuperclass(
-                            "Default Package.Mammal")) {
+                            "Default Package.Mammal"
+                    )) {
 
                 System.out.println(
                         "  -> " + node.getName()
@@ -749,18 +826,21 @@ for (String path :
 
 
             /*
-             * Query 7
-             * Interfaces implemented by Report
+             * -------------------------------------------------
+             * Implemented Interfaces
+             * -------------------------------------------------
              */
 
             System.out.println();
+
             System.out.println(
                     "Interfaces implemented by Report:"
             );
 
             for (GraphNode node :
                     query.getImplementedInterfaces(
-                            "demo.Report")) {
+                            "demo.Report"
+                    )) {
 
                 System.out.println(
                         "  -> " + node.getName()
@@ -770,18 +850,21 @@ for (String path :
 
 
             /*
-             * Query 8
-             * Implementations of Printable
+             * -------------------------------------------------
+             * Implementations
+             * -------------------------------------------------
              */
 
             System.out.println();
+
             System.out.println(
                     "Implementations of Printable:"
             );
 
             for (GraphNode node :
                     query.getImplementations(
-                            "com.demo.Printable")) {
+                            "com.demo.Printable"
+                    )) {
 
                 System.out.println(
                         "  -> " + node.getName()
@@ -801,6 +884,7 @@ for (String path :
 
 
             System.out.println();
+
             System.out.println(
                     "======================================"
             );
@@ -815,17 +899,21 @@ for (String path :
 
 
             /*
+             * -------------------------------------------------
              * Impact of changing Student
+             * -------------------------------------------------
              */
 
             System.out.println();
+
             System.out.println(
                     "Impact of changing Student:"
             );
 
             for (GraphNode node :
                     impactAnalyzer.getImpact(
-                            "Default Package.Student")) {
+                            "Default Package.Student"
+                    )) {
 
                 System.out.println(
                         "  -> " + node.getName()
@@ -835,10 +923,13 @@ for (String path :
 
 
             /*
+             * -------------------------------------------------
              * Impact through method calls
+             * -------------------------------------------------
              */
 
             System.out.println();
+
             System.out.println(
                     "Impact of changing Teacher.teach():"
             );
@@ -848,7 +939,8 @@ for (String path :
                             "Default Package.Teacher#teach()",
                             java.util.Set.of(
                                     EdgeType.CALLS
-                            ))) {
+                            )
+                    )) {
 
                 System.out.println(
                         "  -> " + node.getName()
@@ -858,28 +950,31 @@ for (String path :
 
 
             /*
-             * Containment-Aware Impact Analysis
+             * -------------------------------------------------
+             * Containment-Aware Impact
+             * -------------------------------------------------
              */
 
             System.out.println();
+
             System.out.println(
                     "Containment-Aware Impact Analysis"
             );
 
             System.out.println();
+
             System.out.println(
                     "Impact of changing Teacher:"
             );
 
             for (GraphNode node :
                     impactAnalyzer.getContainmentAwareImpact(
-                            "Default Package.Teacher")) {
+                            "Default Package.Teacher"
+                    )) {
 
                 System.out.println(
                         "  -> " + node.getName()
                 );
-
-                
 
             }
 

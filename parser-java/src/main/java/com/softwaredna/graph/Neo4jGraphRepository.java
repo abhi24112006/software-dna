@@ -1,11 +1,11 @@
 package com.softwaredna.graph;
 
 import java.util.List;
+import java.util.Set;
 
+import com.softwaredna.knowledge.EdgeType;
 import com.softwaredna.knowledge.KnowledgeGraph;
 import com.softwaredna.neo4j.Neo4jService;
-import com.softwaredna.knowledge.EdgeType;
-import java.util.Set;
 
 
 public class Neo4jGraphRepository
@@ -59,6 +59,14 @@ public class Neo4jGraphRepository
                 .getDependencies(nodeId);
 
     }
+    
+    @Override
+        public List<String> getClassNodes() {
+
+        return neo4j.getQueryService()
+            .getClassNodes();
+
+        }
 
 
     @Override

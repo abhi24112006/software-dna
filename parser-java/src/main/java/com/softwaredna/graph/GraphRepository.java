@@ -107,4 +107,6 @@ public interface GraphRepository {
         int depth,
         Set<EdgeType> relationshipTypes);
 
+        List<String> getClassNodes();
+
 }

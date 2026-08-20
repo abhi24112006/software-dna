@@ -1,11 +1,11 @@
 package com.softwaredna.analysis.architecture;
 
-import com.softwaredna.graph.GraphRepository;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import com.softwaredna.graph.GraphRepository;
 
 public class ArchitectureAnalyzer {
 
@@ -166,74 +166,98 @@ public class ArchitectureAnalyzer {
      */
 
     private ArchitectureLayer classify(
-            String nodeId) {
+        String nodeId) {
 
-        if (nodeId == null) {
-
-            return ArchitectureLayer.UNKNOWN;
-
-        }
-
-
-        String value =
-                nodeId.toLowerCase();
-
-
-        /*
-         * Controller
-         */
-
-        if (value.contains("controller")
-                || value.contains(".api.")
-                || value.contains(".controller.")) {
-
-            return ArchitectureLayer.CONTROLLER;
-
-        }
-
-
-        /*
-         * Service
-         */
-
-        if (value.contains("service")
-                || value.contains(".service.")) {
-
-            return ArchitectureLayer.SERVICE;
-
-        }
-
-
-        /*
-         * Repository
-         */
-
-        if (value.contains("repository")
-                || value.contains("repo")
-                || value.contains(".repository.")
-                || value.contains(".repo.")) {
-
-            return ArchitectureLayer.REPOSITORY;
-
-        }
-
-
-        /*
-         * Model
-         */
-
-        if (value.contains(".model.")
-                || value.contains(".entity.")
-                || value.contains(".domain.")) {
-
-            return ArchitectureLayer.MODEL;
-
-        }
-
-
+    if (nodeId == null) {
         return ArchitectureLayer.UNKNOWN;
+    }
+
+    String value =
+            nodeId.toLowerCase();
+
+    /*
+     * Remove method / field information.
+     *
+     * Example:
+     *
+     * service.UserService#repository
+     *
+     * becomes:
+     *
+     * service.UserService
+     */
+
+    int hashIndex =
+            value.indexOf('#');
+
+    if (hashIndex >= 0) {
+
+        value =
+                value.substring(
+                        0,
+                        hashIndex
+                );
 
     }
+
+
+    /*
+     * Controller
+     */
+
+    if (value.contains("controller")
+            || value.contains(".api.")
+            || value.contains(".controller.")) {
+
+        return ArchitectureLayer.CONTROLLER;
+
+    }
+
+
+    /*
+     * Service
+     */
+
+    if (value.contains("service")
+            || value.contains(".service.")) {
+
+        return ArchitectureLayer.SERVICE;
+
+    }
+
+
+    /*
+     * Repository
+     */
+
+    if (value.contains("repository")
+            || value.contains("repo")
+            || value.contains(".repository.")
+            || value.contains(".repo.")) {
+
+        return ArchitectureLayer.REPOSITORY;
+
+    }
+
+
+    /*
+     * Model
+     */
+
+    if (value.startsWith("model.")
+        || value.contains(".model.")
+        || value.startsWith("entity.")
+        || value.contains(".entity.")
+        || value.startsWith("domain.")
+        || value.contains(".domain.")) {
+
+    return ArchitectureLayer.MODEL;
+}
+
+
+    return ArchitectureLayer.UNKNOWN;
+
+}
 
 
     /*

@@ -636,4 +636,42 @@ public class Neo4jQueryService {
 
 }
 
+public List<String> getClassNodes() {
+
+    String cypher =
+            """
+            MATCH (n:Entity)
+            WHERE n.type = 'CLASS'
+            RETURN n.id AS name
+            ORDER BY name
+            """;
+
+    try (
+            Session session =
+                    driver.session(
+                            org.neo4j.driver.SessionConfig
+                                    .builder()
+                                    .withDatabase(database)
+                                    .build()
+                    )
+    ) {
+
+        return session.executeRead(tx -> {
+
+            var result =
+                    tx.run(cypher);
+
+            return result.list(
+                    record ->
+                            record
+                                    .get("name")
+                                    .asString()
+            );
+
+        });
+
+    }
+
+}
+
 }
