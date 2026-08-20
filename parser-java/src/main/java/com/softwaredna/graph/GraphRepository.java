@@ -25,6 +25,8 @@ public interface GraphRepository {
      * =======================================================
      */
 
+    List<String> getAllNodes();
+
     List<String> getDependencies(
             String nodeId
     );
@@ -56,6 +58,8 @@ public interface GraphRepository {
     List<String> getImplementations(
             String interfaceId
     );
+
+    
 
 
     /*

@@ -1,5 +1,6 @@
 package com.softwaredna.parser;
 
+import com.softwaredna.analysis.architecture.ArchitectureAnalyzer;
 import com.softwaredna.analysis.repository.RepositoryAnalyzer;
 import com.softwaredna.graph.GraphRepository;
 import com.softwaredna.graph.Neo4jGraphRepository;
@@ -31,7 +32,7 @@ public class ParserApplication {
                     new RepositoryParser();
 
             RepositoryModel repository =
-                    parser.parseRepository("../sample_projects");
+                    parser.parseRepository("../sample_projects/architecture_test");
 
 
             /*
@@ -107,7 +108,30 @@ public class ParserApplication {
                 GraphRepository graphRepository =
                         new Neo4jGraphRepository(neo4j);
 
+                ArchitectureAnalyzer architectureAnalyzer =
+                        new ArchitectureAnalyzer(
+                        graphRepository
+                );
+
                 graphRepository.save(graph);
+
+                System.out.println();
+        System.out.println(
+                "======================================"
+        );
+        System.out.println(
+                "Architecture Recovery"
+        );
+        System.out.println(
+                "======================================"
+        );
+
+        ArchitectureReport architectureReport =
+                architectureAnalyzer.analyze(
+                        graphRepository.getAllNodes()
+                );
+
+        architectureReport.print();
 
 
                 /*
@@ -660,7 +684,6 @@ for (String path :
                 );
 
             }
-
 
             /*
              * Query 4

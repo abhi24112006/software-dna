@@ -44,6 +44,14 @@ public class Neo4jGraphRepository
      */
 
     @Override
+        public List<String> getAllNodes() {
+
+         return neo4j.getQueryService()
+            .getAllNodes();
+
+        }
+
+    @Override
     public List<String> getDependencies(
             String nodeId) {
 
