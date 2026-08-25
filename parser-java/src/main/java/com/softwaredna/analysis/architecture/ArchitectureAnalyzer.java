@@ -1,11 +1,12 @@
 package com.softwaredna.analysis.architecture;
 
+import com.softwaredna.graph.GraphRepository;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-
-import com.softwaredna.graph.GraphRepository;
+import java.util.Set;
 
 public class ArchitectureAnalyzer {
 
@@ -35,11 +36,14 @@ public class ArchitectureAnalyzer {
         List<ArchitectureEvidence> evidence =
                 new ArrayList<>();
 
+        Set<String> violations =
+                new HashSet<>();
+
 
         /*
          * ---------------------------------------------------
          * Step 1
-         * Classify nodes
+         * Classify architectural nodes
          * ---------------------------------------------------
          */
 
@@ -68,8 +72,12 @@ public class ArchitectureAnalyzer {
             ArchitectureLayer sourceLayer =
                     layers.get(nodeId);
 
-            if (sourceLayer == null) {
+            if (sourceLayer == null
+                    || sourceLayer ==
+                    ArchitectureLayer.UNKNOWN) {
+
                 continue;
+
             }
 
 
@@ -86,18 +94,19 @@ public class ArchitectureAnalyzer {
                         classify(dependency);
 
 
-                /*
-                 * Only record dependencies that
-                 * participate in our architectural
-                 * layers.
-                 */
-
                 if (targetLayer ==
                         ArchitectureLayer.UNKNOWN) {
 
                     continue;
+
                 }
 
+
+                /*
+                 * ------------------------------------------------
+                 * Layered architecture evidence
+                 * ------------------------------------------------
+                 */
 
                 if (isValidLayerDependency(
                         sourceLayer,
@@ -109,10 +118,58 @@ public class ArchitectureAnalyzer {
                                     "DEPENDS_ON",
                                     displayName(dependency),
                                     sourceLayer
-                                            + " → "
+                                            + " -> "
                                             + targetLayer
                                             + " is a valid layered dependency"
                             )
+                    );
+
+                }
+
+
+                /*
+                 * ------------------------------------------------
+                 * MVC evidence
+                 * ------------------------------------------------
+                 */
+
+                if (isValidMVCDependency(
+                        sourceLayer,
+                        targetLayer)) {
+
+                    evidence.add(
+                            new ArchitectureEvidence(
+                                    displayName(nodeId),
+                                    "DEPENDS_ON",
+                                    displayName(dependency),
+                                    sourceLayer
+                                            + " -> "
+                                            + targetLayer
+                                            + " supports MVC"
+                            )
+                    );
+
+                }
+
+
+                /*
+                 * ------------------------------------------------
+                 * Architecture violation
+                 * ------------------------------------------------
+                 */
+
+                if (isArchitectureViolation(
+                        sourceLayer,
+                        targetLayer)) {
+
+                    violations.add(
+                            displayName(nodeId)
+                                    + " --DEPENDS_ON--> "
+                                    + displayName(dependency)
+                                    + " : "
+                                    + sourceLayer
+                                    + " -> "
+                                    + targetLayer
                     );
 
                 }
@@ -125,19 +182,6 @@ public class ArchitectureAnalyzer {
         /*
          * ---------------------------------------------------
          * Step 3
-         * Calculate confidence
-         * ---------------------------------------------------
-         */
-
-        double confidence =
-                calculateConfidence(
-                        evidence
-                );
-
-
-        /*
-         * ---------------------------------------------------
-         * Step 4
          * Determine architecture style
          * ---------------------------------------------------
          */
@@ -149,11 +193,34 @@ public class ArchitectureAnalyzer {
                 );
 
 
+        /*
+         * ---------------------------------------------------
+         * Step 4
+         * Calculate confidence
+         * ---------------------------------------------------
+         */
+
+        double confidence =
+                calculateConfidence(
+                        layers,
+                        evidence,
+                        violations
+                );
+
+
+        /*
+         * ---------------------------------------------------
+         * Step 5
+         * Build report
+         * ---------------------------------------------------
+         */
+
         return new ArchitectureReport(
                 architectureStyle,
                 confidence,
                 layers,
-                evidence
+                evidence,
+                violations
         );
 
     }
@@ -166,103 +233,130 @@ public class ArchitectureAnalyzer {
      */
 
     private ArchitectureLayer classify(
-        String nodeId) {
+            String nodeId) {
 
-    if (nodeId == null) {
+        if (nodeId == null) {
+
+            return ArchitectureLayer.UNKNOWN;
+
+        }
+
+
+        String value =
+                nodeId.toLowerCase();
+
+
+        /*
+         * Remove method / field information.
+         */
+
+        int hashIndex =
+                value.indexOf('#');
+
+
+        if (hashIndex >= 0) {
+
+            value =
+                    value.substring(
+                            0,
+                            hashIndex
+                    );
+
+        }
+
+
+        /*
+         * ---------------------------------------------------
+         * Controller
+         * ---------------------------------------------------
+         */
+
+        if (value.contains("controller")
+                || value.startsWith("api.")
+                || value.contains(".api.")
+                || value.contains(".controller.")) {
+
+            return ArchitectureLayer.CONTROLLER;
+
+        }
+
+
+        /*
+         * ---------------------------------------------------
+         * Service
+         * ---------------------------------------------------
+         */
+
+        if (value.contains("service")
+                || value.startsWith("service.")
+                || value.contains(".service.")) {
+
+            return ArchitectureLayer.SERVICE;
+
+        }
+
+
+        /*
+         * ---------------------------------------------------
+         * Repository
+         * ---------------------------------------------------
+         */
+
+        if (value.contains("repository")
+                || value.contains("repo")
+                || value.startsWith("repository.")
+                || value.startsWith("repo.")
+                || value.contains(".repository.")
+                || value.contains(".repo.")) {
+
+            return ArchitectureLayer.REPOSITORY;
+
+        }
+
+
+        /*
+         * ---------------------------------------------------
+         * Model
+         * ---------------------------------------------------
+         */
+
+        if (value.startsWith("model.")
+                || value.contains(".model.")
+                || value.startsWith("entity.")
+                || value.contains(".entity.")
+                || value.startsWith("domain.")
+                || value.contains(".domain.")) {
+
+            return ArchitectureLayer.MODEL;
+
+        }
+
+
+        /*
+         * ---------------------------------------------------
+         * View
+         * ---------------------------------------------------
+         */
+
+        if (value.contains("view")
+                || value.startsWith("view.")
+                || value.contains(".view.")
+                || value.contains("template")
+                || value.contains(".ui.")) {
+
+            return ArchitectureLayer.VIEW;
+
+        }
+
+
         return ArchitectureLayer.UNKNOWN;
-    }
-
-    String value =
-            nodeId.toLowerCase();
-
-    /*
-     * Remove method / field information.
-     *
-     * Example:
-     *
-     * service.UserService#repository
-     *
-     * becomes:
-     *
-     * service.UserService
-     */
-
-    int hashIndex =
-            value.indexOf('#');
-
-    if (hashIndex >= 0) {
-
-        value =
-                value.substring(
-                        0,
-                        hashIndex
-                );
 
     }
-
-
-    /*
-     * Controller
-     */
-
-    if (value.contains("controller")
-            || value.contains(".api.")
-            || value.contains(".controller.")) {
-
-        return ArchitectureLayer.CONTROLLER;
-
-    }
-
-
-    /*
-     * Service
-     */
-
-    if (value.contains("service")
-            || value.contains(".service.")) {
-
-        return ArchitectureLayer.SERVICE;
-
-    }
-
-
-    /*
-     * Repository
-     */
-
-    if (value.contains("repository")
-            || value.contains("repo")
-            || value.contains(".repository.")
-            || value.contains(".repo.")) {
-
-        return ArchitectureLayer.REPOSITORY;
-
-    }
-
-
-    /*
-     * Model
-     */
-
-    if (value.startsWith("model.")
-        || value.contains(".model.")
-        || value.startsWith("entity.")
-        || value.contains(".entity.")
-        || value.startsWith("domain.")
-        || value.contains(".domain.")) {
-
-    return ArchitectureLayer.MODEL;
-}
-
-
-    return ArchitectureLayer.UNKNOWN;
-
-}
 
 
     /*
      * =======================================================
-     * Layer Dependency Rules
+     * Layered Architecture Rules
      * =======================================================
      */
 
@@ -272,7 +366,7 @@ public class ArchitectureAnalyzer {
 
 
         /*
-         * Controller → Service
+         * Controller -> Service
          */
 
         if (source ==
@@ -286,9 +380,7 @@ public class ArchitectureAnalyzer {
 
 
         /*
-         * Controller → Model
-         *
-         * Allowed for the first heuristic version.
+         * Controller -> Model
          */
 
         if (source ==
@@ -302,7 +394,7 @@ public class ArchitectureAnalyzer {
 
 
         /*
-         * Service → Repository
+         * Service -> Repository
          */
 
         if (source ==
@@ -316,7 +408,7 @@ public class ArchitectureAnalyzer {
 
 
         /*
-         * Service → Model
+         * Service -> Model
          */
 
         if (source ==
@@ -330,7 +422,7 @@ public class ArchitectureAnalyzer {
 
 
         /*
-         * Repository → Model
+         * Repository -> Model
          */
 
         if (source ==
@@ -339,6 +431,118 @@ public class ArchitectureAnalyzer {
                 ArchitectureLayer.MODEL) {
 
             return true;
+
+        }
+
+
+        return false;
+
+    }
+
+
+    /*
+     * =======================================================
+     * MVC Rules
+     * =======================================================
+     *
+     * Controller -> Model
+     * Controller -> View
+     *
+     */
+
+    private boolean isValidMVCDependency(
+            ArchitectureLayer source,
+            ArchitectureLayer target) {
+
+        if (source ==
+                ArchitectureLayer.CONTROLLER
+                && target ==
+                ArchitectureLayer.MODEL) {
+
+            return true;
+
+        }
+
+
+        if (source ==
+                ArchitectureLayer.CONTROLLER
+                && target ==
+                ArchitectureLayer.VIEW) {
+
+            return true;
+
+        }
+
+
+        return false;
+
+    }
+
+
+    /*
+     * =======================================================
+     * Architecture Violations
+     * =======================================================
+     */
+
+    private boolean isArchitectureViolation(
+            ArchitectureLayer source,
+            ArchitectureLayer target) {
+
+
+        /*
+         * Model should not depend on higher layers.
+         */
+
+        if (source ==
+                ArchitectureLayer.MODEL) {
+
+            return target !=
+                    ArchitectureLayer.MODEL;
+
+        }
+
+
+        /*
+         * View should not depend on Service or Repository.
+         */
+
+        if (source ==
+                ArchitectureLayer.VIEW) {
+
+            return target ==
+                    ArchitectureLayer.SERVICE
+                    || target ==
+                    ArchitectureLayer.REPOSITORY;
+
+        }
+
+
+        /*
+         * Repository should not depend on
+         * Service or Controller.
+         */
+
+        if (source ==
+                ArchitectureLayer.REPOSITORY) {
+
+            return target ==
+                    ArchitectureLayer.SERVICE
+                    || target ==
+                    ArchitectureLayer.CONTROLLER;
+
+        }
+
+
+        /*
+         * Service should not depend on Controller.
+         */
+
+        if (source ==
+                ArchitectureLayer.SERVICE) {
+
+            return target ==
+                    ArchitectureLayer.CONTROLLER;
 
         }
 
@@ -379,16 +583,47 @@ public class ArchitectureAnalyzer {
                         ArchitectureLayer.MODEL
                 );
 
+        boolean viewFound =
+                layers.containsValue(
+                        ArchitectureLayer.VIEW
+                );
+
 
         /*
-         * Strong layered architecture signal.
+         * ---------------------------------------------------
+         * MVC
+         * ---------------------------------------------------
+         *
+         * Require all three components:
+         *
+         * Controller
+         * Model
+         * View
+         *
+         * and at least one MVC relationship.
+         */
+
+        if (controllerFound
+                && modelFound
+                && viewFound
+                && hasMVCEvidence(evidence)) {
+
+            return "MVC";
+
+        }
+
+
+        /*
+         * ---------------------------------------------------
+         * Strong Layered Architecture
+         * ---------------------------------------------------
          */
 
         if (controllerFound
                 && serviceFound
                 && repositoryFound
                 && modelFound
-                && !evidence.isEmpty()) {
+                && hasLayeredEvidence(evidence)) {
 
             return "LAYERED";
 
@@ -396,7 +631,9 @@ public class ArchitectureAnalyzer {
 
 
         /*
-         * Partial layered architecture.
+         * ---------------------------------------------------
+         * Partial Layered Architecture
+         * ---------------------------------------------------
          */
 
         if (serviceFound
@@ -415,35 +652,171 @@ public class ArchitectureAnalyzer {
 
     /*
      * =======================================================
+     * Evidence Helpers
+     * =======================================================
+     */
+
+    private boolean hasLayeredEvidence(
+            List<ArchitectureEvidence> evidence) {
+
+        for (ArchitectureEvidence item :
+                evidence) {
+
+            if (item.getExplanation()
+                    .contains(
+                            "valid layered dependency"
+                    )) {
+
+                return true;
+
+            }
+
+        }
+
+        return false;
+
+    }
+
+
+    private boolean hasMVCEvidence(
+            List<ArchitectureEvidence> evidence) {
+
+        for (ArchitectureEvidence item :
+                evidence) {
+
+            if (item.getExplanation()
+                    .contains(
+                            "supports MVC"
+                    )) {
+
+                return true;
+
+            }
+
+        }
+
+        return false;
+
+    }
+
+
+    /*
+     * =======================================================
      * Confidence
      * =======================================================
      */
 
     private double calculateConfidence(
-            List<ArchitectureEvidence> evidence) {
+            Map<String, ArchitectureLayer> layers,
+            List<ArchitectureEvidence> evidence,
+            Set<String> violations) {
 
-        if (evidence.isEmpty()) {
 
-            return 0.0;
+        double score = 0.0;
+
+
+        /*
+         * ---------------------------------------------------
+         * Layer presence
+         * ---------------------------------------------------
+         */
+
+        if (layers.containsValue(
+                ArchitectureLayer.CONTROLLER)) {
+
+            score += 0.15;
+
+        }
+
+
+        if (layers.containsValue(
+                ArchitectureLayer.SERVICE)) {
+
+            score += 0.15;
+
+        }
+
+
+        if (layers.containsValue(
+                ArchitectureLayer.REPOSITORY)) {
+
+            score += 0.15;
+
+        }
+
+
+        if (layers.containsValue(
+                ArchitectureLayer.MODEL)) {
+
+            score += 0.15;
 
         }
 
 
         /*
-         * Initial deterministic heuristic.
-         *
-         * We cap the confidence at 1.0.
+         * View contributes to MVC confidence.
          */
 
-        double confidence =
-                0.25
-                + (evidence.size() * 0.15);
+        if (layers.containsValue(
+                ArchitectureLayer.VIEW)) {
+
+            score += 0.15;
+
+        }
 
 
-        return Math.min(
-                confidence,
-                1.0
-        );
+        /*
+         * ---------------------------------------------------
+         * Evidence
+         * ---------------------------------------------------
+         */
+
+        if (!evidence.isEmpty()) {
+
+            score += Math.min(
+                    evidence.size() * 0.10,
+                    0.30
+            );
+
+        }
+
+
+        /*
+         * ---------------------------------------------------
+         * Violations
+         * ---------------------------------------------------
+         */
+
+        if (!violations.isEmpty()) {
+
+            score -= Math.min(
+                    violations.size() * 0.10,
+                    0.30
+            );
+
+        }
+
+
+        /*
+         * ---------------------------------------------------
+         * Clamp
+         * ---------------------------------------------------
+         */
+
+        score =
+                Math.max(
+                        score,
+                        0.0
+                );
+
+        score =
+                Math.min(
+                        score,
+                        1.0
+                );
+
+
+        return score;
 
     }
 
@@ -463,25 +836,6 @@ public class ArchitectureAnalyzer {
 
         }
 
-
-        /*
-         * Convert method-style graph IDs such as:
-         *
-         * com.demo.Student#study()
-         *
-         * to:
-         *
-         * Student#study()
-         *
-         *
-         * For classes:
-         *
-         * service.UserService
-         *
-         * becomes:
-         *
-         * UserService
-         */
 
         int hashIndex =
                 nodeId.lastIndexOf('#');

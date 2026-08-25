@@ -2,26 +2,57 @@ package api;
 
 import model.User;
 import service.UserService;
+import view.UserView;
 
 public class UserController {
 
-    private UserService service;
+    private final UserService service;
+
+    private final UserView view;
+
 
     public UserController(
-            UserService service) {
+            UserService service,
+            UserView view) {
 
-        this.service = service;
+        this.service =
+                service;
+
+        this.view =
+                view;
+
     }
 
-    public User handleRequest(int id) {
 
-        return service.getUser(id);
+    public void handleRequest(
+            int id) {
+
+        User user =
+                service.getUser(
+                        id
+                );
+
+        view.display(
+                user
+        );
+
     }
+
 
     public void createUser(
             int id,
             String name) {
 
-        service.createUser(id, name);
+        User user =
+                service.createUser(
+                        id,
+                        name
+                );
+
+        view.display(
+                user
+        );
+
     }
+
 }

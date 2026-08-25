@@ -5,26 +5,44 @@ import repository.UserRepository;
 
 public class UserService {
 
-    private UserRepository repository;
+    private final UserRepository repository;
+
 
     public UserService(
             UserRepository repository) {
 
-        this.repository = repository;
+        this.repository =
+                repository;
+
     }
 
-    public User getUser(int id) {
 
-        return repository.findById(id);
+    public User getUser(
+            int id) {
+
+        return repository.findById(
+                id
+        );
+
     }
 
-    public void createUser(
+
+    public User createUser(
             int id,
             String name) {
 
         User user =
-                new User(id, name);
+                new User(
+                        id,
+                        name
+                );
 
-        repository.save(user);
+        repository.save(
+                user
+        );
+
+        return user;
+
     }
+
 }

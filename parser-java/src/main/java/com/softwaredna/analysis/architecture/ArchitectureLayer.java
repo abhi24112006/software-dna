@@ -10,6 +10,8 @@ public enum ArchitectureLayer {
 
     MODEL,
 
+    VIEW,
+
     UNKNOWN
 
 }
