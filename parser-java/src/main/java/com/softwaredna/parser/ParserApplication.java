@@ -34,7 +34,7 @@ public class ParserApplication {
 
             RepositoryModel repository =
                     parser.parseRepository(
-                            "../sample_projects/architecture_test"
+                            "../sample_projects/microservices_test"
                     );
 
 

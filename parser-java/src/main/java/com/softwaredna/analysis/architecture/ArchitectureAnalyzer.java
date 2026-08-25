@@ -558,97 +558,180 @@ public class ArchitectureAnalyzer {
      * =======================================================
      */
 
-    private String determineStyle(
-            Map<String, ArchitectureLayer> layers,
-            List<ArchitectureEvidence> evidence) {
+  private String determineStyle(
+        Map<String, ArchitectureLayer> layers,
+        List<ArchitectureEvidence> evidence) {
+
+    boolean controllerFound =
+            layers.containsValue(
+                    ArchitectureLayer.CONTROLLER
+            );
+
+    boolean serviceFound =
+            layers.containsValue(
+                    ArchitectureLayer.SERVICE
+            );
+
+    boolean repositoryFound =
+            layers.containsValue(
+                    ArchitectureLayer.REPOSITORY
+            );
+
+    boolean modelFound =
+            layers.containsValue(
+                    ArchitectureLayer.MODEL
+            );
+
+    boolean viewFound =
+            layers.containsValue(
+                    ArchitectureLayer.VIEW
+            );
 
 
-        boolean controllerFound =
-                layers.containsValue(
-                        ArchitectureLayer.CONTROLLER
-                );
+    /*
+     * ---------------------------------------------------
+     * MVC
+     * ---------------------------------------------------
+     */
 
-        boolean serviceFound =
-                layers.containsValue(
-                        ArchitectureLayer.SERVICE
-                );
+    if (controllerFound
+            && modelFound
+            && viewFound
+            && hasMVCEvidence(evidence)) {
 
-        boolean repositoryFound =
-                layers.containsValue(
-                        ArchitectureLayer.REPOSITORY
-                );
-
-        boolean modelFound =
-                layers.containsValue(
-                        ArchitectureLayer.MODEL
-                );
-
-        boolean viewFound =
-                layers.containsValue(
-                        ArchitectureLayer.VIEW
-                );
-
-
-        /*
-         * ---------------------------------------------------
-         * MVC
-         * ---------------------------------------------------
-         *
-         * Require all three components:
-         *
-         * Controller
-         * Model
-         * View
-         *
-         * and at least one MVC relationship.
-         */
-
-        if (controllerFound
-                && modelFound
-                && viewFound
-                && hasMVCEvidence(evidence)) {
-
-            return "MVC";
-
-        }
-
-
-        /*
-         * ---------------------------------------------------
-         * Strong Layered Architecture
-         * ---------------------------------------------------
-         */
-
-        if (controllerFound
-                && serviceFound
-                && repositoryFound
-                && modelFound
-                && hasLayeredEvidence(evidence)) {
-
-            return "LAYERED";
-
-        }
-
-
-        /*
-         * ---------------------------------------------------
-         * Partial Layered Architecture
-         * ---------------------------------------------------
-         */
-
-        if (serviceFound
-                && repositoryFound
-                && modelFound) {
-
-            return "LAYERED";
-
-        }
-
-
-        return "UNKNOWN";
+        return "MVC";
 
     }
 
+
+    /*
+     * ---------------------------------------------------
+     * Microservices
+     * ---------------------------------------------------
+     *
+     * Multiple independent service boundaries are
+     * represented by multiple SERVICE -> REPOSITORY
+     * relationships.
+     */
+
+    if (isMicroservicesArchitecture(
+            layers,
+            evidence)) {
+
+        return "MICROSERVICES";
+
+    }
+
+
+    /*
+     * ---------------------------------------------------
+     * Layered Architecture
+     * ---------------------------------------------------
+     */
+
+    if (controllerFound
+            && serviceFound
+            && repositoryFound
+            && modelFound
+            && hasLayeredEvidence(evidence)) {
+
+        return "LAYERED";
+
+    }
+
+
+    /*
+     * Partial Layered Architecture
+     * ---------------------------------------------------
+     */
+
+    if (serviceFound
+            && repositoryFound
+            && modelFound) {
+
+        return "LAYERED";
+
+    }
+
+
+    return "UNKNOWN";
+
+}
+
+private boolean isMicroservicesArchitecture(
+        Map<String, ArchitectureLayer> layers,
+        List<ArchitectureEvidence> evidence) {
+
+    /*
+     * A microservices architecture should contain
+     * multiple service boundaries.
+     */
+
+    int serviceCount = 0;
+
+    for (ArchitectureLayer layer :
+            layers.values()) {
+
+        if (layer ==
+                ArchitectureLayer.SERVICE) {
+
+            serviceCount++;
+
+        }
+
+    }
+
+
+    /*
+     * Require at least 3 independent services
+     * for our current heuristic.
+     */
+
+    if (serviceCount < 3) {
+
+        return false;
+
+    }
+
+
+    /*
+     * Count SERVICE -> REPOSITORY relationships.
+     */
+
+    int serviceRepositoryEdges = 0;
+
+    Set<String> serviceNames =
+            new HashSet<>();
+
+
+    for (ArchitectureEvidence item :
+            evidence) {
+
+        if (item.getExplanation()
+                .contains(
+                        "SERVICE -> REPOSITORY"
+                )) {
+
+            serviceRepositoryEdges++;
+
+            serviceNames.add(
+                    item.getSource()
+            );
+
+        }
+
+    }
+
+
+    /*
+     * Each service should have its own
+     * repository boundary.
+     */
+
+    return serviceNames.size() >= 3
+            && serviceRepositoryEdges >= 3;
+
+}
 
     /*
      * =======================================================
@@ -713,6 +796,24 @@ public class ArchitectureAnalyzer {
 
 
         double score = 0.0;
+
+        /*
+ * ---------------------------------------------------
+ * Microservices evidence
+ * ---------------------------------------------------
+ */
+
+boolean microservices =
+        isMicroservicesArchitecture(
+                layers,
+                evidence
+        );
+
+if (microservices) {
+
+    score += 0.15;
+
+}
 
 
         /*

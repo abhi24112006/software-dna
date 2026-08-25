@@ -287,9 +287,12 @@ public class ArchitectureReport {
 
         System.out.println();
 
-        System.out.println(
+System.out.println();
+
+System.out.println(
         "Conclusion:"
 );
+
 
 if ("LAYERED".equals(
         architectureStyle)) {
@@ -298,13 +301,13 @@ if ("LAYERED".equals(
 
         System.out.println(
                 "  The repository follows "
-                + "a layered architecture."
+                        + "a layered architecture."
         );
 
         System.out.println(
                 "  Dependencies follow "
-                + "recognized architectural "
-                + "layer boundaries."
+                        + "recognized architectural "
+                        + "layer boundaries."
         );
 
     }
@@ -312,12 +315,12 @@ if ("LAYERED".equals(
 
         System.out.println(
                 "  The repository resembles "
-                + "a layered architecture."
+                        + "a layered architecture."
         );
 
         System.out.println(
                 "  However, architectural "
-                + "violations were detected."
+                        + "violations were detected."
         );
 
     }
@@ -330,13 +333,13 @@ else if ("MVC".equals(
 
         System.out.println(
                 "  The repository follows "
-                + "an MVC architecture."
+                        + "an MVC architecture."
         );
 
         System.out.println(
                 "  Controller, Model, and View "
-                + "components were detected with "
-                + "supporting graph evidence."
+                        + "components were detected with "
+                        + "supporting graph evidence."
         );
 
     }
@@ -344,12 +347,43 @@ else if ("MVC".equals(
 
         System.out.println(
                 "  The repository resembles "
-                + "an MVC architecture."
+                        + "an MVC architecture."
         );
 
         System.out.println(
                 "  However, architectural "
-                + "violations were detected."
+                        + "violations were detected."
+        );
+
+    }
+
+}
+else if ("MICROSERVICES".equals(
+        architectureStyle)) {
+
+    if (violations.isEmpty()) {
+
+        System.out.println(
+                "  The repository exhibits "
+                        + "a microservices architecture."
+        );
+
+        System.out.println(
+                "  Multiple independent service "
+                        + "boundaries were detected."
+        );
+
+    }
+    else {
+
+        System.out.println(
+                "  The repository resembles "
+                        + "a microservices architecture."
+        );
+
+        System.out.println(
+                "  However, architectural "
+                        + "violations were detected."
         );
 
     }
@@ -359,14 +393,10 @@ else {
 
     System.out.println(
             "  No recognized architecture "
-            + "style was detected."
+                    + "style was detected."
     );
 
 }
-
-
-        System.out.println();
-
     }
 
 }
