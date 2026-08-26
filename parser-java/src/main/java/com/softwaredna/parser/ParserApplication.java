@@ -14,6 +14,9 @@ import com.softwaredna.analysis.architecture.ArchitectureHealthReport;
 import com.softwaredna.analysis.architecture.ArchitectureRecommendation;
 import com.softwaredna.analysis.architecture.ArchitectureRecommendationAnalyzer;
 import com.softwaredna.analysis.architecture.ArchitectureReport;
+import com.softwaredna.analysis.architecture.ArchitectureSnapshot;
+import com.softwaredna.analysis.architecture.ArchitectureSnapshotLoader;
+import com.softwaredna.analysis.architecture.ArchitectureSnapshotStore;
 import com.softwaredna.analysis.repository.RepositoryAnalyzer;
 import com.softwaredna.graph.GraphRepository;
 import com.softwaredna.graph.Neo4jGraphRepository;
@@ -43,10 +46,9 @@ public class ParserApplication {
 
             RepositoryParser parser =
                     new RepositoryParser();
-
             RepositoryModel repository =
                     parser.parseRepository(
-                            "../sample_projects/architecture_test"
+                            "../sample_projects/layered_violation_test"
                     );
 
 
@@ -172,6 +174,84 @@ ArchitectureHealthReport healthReport =
         );
 
 healthReport.print();
+
+ArchitectureSnapshot currentSnapshot =
+        new ArchitectureSnapshot(
+                architectureReport,
+                healthReport,
+                graphRepository.getClassNodes()
+        );
+
+ArchitectureSnapshotStore architectureSnapshotStore =
+        new ArchitectureSnapshotStore();
+
+ArchitectureSnapshotLoader snapshotLoader =
+        new ArchitectureSnapshotLoader();
+
+ArchitectureSnapshotLoader.SnapshotData
+        previousSnapshotData =
+        snapshotLoader.exists()
+                ? snapshotLoader.load()
+                : null;
+
+architectureSnapshotStore.setCurrent(
+        currentSnapshot
+);
+
+architectureSnapshotStore.saveCurrentAsPrevious();
+
+if (previousSnapshotData != null) {
+
+    ArchitectureSnapshotLoader.SnapshotData
+            currentSnapshotData =
+            snapshotLoader.load();
+
+    ArchitectureDiffAnalyzer diffAnalyzer =
+            new ArchitectureDiffAnalyzer();
+
+    ArchitectureDiff diff =
+            diffAnalyzer.analyze(
+                    previousSnapshotData,
+                    currentSnapshotData
+            );
+
+    ArchitectureDiffPrinter diffPrinter =
+            new ArchitectureDiffPrinter();
+
+    diffPrinter.print(
+            diff
+    );
+
+}
+else {
+
+    System.out.println();
+
+    System.out.println(
+            "======================================"
+    );
+
+    System.out.println(
+            "Architecture Evolution"
+    );
+
+    System.out.println(
+            "======================================"
+    );
+
+    System.out.println();
+
+    System.out.println(
+            "No previous architecture snapshot found."
+    );
+
+    System.out.println(
+            "Current architecture saved as the baseline."
+    );
+
+    System.out.println();
+
+}
 
 ArchitectureRecommendationAnalyzer
         recommendationAnalyzer =
@@ -1072,28 +1152,5 @@ for (ArchitectureRecommendation recommendation :
     }
     
 
-    private static void compareArchitectureReports(
-            ArchitectureReport previousReport,
-            ArchitectureHealthReport previousHealth,
-            ArchitectureReport currentReport,
-            ArchitectureHealthReport currentHealth) {
-
-        ArchitectureDiffAnalyzer diffAnalyzer =
-                new ArchitectureDiffAnalyzer();
-
-        ArchitectureDiff diff =
-                diffAnalyzer.analyze(
-                        previousReport,
-                        previousHealth,
-                        currentReport,
-                        currentHealth
-                );
-
-        ArchitectureDiffPrinter diffPrinter =
-                new ArchitectureDiffPrinter();
-
-        diffPrinter.print(diff);
-
-    }
 
 }

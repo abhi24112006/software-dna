@@ -8,42 +8,86 @@ import java.util.Set;
 public class ArchitectureDiffAnalyzer {
 
 
+    /*
+     * =======================================================
+     * Compare full architecture reports
+     * =======================================================
+     */
+
     public ArchitectureDiff analyze(
             ArchitectureReport previousReport,
             ArchitectureHealthReport previousHealth,
             ArchitectureReport currentReport,
             ArchitectureHealthReport currentHealth) {
 
+        return analyzeData(
+                previousReport.getArchitectureStyle(),
+                previousHealth.getOverallScore(),
+                buildDependencySet(previousReport),
+                new HashSet<>(
+                        previousReport.getViolations()
+                ),
 
-        /*
-         * ===================================================
-         * Architecture Style
-         * ===================================================
-         */
+                currentReport.getArchitectureStyle(),
+                currentHealth.getOverallScore(),
+                buildDependencySet(currentReport),
+                new HashSet<>(
+                        currentReport.getViolations()
+                )
+        );
 
-        String previousStyle =
-                previousReport.getArchitectureStyle();
-
-        String currentStyle =
-                currentReport.getArchitectureStyle();
-
-
-        /*
-         * ===================================================
-         * Dependency Sets
-         * ===================================================
-         */
-
-        Set<String> previousDependencies =
-                buildDependencySet(
-                        previousReport
-                );
+    }
 
 
-        Set<String> currentDependencies =
-                buildDependencySet(
-                        currentReport
-                );
+    /*
+     * =======================================================
+     * Compare persisted snapshot data
+     * =======================================================
+     */
+
+    public ArchitectureDiff analyze(
+            ArchitectureSnapshotLoader.SnapshotData previous,
+            ArchitectureSnapshotLoader.SnapshotData current) {
+
+        return analyzeData(
+                previous.getStyle(),
+                previous.getHealth(),
+                new HashSet<>(
+                        previous.getDependencies()
+                ),
+                new HashSet<>(
+                        previous.getAnomalies()
+                ),
+
+                current.getStyle(),
+                current.getHealth(),
+                new HashSet<>(
+                        current.getDependencies()
+                ),
+                new HashSet<>(
+                        current.getAnomalies()
+                )
+        );
+
+    }
+
+
+    /*
+     * =======================================================
+     * Common comparison logic
+     * =======================================================
+     */
+
+    private ArchitectureDiff analyzeData(
+            String previousStyle,
+            double previousHealth,
+            Set<String> previousDependencies,
+            Set<String> previousAnomalies,
+
+            String currentStyle,
+            double currentHealth,
+            Set<String> currentDependencies,
+            Set<String> currentAnomalies) {
 
 
         /*
@@ -98,24 +142,6 @@ public class ArchitectureDiffAnalyzer {
 
         /*
          * ===================================================
-         * Anomaly Sets
-         * ===================================================
-         */
-
-        Set<String> previousAnomalies =
-                new HashSet<>(
-                        previousReport.getViolations()
-                );
-
-
-        Set<String> currentAnomalies =
-                new HashSet<>(
-                        currentReport.getViolations()
-                );
-
-
-        /*
-         * ===================================================
          * New Anomalies
          * ===================================================
          */
@@ -166,29 +192,15 @@ public class ArchitectureDiffAnalyzer {
 
         /*
          * ===================================================
-         * Health
-         * ===================================================
-         */
-
-        double previousHealthScore =
-                previousHealth.getOverallScore();
-
-
-        double currentHealthScore =
-                currentHealth.getOverallScore();
-
-
-        /*
-         * ===================================================
-         * Build Diff
+         * Build result
          * ===================================================
          */
 
         return new ArchitectureDiff(
                 previousStyle,
                 currentStyle,
-                previousHealthScore,
-                currentHealthScore,
+                previousHealth,
+                currentHealth,
                 addedDependencies,
                 removedDependencies,
                 newAnomalies,
@@ -200,7 +212,7 @@ public class ArchitectureDiffAnalyzer {
 
     /*
      * =======================================================
-     * Dependency Set
+     * Build dependency set from ArchitectureReport
      * =======================================================
      */
 

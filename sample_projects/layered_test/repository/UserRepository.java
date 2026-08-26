@@ -1,7 +1,6 @@
 package repository;
 
 import model.User;
-import service.UserService;
 
 public class UserRepository {
 
@@ -22,22 +21,6 @@ public class UserRepository {
                 "Saving user: "
                         + user.getName()
         );
-    }
-
-
-    /*
-     * Intentional architecture violation.
-     *
-     * Repository depends on Service.
-     */
-
-    public void refreshCache(
-            UserService service) {
-
-        System.out.println(
-                "Refreshing cache"
-        );
-
     }
 
 }

@@ -1,0 +1,8 @@
+STYLE=LAYERED
+CONFIDENCE=0.7000000000000001
+HEALTH=63.16666666666667
+DEPENDENCIES
+UserController --DEPENDS_ON--> UserService
+UserService --DEPENDS_ON--> UserRepository
+ANOMALIES
+UserRepository --DEPENDS_ON--> UserService : Repository depends on Service. This reverses the expected layered dependency direction. [HIGH]
