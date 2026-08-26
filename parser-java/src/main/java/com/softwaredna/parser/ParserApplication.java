@@ -17,6 +17,9 @@ import com.softwaredna.analysis.architecture.ArchitectureReport;
 import com.softwaredna.analysis.architecture.ArchitectureSnapshot;
 import com.softwaredna.analysis.architecture.ArchitectureSnapshotLoader;
 import com.softwaredna.analysis.architecture.ArchitectureSnapshotStore;
+import com.softwaredna.analysis.architecture.ArchitectureTrend;
+import com.softwaredna.analysis.architecture.ArchitectureTrendAnalyzer;
+import com.softwaredna.analysis.architecture.ArchitectureTrendPrinter;
 import com.softwaredna.analysis.repository.RepositoryAnalyzer;
 import com.softwaredna.graph.GraphRepository;
 import com.softwaredna.graph.Neo4jGraphRepository;
@@ -31,6 +34,7 @@ import com.softwaredna.model.RepositoryModel;
 import com.softwaredna.neo4j.Neo4jConfig;
 import com.softwaredna.neo4j.Neo4jService;
 import com.softwaredna.printer.RepositoryPrinter;
+
 
 public class ParserApplication {
 
@@ -182,11 +186,14 @@ ArchitectureSnapshot currentSnapshot =
                 graphRepository.getClassNodes()
         );
 
+
 ArchitectureSnapshotStore architectureSnapshotStore =
         new ArchitectureSnapshotStore();
 
+
 ArchitectureSnapshotLoader snapshotLoader =
         new ArchitectureSnapshotLoader();
+
 
 ArchitectureSnapshotLoader.SnapshotData
         previousSnapshotData =
@@ -194,11 +201,14 @@ ArchitectureSnapshotLoader.SnapshotData
                 ? snapshotLoader.load()
                 : null;
 
+
 architectureSnapshotStore.setCurrent(
         currentSnapshot
 );
 
+
 architectureSnapshotStore.saveCurrentAsPrevious();
+
 
 if (previousSnapshotData != null) {
 
@@ -206,8 +216,10 @@ if (previousSnapshotData != null) {
             currentSnapshotData =
             snapshotLoader.load();
 
+
     ArchitectureDiffAnalyzer diffAnalyzer =
             new ArchitectureDiffAnalyzer();
+
 
     ArchitectureDiff diff =
             diffAnalyzer.analyze(
@@ -215,12 +227,75 @@ if (previousSnapshotData != null) {
                     currentSnapshotData
             );
 
+
+    /*
+     * ===================================================
+     * Store Diff For Architecture Trend
+     * ===================================================
+     */
+
+    architectureSnapshotStore.addDiff(
+            diff
+    );
+
+
+    /*
+     * ===================================================
+     * Architecture Evolution
+     * ===================================================
+     */
+
     ArchitectureDiffPrinter diffPrinter =
             new ArchitectureDiffPrinter();
+
 
     diffPrinter.print(
             diff
     );
+
+
+    /*
+     * ===================================================
+     * Architecture Trend
+     * ===================================================
+     */
+
+    ArchitectureTrendAnalyzer trendAnalyzer =
+            new ArchitectureTrendAnalyzer();
+
+
+    if (!architectureSnapshotStore
+            .getHistory()
+            .isEmpty()) {
+
+        ArchitectureDiff firstDiff =
+                architectureSnapshotStore
+                        .getHistory()
+                        .get(0);
+
+
+        double startingHealth =
+                firstDiff.getPreviousHealth();
+
+
+        ArchitectureTrend trend =
+                trendAnalyzer.analyze(
+                        architectureSnapshotStore
+                                .getHistory(),
+                        startingHealth,
+                        healthReport.getOverallScore()
+                );
+
+
+        ArchitectureTrendPrinter trendPrinter =
+                new ArchitectureTrendPrinter();
+
+
+        trendPrinter.print(
+                trend
+        );
+
+    }
 
 }
 else {

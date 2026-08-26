@@ -1,0 +1,2 @@
+MVC|LAYERED|95.5|94.0||UserController --DEPENDS_ON--> UserView||
+LAYERED|LAYERED|94.0|63.16666666666667|||UserRepository --DEPENDS_ON--> UserService : Repository depends on Service. This reverses the expected layered dependency direction. [HIGH]|
