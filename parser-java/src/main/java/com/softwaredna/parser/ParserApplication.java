@@ -1,8 +1,12 @@
 package com.softwaredna.parser;
 
+import java.util.List;
+
 import com.softwaredna.analysis.architecture.ArchitectureAnalyzer;
 import com.softwaredna.analysis.architecture.ArchitectureHealthAnalyzer;
 import com.softwaredna.analysis.architecture.ArchitectureHealthReport;
+import com.softwaredna.analysis.architecture.ArchitectureRecommendation;
+import com.softwaredna.analysis.architecture.ArchitectureRecommendationAnalyzer;
 import com.softwaredna.analysis.architecture.ArchitectureReport;
 import com.softwaredna.analysis.repository.RepositoryAnalyzer;
 import com.softwaredna.graph.GraphRepository;
@@ -36,7 +40,7 @@ public class ParserApplication {
 
             RepositoryModel repository =
                     parser.parseRepository(
-                            "../sample_projects/microservices_test"
+                            "../sample_projects/layered_test"
                     );
 
 
@@ -156,6 +160,37 @@ ArchitectureHealthReport healthReport =
         );
 
 healthReport.print();
+
+ArchitectureRecommendationAnalyzer
+        recommendationAnalyzer =
+        new ArchitectureRecommendationAnalyzer();
+
+List<ArchitectureRecommendation>
+        recommendations =
+        recommendationAnalyzer.analyze(
+                architectureReport
+        );
+
+        System.out.println();
+
+System.out.println(
+        "======================================"
+);
+
+System.out.println(
+        "Architecture Recommendations"
+);
+
+System.out.println(
+        "======================================"
+);
+
+for (ArchitectureRecommendation recommendation :
+        recommendations) {
+
+    recommendation.print();
+
+}
 
 
                 /*
