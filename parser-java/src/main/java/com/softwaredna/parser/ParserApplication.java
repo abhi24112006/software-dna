@@ -3,6 +3,9 @@ package com.softwaredna.parser;
 import java.util.List;
 
 import com.softwaredna.analysis.architecture.ArchitectureAnalyzer;
+import com.softwaredna.analysis.architecture.ArchitectureDiff;
+import com.softwaredna.analysis.architecture.ArchitectureDiffAnalyzer;
+import com.softwaredna.analysis.architecture.ArchitectureDiffPrinter;
 import com.softwaredna.analysis.architecture.ArchitectureGraph;
 import com.softwaredna.analysis.architecture.ArchitectureGraphAnalyzer;
 import com.softwaredna.analysis.architecture.ArchitectureGraphPrinter;
@@ -133,17 +136,6 @@ public class ParserApplication {
 
                 System.out.println();
 
-                System.out.println(
-                        "======================================"
-                );
-
-                System.out.println(
-                        "Architecture Recovery"
-                );
-
-                System.out.println(
-                        "======================================"
-                );
 
 
                 ArchitectureReport architectureReport =
@@ -1076,6 +1068,31 @@ for (ArchitectureRecommendation recommendation :
             e.printStackTrace();
 
         }
+
+    }
+    
+
+    private static void compareArchitectureReports(
+            ArchitectureReport previousReport,
+            ArchitectureHealthReport previousHealth,
+            ArchitectureReport currentReport,
+            ArchitectureHealthReport currentHealth) {
+
+        ArchitectureDiffAnalyzer diffAnalyzer =
+                new ArchitectureDiffAnalyzer();
+
+        ArchitectureDiff diff =
+                diffAnalyzer.analyze(
+                        previousReport,
+                        previousHealth,
+                        currentReport,
+                        currentHealth
+                );
+
+        ArchitectureDiffPrinter diffPrinter =
+                new ArchitectureDiffPrinter();
+
+        diffPrinter.print(diff);
 
     }
 
