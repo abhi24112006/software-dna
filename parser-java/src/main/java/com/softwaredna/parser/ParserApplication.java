@@ -3,6 +3,9 @@ package com.softwaredna.parser;
 import java.util.List;
 
 import com.softwaredna.analysis.architecture.ArchitectureAnalyzer;
+import com.softwaredna.analysis.architecture.ArchitectureGraph;
+import com.softwaredna.analysis.architecture.ArchitectureGraphAnalyzer;
+import com.softwaredna.analysis.architecture.ArchitectureGraphPrinter;
 import com.softwaredna.analysis.architecture.ArchitectureHealthAnalyzer;
 import com.softwaredna.analysis.architecture.ArchitectureHealthReport;
 import com.softwaredna.analysis.architecture.ArchitectureRecommendation;
@@ -40,7 +43,7 @@ public class ParserApplication {
 
             RepositoryModel repository =
                     parser.parseRepository(
-                            "../sample_projects/layered_test"
+                            "../sample_projects/architecture_test"
                     );
 
 
@@ -147,6 +150,23 @@ public class ParserApplication {
                         architectureAnalyzer.analyze(
                                 graphRepository.getClassNodes()
                         );
+
+        ArchitectureGraphAnalyzer graphAnalyzer =
+        new ArchitectureGraphAnalyzer(
+                graphRepository
+        );
+
+ArchitectureGraph architectureGraph =
+        graphAnalyzer.build(
+                architectureReport
+        );
+
+ArchitectureGraphPrinter graphPrinter =
+        new ArchitectureGraphPrinter();
+
+graphPrinter.print(
+        architectureGraph
+);
 
 
                 architectureReport.print();
