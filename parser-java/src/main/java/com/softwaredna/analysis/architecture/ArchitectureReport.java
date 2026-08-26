@@ -17,13 +17,19 @@ public class ArchitectureReport {
 
     private final Set<String> violations;
 
+    private final List<ArchitectureScore> scores;
+
+    private final List<ArchitectureAnomaly> anomalies;
+
 
     public ArchitectureReport(
             String architectureStyle,
             double confidence,
             Map<String, ArchitectureLayer> layers,
             List<ArchitectureEvidence> evidence,
-            Set<String> violations) {
+            Set<String> violations,
+            List<ArchitectureScore> scores,
+            List<ArchitectureAnomaly> anomalies) {
 
         this.architectureStyle =
                 architectureStyle;
@@ -46,14 +52,18 @@ public class ArchitectureReport {
                         violations
                 );
 
+        this.scores =
+                Collections.unmodifiableList(
+                        scores
+                );
+
+        this.anomalies =
+                Collections.unmodifiableList(
+                        anomalies
+                );
+
     }
 
-
-    /*
-     * =======================================================
-     * Getters
-     * =======================================================
-     */
 
     public String getArchitectureStyle() {
 
@@ -85,18 +95,29 @@ public class ArchitectureReport {
     }
 
 
-    public Set<String> getViolations() {
+    public Set<String>
+    getViolations() {
 
         return violations;
 
     }
 
 
-    /*
-     * =======================================================
-     * Print Report
-     * =======================================================
-     */
+    public List<ArchitectureScore>
+    getScores() {
+
+        return scores;
+
+    }
+
+
+    public List<ArchitectureAnomaly>
+    getAnomalies() {
+
+        return anomalies;
+
+    }
+
 
     public void print() {
 
@@ -116,9 +137,9 @@ public class ArchitectureReport {
 
 
         /*
-         * ---------------------------------------------------
-         * Architecture Style
-         * ---------------------------------------------------
+         * ===================================================
+         * Selected Architecture
+         * ===================================================
          */
 
         System.out.println();
@@ -135,9 +156,39 @@ public class ArchitectureReport {
 
 
         /*
-         * ---------------------------------------------------
+         * ===================================================
+         * Architecture Candidates
+         * ===================================================
+         */
+
+        System.out.println();
+
+        System.out.println(
+                "Architecture Candidates:"
+        );
+
+
+        for (ArchitectureScore score :
+                scores) {
+
+            System.out.printf(
+                    "  %-15s : %.2f%n",
+                    score.getArchitectureStyle(),
+                    score.getScore()
+            );
+
+            System.out.println(
+                    "    -> "
+                            + score.getExplanation()
+            );
+
+        }
+
+
+        /*
+         * ===================================================
          * Layers
-         * ---------------------------------------------------
+         * ===================================================
          */
 
         System.out.println();
@@ -157,21 +208,20 @@ public class ArchitectureReport {
 
             }
 
-
             System.out.println(
                     "  "
-                    + entry.getValue()
-                    + " -> "
-                    + entry.getKey()
+                            + entry.getValue()
+                            + " -> "
+                            + entry.getKey()
             );
 
         }
 
 
         /*
-         * ---------------------------------------------------
-         * Evidence
-         * ---------------------------------------------------
+         * ===================================================
+         * Architecture Evidence
+         * ===================================================
          */
 
         System.out.println();
@@ -181,33 +231,21 @@ public class ArchitectureReport {
         );
 
 
-        if (evidence.isEmpty()) {
+        for (ArchitectureEvidence item :
+                evidence) {
 
             System.out.println(
-                    "  None"
+                    "  [OK] "
+                            + item
             );
-
-        }
-
-        else {
-
-            for (ArchitectureEvidence item :
-                    evidence) {
-
-                System.out.println(
-                        "  [OK] "
-                        + item
-                );
-
-            }
 
         }
 
 
         /*
-         * ---------------------------------------------------
-         * Validation
-         * ---------------------------------------------------
+         * ===================================================
+         * Architecture Validation
+         * ===================================================
          */
 
         System.out.println();
@@ -217,25 +255,23 @@ public class ArchitectureReport {
         );
 
 
-        if (evidence.isEmpty()) {
+        for (ArchitectureEvidence item :
+                evidence) {
 
-            System.out.println(
-                    "  No valid architectural "
-                    + "dependencies detected."
-            );
+            String explanation =
+                    item.getExplanation();
 
-        }
 
-        else {
-
-            for (ArchitectureEvidence item :
-                    evidence) {
+            if (explanation.contains(
+                    "valid layered dependency")
+                    || explanation.contains(
+                    "supports MVC")) {
 
                 System.out.println(
                         "  [OK] "
-                        + item.getSource()
-                        + " -> "
-                        + item.getTarget()
+                                + item.getSource()
+                                + " -> "
+                                + item.getTarget()
                 );
 
             }
@@ -244,34 +280,53 @@ public class ArchitectureReport {
 
 
         /*
-         * ---------------------------------------------------
-         * Violations
-         * ---------------------------------------------------
+         * ===================================================
+         * Architecture Anomalies
+         * ===================================================
          */
 
         System.out.println();
 
         System.out.println(
-                "Architecture Violations:"
+                "Architecture Anomalies:"
         );
 
 
-        if (violations.isEmpty()) {
+        if (anomalies.isEmpty()) {
 
             System.out.println(
                     "  None"
             );
 
         }
-
         else {
 
-            for (String violation :
-                    violations) {
+            for (ArchitectureAnomaly anomaly :
+                    anomalies) {
+
+                System.out.println();
 
                 System.out.println(
-                        "  [VIOLATION] "
-                        + violation
+                        "  ["
+                                + anomaly.getSeverity()
+                                + "] "
+                                + anomaly.getSource()
+                                + " --"
+                                + anomaly.getRelationship()
+                                + "--> "
+                                + anomaly.getTarget()
+                );
+
+                System.out.println(
+                        "    "
+                                + anomaly.getSourceLayer()
+                                + " -> "
+                                + anomaly.getTargetLayer()
+                );
+
+                System.out.println(
+                        "    Reason: "
+                                + anomaly.getDescription()
                 );
 
             }
@@ -280,123 +335,125 @@ public class ArchitectureReport {
 
 
         /*
-         * ---------------------------------------------------
+         * ===================================================
          * Conclusion
-         * ---------------------------------------------------
+         * ===================================================
          */
 
         System.out.println();
 
-System.out.println();
-
-System.out.println(
-        "Conclusion:"
-);
-
-
-if ("LAYERED".equals(
-        architectureStyle)) {
-
-    if (violations.isEmpty()) {
-
         System.out.println(
-                "  The repository follows "
-                        + "a layered architecture."
+                "Conclusion:"
         );
 
-        System.out.println(
-                "  Dependencies follow "
-                        + "recognized architectural "
-                        + "layer boundaries."
-        );
 
-    }
-    else {
+        if ("LAYERED".equals(
+                architectureStyle)) {
 
-        System.out.println(
-                "  The repository resembles "
-                        + "a layered architecture."
-        );
+            if (anomalies.isEmpty()) {
 
-        System.out.println(
-                "  However, architectural "
-                        + "violations were detected."
-        );
+                System.out.println(
+                        "  The repository follows "
+                                + "a layered architecture."
+                );
 
-    }
+                System.out.println(
+                        "  Dependencies follow "
+                                + "recognized architectural "
+                                + "layer boundaries."
+                );
 
-}
-else if ("MVC".equals(
-        architectureStyle)) {
+            }
+            else {
 
-    if (violations.isEmpty()) {
+                System.out.println(
+                        "  The repository resembles "
+                                + "a layered architecture."
+                );
 
-        System.out.println(
-                "  The repository follows "
-                        + "an MVC architecture."
-        );
+                System.out.println(
+                        "  However, architectural "
+                                + "anomalies were detected."
+                );
 
-        System.out.println(
-                "  Controller, Model, and View "
-                        + "components were detected with "
-                        + "supporting graph evidence."
-        );
+            }
 
-    }
-    else {
+        }
+        else if ("MVC".equals(
+                architectureStyle)) {
 
-        System.out.println(
-                "  The repository resembles "
-                        + "an MVC architecture."
-        );
+            if (anomalies.isEmpty()) {
 
-        System.out.println(
-                "  However, architectural "
-                        + "violations were detected."
-        );
+                System.out.println(
+                        "  The repository follows "
+                                + "an MVC architecture."
+                );
 
-    }
+                System.out.println(
+                        "  Controller, Model, and View "
+                                + "components were detected with "
+                                + "supporting graph evidence."
+                );
 
-}
-else if ("MICROSERVICES".equals(
-        architectureStyle)) {
+            }
+            else {
 
-    if (violations.isEmpty()) {
+                System.out.println(
+                        "  The repository resembles "
+                                + "an MVC architecture."
+                );
 
-        System.out.println(
-                "  The repository exhibits "
-                        + "a microservices architecture."
-        );
+                System.out.println(
+                        "  However, architectural "
+                                + "anomalies were detected."
+                );
 
-        System.out.println(
-                "  Multiple independent service "
-                        + "boundaries were detected."
-        );
+            }
 
-    }
-    else {
+        }
+        else if ("MICROSERVICES".equals(
+                architectureStyle)) {
 
-        System.out.println(
-                "  The repository resembles "
-                        + "a microservices architecture."
-        );
+            if (anomalies.isEmpty()) {
 
-        System.out.println(
-                "  However, architectural "
-                        + "violations were detected."
-        );
+                System.out.println(
+                        "  The repository exhibits "
+                                + "a microservices architecture."
+                );
 
-    }
+                System.out.println(
+                        "  Multiple independent service "
+                                + "boundaries were detected."
+                );
 
-}
-else {
+            }
+            else {
 
-    System.out.println(
-            "  No recognized architecture "
-                    + "style was detected."
-    );
+                System.out.println(
+                        "  The repository resembles "
+                                + "a microservices architecture."
+                );
 
-}
+                System.out.println(
+                        "  However, architectural "
+                                + "anomalies were detected."
+                );
+
+            }
+
+        }
+        else {
+
+            System.out.println(
+                    "  No recognized architecture "
+                            + "style was detected."
+            );
+
+        }
+
+
+        System.out.println();
+
     }
 
 }

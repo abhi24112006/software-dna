@@ -1,6 +1,8 @@
 package com.softwaredna.parser;
 
 import com.softwaredna.analysis.architecture.ArchitectureAnalyzer;
+import com.softwaredna.analysis.architecture.ArchitectureHealthAnalyzer;
+import com.softwaredna.analysis.architecture.ArchitectureHealthReport;
 import com.softwaredna.analysis.architecture.ArchitectureReport;
 import com.softwaredna.analysis.repository.RepositoryAnalyzer;
 import com.softwaredna.graph.GraphRepository;
@@ -144,6 +146,16 @@ public class ParserApplication {
 
 
                 architectureReport.print();
+
+                ArchitectureHealthAnalyzer healthAnalyzer =
+        new ArchitectureHealthAnalyzer();
+
+ArchitectureHealthReport healthReport =
+        healthAnalyzer.analyze(
+                architectureReport
+        );
+
+healthReport.print();
 
 
                 /*
