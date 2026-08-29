@@ -1,5 +1,6 @@
 package com.softwaredna.parser;
 
+import java.nio.file.Path;
 import java.util.List;
 
 import com.softwaredna.analysis.architecture.ArchitectureAnalyzer;
@@ -20,7 +21,6 @@ import com.softwaredna.analysis.architecture.ArchitectureSnapshotStore;
 import com.softwaredna.analysis.architecture.ArchitectureTrend;
 import com.softwaredna.analysis.architecture.ArchitectureTrendAnalyzer;
 import com.softwaredna.analysis.architecture.ArchitectureTrendPrinter;
-import com.softwaredna.analysis.repository.RepositoryAnalyzer;
 import com.softwaredna.graph.GraphRepository;
 import com.softwaredna.graph.Neo4jGraphRepository;
 import com.softwaredna.knowledge.EdgeType;
@@ -30,11 +30,15 @@ import com.softwaredna.knowledge.KnowledgeGraphBuilder;
 import com.softwaredna.knowledge.printer.KnowledgeGraphPrinter;
 import com.softwaredna.knowledge.query.ImpactAnalyzer;
 import com.softwaredna.knowledge.query.KnowledgeGraphQuery;
+import com.softwaredna.language.Language;
+import com.softwaredna.language.LanguageDetector;
+import com.softwaredna.language.LanguageReport;
 import com.softwaredna.model.RepositoryModel;
 import com.softwaredna.neo4j.Neo4jConfig;
 import com.softwaredna.neo4j.Neo4jService;
+import com.softwaredna.parser.language.LanguageParser;
+import com.softwaredna.parser.language.ParserFactory;
 import com.softwaredna.printer.RepositoryPrinter;
-
 
 public class ParserApplication {
 
@@ -48,12 +52,28 @@ public class ParserApplication {
              * =================================================
              */
 
-            RepositoryParser parser =
-                    new RepositoryParser();
-            RepositoryModel repository =
-                    parser.parseRepository(
-                            "../sample_projects/layered_violation_test"
-                    );
+            String repositoryPath =
+        "../sample_projects/javascript_test";
+
+        LanguageDetector languageDetector =
+                new LanguageDetector();
+
+        LanguageReport languageReport =
+                new LanguageReport(
+                        languageDetector.detect(
+                                Path.of(repositoryPath)
+                        )
+                );
+
+        languageReport.print();
+
+        RepositoryParser parser =
+                new RepositoryParser();
+
+        RepositoryModel repository =
+                parser.parseRepository(
+                        repositoryPath
+                );
 
 
             /*
@@ -62,10 +82,18 @@ public class ParserApplication {
              * =================================================
              */
 
-            RepositoryAnalyzer analyzer =
-                    new RepositoryAnalyzer();
+            Language primaryLanguage =
+        languageReport.getPrimaryLanguage();
 
-            analyzer.analyze(repository);
+LanguageParser languageParser =
+        ParserFactory.getParser(
+                primaryLanguage
+        );
+
+repository =
+        languageParser.parse(
+                repositoryPath
+        );
 
 
             /*

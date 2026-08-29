@@ -1,2 +1,14 @@
 MVC|LAYERED|95.5|94.0||UserController --DEPENDS_ON--> UserView||
 LAYERED|LAYERED|94.0|63.16666666666667|||UserRepository --DEPENDS_ON--> UserService : Repository depends on Service. This reverses the expected layered dependency direction. [HIGH]|
+LAYERED|LAYERED|63.16666666666667|63.16666666666667||||
+LAYERED|MVC|63.16666666666667|68.0|UserController --DEPENDS_ON--> UserView|||
+MVC|MVC|68.0|95.5||||UserRepository --DEPENDS_ON--> UserService : Repository depends on Service. This reverses the expected layered dependency direction. [HIGH]
+MVC|MICROSERVICES|95.5|73.78571428571428|PaymentService --DEPENDS_ON--> PaymentRepository~OrderService --DEPENDS_ON--> OrderRepository||UserRepository --DEPENDS_ON--> UserService : Repository depends on Service. This reverses the expected layered dependency direction. [HIGH]|
+MICROSERVICES|MICROSERVICES|73.78571428571428|73.78571428571428||||
+MICROSERVICES|LAYERED|73.78571428571428|63.16666666666667||PaymentService --DEPENDS_ON--> PaymentRepository~UserController --DEPENDS_ON--> UserView~OrderService --DEPENDS_ON--> OrderRepository||
+LAYERED|LAYERED|63.16666666666667|63.16666666666667||||
+LAYERED|UNKNOWN|63.16666666666667|30.0||UserService --DEPENDS_ON--> UserRepository~UserController --DEPENDS_ON--> UserService||UserRepository --DEPENDS_ON--> UserService : Repository depends on Service. This reverses the expected layered dependency direction. [HIGH]
+UNKNOWN|LAYERED|30.0|94.0|UserService --DEPENDS_ON--> UserRepository~UserController --DEPENDS_ON--> UserService|||
+LAYERED|LAYERED|94.0|94.0||||
+LAYERED|UNKNOWN|94.0|30.0||UserService --DEPENDS_ON--> UserRepository~UserController --DEPENDS_ON--> UserService||
+UNKNOWN|LAYERED|30.0|94.0|UserService --DEPENDS_ON--> UserRepository~UserController --DEPENDS_ON--> UserService|||
