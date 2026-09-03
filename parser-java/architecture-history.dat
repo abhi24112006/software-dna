@@ -15,3 +15,8 @@ UNKNOWN|LAYERED|30.0|94.0|UserService --DEPENDS_ON--> UserRepository~UserControl
 LAYERED|LAYERED|94.0|94.0||||
 LAYERED|LAYERED|94.0|94.0||||
 LAYERED|LAYERED|94.0|94.0||||
+LAYERED|MICROSERVICES|94.0|73.78571428571428|PaymentService --DEPENDS_ON--> PaymentRepository~UserController --DEPENDS_ON--> UserView~OrderService --DEPENDS_ON--> OrderRepository||UserRepository --DEPENDS_ON--> UserService : Repository depends on Service. This reverses the expected layered dependency direction. [HIGH]|
+MICROSERVICES|MICROSERVICES|73.78571428571428|75.05555555555556||||
+MICROSERVICES|LAYERED|75.05555555555556|94.0||PaymentService --DEPENDS_ON--> PaymentRepository~UserController --DEPENDS_ON--> UserView~OrderService --DEPENDS_ON--> OrderRepository||UserRepository --DEPENDS_ON--> UserService : Repository depends on Service. This reverses the expected layered dependency direction. [HIGH]
+LAYERED|LAYERED|94.0|94.0||||
+LAYERED|LAYERED|94.0|94.0||||

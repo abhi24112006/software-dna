@@ -41,6 +41,7 @@ import com.softwaredna.neo4j.Neo4jConfig;
 import com.softwaredna.neo4j.Neo4jService;
 import com.softwaredna.parser.language.LanguageParser;
 import com.softwaredna.parser.language.ParserFactory;
+import com.softwaredna.parser.nlp.NaturalLanguageQueryEngine;
 import com.softwaredna.printer.RepositoryPrinter;
 
 public class ParserApplication {
@@ -56,7 +57,7 @@ public class ParserApplication {
              */
 
             String repositoryPath =
-                    "../sample_projects/javascript_test";
+                    "../sample_projects/python_test";
 
             LanguageDetector languageDetector =
                     new LanguageDetector();
@@ -1202,6 +1203,47 @@ public class ParserApplication {
 
             /*
              * =================================================
+             * Natural Language Query Engine
+             * =================================================
+             *
+             * Verify the deterministic NLP pipeline against the
+             * actual Knowledge Graph built from this repository.
+             */
+
+            NaturalLanguageQueryEngine naturalLanguageQueryEngine =
+                    new NaturalLanguageQueryEngine(graph);
+
+            System.out.println();
+            System.out.println("======================================");
+            System.out.println("Natural Language Query Engine");
+            System.out.println("======================================");
+
+            if (primaryClass != null) {
+                runNaturalLanguageQuery(
+                        naturalLanguageQueryEngine,
+                        "What does " + primaryClass.getName() + " depend on?");
+            }
+
+            if (secondaryClass != null) {
+                runNaturalLanguageQuery(
+                        naturalLanguageQueryEngine,
+                        "Who depends on " + secondaryClass.getName() + "?");
+            }
+
+            if (primaryClass != null) {
+                runNaturalLanguageQuery(
+                        naturalLanguageQueryEngine,
+                        "What methods does " + primaryClass.getName() + " call?");
+            }
+
+            if (secondaryMethod != null) {
+                runNaturalLanguageQuery(
+                        naturalLanguageQueryEngine,
+                        "Who calls " + secondaryMethod.getName() + "?");
+            }
+
+            /*
+             * =================================================
              * Print Knowledge Graph
              * =================================================
              */
@@ -1229,6 +1271,68 @@ public class ParserApplication {
             e.printStackTrace();
         }
     }
+
+    /*
+ * =================================================
+ * Natural Language Query Helpers
+ * =================================================
+ */
+
+/**
+ * Runs a natural-language question against the
+ * Knowledge Graph and prints the resulting graph facts.
+ */
+private static void runNaturalLanguageQuery(
+        NaturalLanguageQueryEngine engine,
+        String question) {
+
+    System.out.println();
+
+    System.out.println(
+            "Question: " + question
+    );
+
+    try {
+
+        com.softwaredna.parser.nlp.QueryResult result =
+                engine.ask(question);
+
+        System.out.println(
+                "Intent: " + result.getIntent()
+        );
+
+        System.out.println(
+                "Entity: " + result.getEntity().getName()
+        );
+
+        System.out.println(
+                "Answer:"
+        );
+
+        if (result.getNodes().isEmpty()) {
+
+            System.out.println(
+                    "  None"
+            );
+
+        } else {
+
+            for (GraphNode node : result.getNodes()) {
+
+                System.out.println(
+                        "  -> " + node.getName()
+                );
+            }
+        }
+
+    } catch (Exception e) {
+
+        System.out.println(
+                "  NLP query could not be executed: "
+                        + e.getMessage()
+        );
+    }
+}
 
     /*
      * =================================================
