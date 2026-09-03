@@ -1,7 +1,10 @@
 package com.softwaredna.parser;
 
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 
 import com.softwaredna.analysis.architecture.ArchitectureAnalyzer;
 import com.softwaredna.analysis.architecture.ArchitectureDiff;
@@ -53,48 +56,41 @@ public class ParserApplication {
              */
 
             String repositoryPath =
-        "../sample_projects/javascript_test";
+                    "../sample_projects/javascript_test";
 
-        LanguageDetector languageDetector =
-                new LanguageDetector();
+            LanguageDetector languageDetector =
+                    new LanguageDetector();
 
-        LanguageReport languageReport =
-                new LanguageReport(
-                        languageDetector.detect(
-                                Path.of(repositoryPath)
-                        )
-                );
+            LanguageReport languageReport =
+                    new LanguageReport(
+                            languageDetector.detect(
+                                    Path.of(repositoryPath)
+                            )
+                    );
 
-        languageReport.print();
-
-        RepositoryParser parser =
-                new RepositoryParser();
-
-        RepositoryModel repository =
-                parser.parseRepository(
-                        repositoryPath
-                );
-
+            languageReport.print();
 
             /*
              * =================================================
-             * Run Repository Analyses
+             * Run Language-Specific Parser
              * =================================================
+             *
+             * The repository is parsed exactly once using
+             * the parser selected by the detected language.
              */
 
             Language primaryLanguage =
-        languageReport.getPrimaryLanguage();
+                    languageReport.getPrimaryLanguage();
 
-LanguageParser languageParser =
-        ParserFactory.getParser(
-                primaryLanguage
-        );
+            LanguageParser languageParser =
+                    ParserFactory.getParser(
+                            primaryLanguage
+                    );
 
-repository =
-        languageParser.parse(
-                repositoryPath
-        );
-
+            RepositoryModel repository =
+                    languageParser.parse(
+                            repositoryPath
+                    );
 
             /*
              * =================================================
@@ -108,6 +104,56 @@ repository =
             KnowledgeGraph graph =
                     graphBuilder.build(repository);
 
+            /*
+             * =================================================
+             * Dynamically Select Graph Nodes
+             * =================================================
+             *
+             * IMPORTANT:
+             * These variables are declared outside the Neo4j
+             * try-block because they are also used by the
+             * in-memory graph queries later.
+             */
+
+            Collection<GraphNode> graphNodeCollection =
+                    graph.getNodes();
+
+            List<GraphNode> graphNodes =
+                    new ArrayList<>(
+                            graphNodeCollection
+                    );
+
+            GraphNode primaryClass =
+                    findFirstNodeOfType(
+                            graphNodes,
+                            "CLASS"
+                    );
+
+            GraphNode secondaryClass =
+                    findSecondNodeOfType(
+                            graphNodes,
+                            "CLASS",
+                            primaryClass
+                    );
+
+            GraphNode primaryMethod =
+                    findFirstNodeOfType(
+                            graphNodes,
+                            "METHOD"
+                    );
+
+            GraphNode secondaryMethod =
+                    findSecondNodeOfType(
+                            graphNodes,
+                            "METHOD",
+                            primaryMethod
+                    );
+
+            GraphNode interfaceNode =
+                    findFirstNodeOfType(
+                            graphNodes,
+                            "INTERFACE"
+                    );
 
             /*
              * =================================================
@@ -117,7 +163,6 @@ repository =
 
             Neo4jConfig neo4jConfig =
                     Neo4jConfig.fromEnvironment();
-
 
             try (
                     Neo4jService neo4j =
@@ -134,7 +179,6 @@ repository =
 
                 neo4j.verifyConnection();
 
-
                 /*
                  * =================================================
                  * Graph Repository
@@ -146,7 +190,6 @@ repository =
                                 neo4j
                         );
 
-
                 /*
                  * =================================================
                  * Export Knowledge Graph
@@ -154,7 +197,6 @@ repository =
                  */
 
                 graphRepository.save(graph);
-
 
                 /*
                  * =================================================
@@ -167,226 +209,212 @@ repository =
                                 graphRepository
                         );
 
-
                 System.out.println();
-
-
 
                 ArchitectureReport architectureReport =
                         architectureAnalyzer.analyze(
                                 graphRepository.getClassNodes()
                         );
 
-        ArchitectureGraphAnalyzer graphAnalyzer =
-        new ArchitectureGraphAnalyzer(
-                graphRepository
-        );
+                ArchitectureGraphAnalyzer graphAnalyzer =
+                        new ArchitectureGraphAnalyzer(
+                                graphRepository
+                        );
 
-ArchitectureGraph architectureGraph =
-        graphAnalyzer.build(
-                architectureReport
-        );
+                ArchitectureGraph architectureGraph =
+                        graphAnalyzer.build(
+                                architectureReport
+                        );
 
-ArchitectureGraphPrinter graphPrinter =
-        new ArchitectureGraphPrinter();
+                ArchitectureGraphPrinter graphPrinter =
+                        new ArchitectureGraphPrinter();
 
-graphPrinter.print(
-        architectureGraph
-);
-
+                graphPrinter.print(
+                        architectureGraph
+                );
 
                 architectureReport.print();
 
+                /*
+                 * =================================================
+                 * Architecture Health
+                 * =================================================
+                 */
+
                 ArchitectureHealthAnalyzer healthAnalyzer =
-        new ArchitectureHealthAnalyzer();
+                        new ArchitectureHealthAnalyzer();
 
-ArchitectureHealthReport healthReport =
-        healthAnalyzer.analyze(
-                architectureReport
-        );
+                ArchitectureHealthReport healthReport =
+                        healthAnalyzer.analyze(
+                                architectureReport
+                        );
 
-healthReport.print();
+                healthReport.print();
 
-ArchitectureSnapshot currentSnapshot =
-        new ArchitectureSnapshot(
-                architectureReport,
-                healthReport,
-                graphRepository.getClassNodes()
-        );
+                /*
+                 * =================================================
+                 * Architecture Snapshot
+                 * =================================================
+                 */
 
+                ArchitectureSnapshot currentSnapshot =
+                        new ArchitectureSnapshot(
+                                architectureReport,
+                                healthReport,
+                                graphRepository.getClassNodes()
+                        );
 
-ArchitectureSnapshotStore architectureSnapshotStore =
-        new ArchitectureSnapshotStore();
+                ArchitectureSnapshotStore architectureSnapshotStore =
+                        new ArchitectureSnapshotStore();
 
+                ArchitectureSnapshotLoader snapshotLoader =
+                        new ArchitectureSnapshotLoader();
 
-ArchitectureSnapshotLoader snapshotLoader =
-        new ArchitectureSnapshotLoader();
+                ArchitectureSnapshotLoader.SnapshotData
+                        previousSnapshotData =
+                        snapshotLoader.exists()
+                                ? snapshotLoader.load()
+                                : null;
 
-
-ArchitectureSnapshotLoader.SnapshotData
-        previousSnapshotData =
-        snapshotLoader.exists()
-                ? snapshotLoader.load()
-                : null;
-
-
-architectureSnapshotStore.setCurrent(
-        currentSnapshot
-);
-
-
-architectureSnapshotStore.saveCurrentAsPrevious();
-
-
-if (previousSnapshotData != null) {
-
-    ArchitectureSnapshotLoader.SnapshotData
-            currentSnapshotData =
-            snapshotLoader.load();
-
-
-    ArchitectureDiffAnalyzer diffAnalyzer =
-            new ArchitectureDiffAnalyzer();
-
-
-    ArchitectureDiff diff =
-            diffAnalyzer.analyze(
-                    previousSnapshotData,
-                    currentSnapshotData
-            );
-
-
-    /*
-     * ===================================================
-     * Store Diff For Architecture Trend
-     * ===================================================
-     */
-
-    architectureSnapshotStore.addDiff(
-            diff
-    );
-
-
-    /*
-     * ===================================================
-     * Architecture Evolution
-     * ===================================================
-     */
-
-    ArchitectureDiffPrinter diffPrinter =
-            new ArchitectureDiffPrinter();
-
-
-    diffPrinter.print(
-            diff
-    );
-
-
-    /*
-     * ===================================================
-     * Architecture Trend
-     * ===================================================
-     */
-
-    ArchitectureTrendAnalyzer trendAnalyzer =
-            new ArchitectureTrendAnalyzer();
-
-
-    if (!architectureSnapshotStore
-            .getHistory()
-            .isEmpty()) {
-
-        ArchitectureDiff firstDiff =
-                architectureSnapshotStore
-                        .getHistory()
-                        .get(0);
-
-
-        double startingHealth =
-                firstDiff.getPreviousHealth();
-
-
-        ArchitectureTrend trend =
-                trendAnalyzer.analyze(
-                        architectureSnapshotStore
-                                .getHistory(),
-                        startingHealth,
-                        healthReport.getOverallScore()
+                architectureSnapshotStore.setCurrent(
+                        currentSnapshot
                 );
 
+                architectureSnapshotStore.saveCurrentAsPrevious();
 
-        ArchitectureTrendPrinter trendPrinter =
-                new ArchitectureTrendPrinter();
+                /*
+                 * =================================================
+                 * Architecture Evolution
+                 * =================================================
+                 */
 
+                if (previousSnapshotData != null) {
 
-        trendPrinter.print(
-                trend
-        );
+                    ArchitectureSnapshotLoader.SnapshotData
+                            currentSnapshotData =
+                            snapshotLoader.load();
 
-    }
+                    ArchitectureDiffAnalyzer diffAnalyzer =
+                            new ArchitectureDiffAnalyzer();
 
-}
-else {
+                    ArchitectureDiff diff =
+                            diffAnalyzer.analyze(
+                                    previousSnapshotData,
+                                    currentSnapshotData
+                            );
 
-    System.out.println();
+                    architectureSnapshotStore.addDiff(
+                            diff
+                    );
 
-    System.out.println(
-            "======================================"
-    );
+                    ArchitectureDiffPrinter diffPrinter =
+                            new ArchitectureDiffPrinter();
 
-    System.out.println(
-            "Architecture Evolution"
-    );
+                    diffPrinter.print(
+                            diff
+                    );
 
-    System.out.println(
-            "======================================"
-    );
+                    /*
+                     * =================================================
+                     * Architecture Trend
+                     * =================================================
+                     */
 
-    System.out.println();
+                    ArchitectureTrendAnalyzer trendAnalyzer =
+                            new ArchitectureTrendAnalyzer();
 
-    System.out.println(
-            "No previous architecture snapshot found."
-    );
+                    if (!architectureSnapshotStore
+                            .getHistory()
+                            .isEmpty()) {
 
-    System.out.println(
-            "Current architecture saved as the baseline."
-    );
+                        ArchitectureDiff firstDiff =
+                                architectureSnapshotStore
+                                        .getHistory()
+                                        .get(0);
 
-    System.out.println();
+                        double startingHealth =
+                                firstDiff.getPreviousHealth();
 
-}
+                        ArchitectureTrend trend =
+                                trendAnalyzer.analyze(
+                                        architectureSnapshotStore
+                                                .getHistory(),
+                                        startingHealth,
+                                        healthReport.getOverallScore()
+                                );
 
-ArchitectureRecommendationAnalyzer
-        recommendationAnalyzer =
-        new ArchitectureRecommendationAnalyzer();
+                        ArchitectureTrendPrinter trendPrinter =
+                                new ArchitectureTrendPrinter();
 
-List<ArchitectureRecommendation>
-        recommendations =
-        recommendationAnalyzer.analyze(
-                architectureReport
-        );
+                        trendPrinter.print(
+                                trend
+                        );
+                    }
 
-        System.out.println();
+                } else {
 
-System.out.println(
-        "======================================"
-);
+                    System.out.println();
 
-System.out.println(
-        "Architecture Recommendations"
-);
+                    System.out.println(
+                            "======================================"
+                    );
 
-System.out.println(
-        "======================================"
-);
+                    System.out.println(
+                            "Architecture Evolution"
+                    );
 
-for (ArchitectureRecommendation recommendation :
-        recommendations) {
+                    System.out.println(
+                            "======================================"
+                    );
 
-    recommendation.print();
+                    System.out.println();
 
-}
+                    System.out.println(
+                            "No previous architecture snapshot found."
+                    );
 
+                    System.out.println(
+                            "Current architecture saved as the baseline."
+                    );
+
+                    System.out.println();
+                }
+
+                /*
+                 * =================================================
+                 * Architecture Recommendations
+                 * =================================================
+                 */
+
+                ArchitectureRecommendationAnalyzer
+                        recommendationAnalyzer =
+                        new ArchitectureRecommendationAnalyzer();
+
+                List<ArchitectureRecommendation>
+                        recommendations =
+                        recommendationAnalyzer.analyze(
+                                architectureReport
+                        );
+
+                System.out.println();
+
+                System.out.println(
+                        "======================================"
+                );
+
+                System.out.println(
+                        "Architecture Recommendations"
+                );
+
+                System.out.println(
+                        "======================================"
+                );
+
+                for (ArchitectureRecommendation recommendation :
+                        recommendations) {
+
+                    recommendation.print();
+                }
 
                 /*
                  * =================================================
@@ -408,30 +436,31 @@ for (ArchitectureRecommendation recommendation :
                         "======================================"
                 );
 
-
                 /*
                  * -------------------------------------------------
                  * Dependencies
                  * -------------------------------------------------
                  */
 
-                System.out.println();
+                if (primaryClass != null) {
 
-                System.out.println(
-                        "Dependencies of StudentService:"
-                );
-
-                for (String name :
-                        graphRepository.getDependencies(
-                                "Default Package.StudentService"
-                        )) {
-
-                    System.out.println(
-                            "  -> " + name
+                    printNeo4jResults(
+                            "Dependencies of "
+                                    + primaryClass.getId()
+                                    + ":",
+                            graphRepository.getDependencies(
+                                    primaryClass.getId()
+                            )
                     );
 
-                }
+                } else {
 
+                    System.out.println();
+
+                    System.out.println(
+                            "No class available for dependency query."
+                    );
+                }
 
                 /*
                  * -------------------------------------------------
@@ -439,23 +468,28 @@ for (ArchitectureRecommendation recommendation :
                  * -------------------------------------------------
                  */
 
-                System.out.println();
+                if (secondaryClass != null) {
 
-                System.out.println(
-                        "Dependents of Student:"
-                );
-
-                for (String name :
-                        graphRepository.getDependents(
-                                "Default Package.Student"
-                        )) {
-
-                    System.out.println(
-                            "  -> " + name
+                    printNeo4jResults(
+                            "Dependents of "
+                                    + secondaryClass.getId()
+                                    + ":",
+                            graphRepository.getDependents(
+                                    secondaryClass.getId()
+                            )
                     );
 
-                }
+                } else if (primaryClass != null) {
 
+                    printNeo4jResults(
+                            "Dependents of "
+                                    + primaryClass.getId()
+                                    + ":",
+                            graphRepository.getDependents(
+                                    primaryClass.getId()
+                            )
+                    );
+                }
 
                 /*
                  * -------------------------------------------------
@@ -463,23 +497,25 @@ for (ArchitectureRecommendation recommendation :
                  * -------------------------------------------------
                  */
 
-                System.out.println();
+                if (primaryMethod != null) {
 
-                System.out.println(
-                        "Callees of Student.study():"
-                );
-
-                for (String name :
-                        graphRepository.getCallees(
-                                "Default Package.Student#study()"
-                        )) {
-
-                    System.out.println(
-                            "  -> " + name
+                    printNeo4jResults(
+                            "Callees of "
+                                    + primaryMethod.getId()
+                                    + ":",
+                            graphRepository.getCallees(
+                                    primaryMethod.getId()
+                            )
                     );
 
-                }
+                } else {
 
+                    System.out.println();
+
+                    System.out.println(
+                            "No method available for callee query."
+                    );
+                }
 
                 /*
                  * -------------------------------------------------
@@ -487,23 +523,28 @@ for (ArchitectureRecommendation recommendation :
                  * -------------------------------------------------
                  */
 
-                System.out.println();
+                if (secondaryMethod != null) {
 
-                System.out.println(
-                        "Callers of Teacher.teach():"
-                );
-
-                for (String name :
-                        graphRepository.getCallers(
-                                "Default Package.Teacher#teach()"
-                        )) {
-
-                    System.out.println(
-                            "  -> " + name
+                    printNeo4jResults(
+                            "Callers of "
+                                    + secondaryMethod.getId()
+                                    + ":",
+                            graphRepository.getCallers(
+                                    secondaryMethod.getId()
+                            )
                     );
 
-                }
+                } else if (primaryMethod != null) {
 
+                    printNeo4jResults(
+                            "Callers of "
+                                    + primaryMethod.getId()
+                                    + ":",
+                            graphRepository.getCallers(
+                                    primaryMethod.getId()
+                            )
+                    );
+                }
 
                 /*
                  * -------------------------------------------------
@@ -511,23 +552,17 @@ for (ArchitectureRecommendation recommendation :
                  * -------------------------------------------------
                  */
 
-                System.out.println();
+                if (primaryClass != null) {
 
-                System.out.println(
-                        "Subclasses of Animal:"
-                );
-
-                for (String name :
-                        graphRepository.getSubclasses(
-                                "Default Package.Animal"
-                        )) {
-
-                    System.out.println(
-                            "  -> " + name
+                    printNeo4jResults(
+                            "Subclasses of "
+                                    + primaryClass.getId()
+                                    + ":",
+                            graphRepository.getSubclasses(
+                                    primaryClass.getId()
+                            )
                     );
-
                 }
-
 
                 /*
                  * -------------------------------------------------
@@ -535,23 +570,28 @@ for (ArchitectureRecommendation recommendation :
                  * -------------------------------------------------
                  */
 
-                System.out.println();
+                if (secondaryClass != null) {
 
-                System.out.println(
-                        "Superclass of Mammal:"
-                );
-
-                for (String name :
-                        graphRepository.getSuperclass(
-                                "Default Package.Mammal"
-                        )) {
-
-                    System.out.println(
-                            "  -> " + name
+                    printNeo4jResults(
+                            "Superclass of "
+                                    + secondaryClass.getId()
+                                    + ":",
+                            graphRepository.getSuperclass(
+                                    secondaryClass.getId()
+                            )
                     );
 
-                }
+                } else if (primaryClass != null) {
 
+                    printNeo4jResults(
+                            "Superclass of "
+                                    + primaryClass.getId()
+                                    + ":",
+                            graphRepository.getSuperclass(
+                                    primaryClass.getId()
+                            )
+                    );
+                }
 
                 /*
                  * -------------------------------------------------
@@ -559,23 +599,17 @@ for (ArchitectureRecommendation recommendation :
                  * -------------------------------------------------
                  */
 
-                System.out.println();
+                if (primaryClass != null) {
 
-                System.out.println(
-                        "Interfaces implemented by Report:"
-                );
-
-                for (String name :
-                        graphRepository.getImplementedInterfaces(
-                                "demo.Report"
-                        )) {
-
-                    System.out.println(
-                            "  -> " + name
+                    printNeo4jResults(
+                            "Interfaces implemented by "
+                                    + primaryClass.getId()
+                                    + ":",
+                            graphRepository.getImplementedInterfaces(
+                                    primaryClass.getId()
+                            )
                     );
-
                 }
-
 
                 /*
                  * -------------------------------------------------
@@ -583,23 +617,25 @@ for (ArchitectureRecommendation recommendation :
                  * -------------------------------------------------
                  */
 
-                System.out.println();
+                if (interfaceNode != null) {
 
-                System.out.println(
-                        "Implementations of Printable:"
-                );
-
-                for (String name :
-                        graphRepository.getImplementations(
-                                "com.demo.Printable"
-                        )) {
-
-                    System.out.println(
-                            "  -> " + name
+                    printNeo4jResults(
+                            "Implementations of "
+                                    + interfaceNode.getId()
+                                    + ":",
+                            graphRepository.getImplementations(
+                                    interfaceNode.getId()
+                            )
                     );
 
-                }
+                } else {
 
+                    System.out.println();
+
+                    System.out.println(
+                            "No interface available for implementation query."
+                    );
+                }
 
                 /*
                  * =================================================
@@ -621,30 +657,23 @@ for (ArchitectureRecommendation recommendation :
                         "======================================"
                 );
 
-
                 /*
                  * -------------------------------------------------
-                 * Student Impact
+                 * Class Impact
                  * -------------------------------------------------
                  */
 
-                System.out.println();
+                if (primaryClass != null) {
 
-                System.out.println(
-                        "Impact of changing Student:"
-                );
-
-                for (String name :
-                        graphRepository.getImpact(
-                                "Default Package.Student"
-                        )) {
-
-                    System.out.println(
-                            "  -> " + name
+                    printNeo4jResults(
+                            "Impact of changing "
+                                    + primaryClass.getId()
+                                    + ":",
+                            graphRepository.getImpact(
+                                    primaryClass.getId()
+                            )
                     );
-
                 }
-
 
                 /*
                  * -------------------------------------------------
@@ -652,23 +681,17 @@ for (ArchitectureRecommendation recommendation :
                  * -------------------------------------------------
                  */
 
-                System.out.println();
+                if (primaryMethod != null) {
 
-                System.out.println(
-                        "Impact of changing Teacher.teach():"
-                );
-
-                for (String name :
-                        graphRepository.getMethodImpact(
-                                "Default Package.Teacher#teach()"
-                        )) {
-
-                    System.out.println(
-                            "  -> " + name
+                    printNeo4jResults(
+                            "Impact of changing "
+                                    + primaryMethod.getId()
+                                    + ":",
+                            graphRepository.getMethodImpact(
+                                    primaryMethod.getId()
+                            )
                     );
-
                 }
-
 
                 /*
                  * -------------------------------------------------
@@ -676,29 +699,40 @@ for (ArchitectureRecommendation recommendation :
                  * -------------------------------------------------
                  */
 
-                System.out.println();
+                if (secondaryClass != null) {
 
-                System.out.println(
-                        "Containment-Aware Impact Analysis"
-                );
-
-                System.out.println();
-
-                System.out.println(
-                        "Impact of changing Teacher:"
-                );
-
-                for (String name :
-                        graphRepository.getContainmentAwareImpact(
-                                "Default Package.Teacher"
-                        )) {
+                    System.out.println();
 
                     System.out.println(
-                            "  -> " + name
+                            "Containment-Aware Impact Analysis"
                     );
 
-                }
+                    printNeo4jResults(
+                            "Impact of changing "
+                                    + secondaryClass.getId()
+                                    + ":",
+                            graphRepository.getContainmentAwareImpact(
+                                    secondaryClass.getId()
+                            )
+                    );
 
+                } else if (primaryClass != null) {
+
+                    System.out.println();
+
+                    System.out.println(
+                            "Containment-Aware Impact Analysis"
+                    );
+
+                    printNeo4jResults(
+                            "Impact of changing "
+                                    + primaryClass.getId()
+                                    + ":",
+                            graphRepository.getContainmentAwareImpact(
+                                    primaryClass.getId()
+                            )
+                    );
+                }
 
                 /*
                  * =================================================
@@ -720,56 +754,28 @@ for (ArchitectureRecommendation recommendation :
                         "======================================"
                 );
 
+                if (primaryClass != null) {
 
-                /*
-                 * -------------------------------------------------
-                 * Reachable Nodes - Depth 1
-                 * -------------------------------------------------
-                 */
-
-                System.out.println();
-
-                System.out.println(
-                        "Reachable from StudentService (depth 1):"
-                );
-
-                for (String name :
-                        graphRepository.getReachableNodes(
-                                "Default Package.StudentService",
-                                1
-                        )) {
-
-                    System.out.println(
-                            "  -> " + name
+                    printNeo4jResults(
+                            "Reachable from "
+                                    + primaryClass.getId()
+                                    + " (depth 1):",
+                            graphRepository.getReachableNodes(
+                                    primaryClass.getId(),
+                                    1
+                            )
                     );
 
-                }
-
-
-                /*
-                 * -------------------------------------------------
-                 * Reachable Nodes - Depth 2
-                 * -------------------------------------------------
-                 */
-
-                System.out.println();
-
-                System.out.println(
-                        "Reachable from StudentService (depth 2):"
-                );
-
-                for (String name :
-                        graphRepository.getReachableNodes(
-                                "Default Package.StudentService",
-                                2
-                        )) {
-
-                    System.out.println(
-                            "  -> " + name
+                    printNeo4jResults(
+                            "Reachable from "
+                                    + primaryClass.getId()
+                                    + " (depth 2):",
+                            graphRepository.getReachableNodes(
+                                    primaryClass.getId(),
+                                    2
+                            )
                     );
-
                 }
-
 
                 /*
                  * =================================================
@@ -777,40 +783,32 @@ for (ArchitectureRecommendation recommendation :
                  * =================================================
                  */
 
-                System.out.println();
+                if (primaryClass != null) {
 
-                System.out.println(
-                        "======================================"
-                );
-
-                System.out.println(
-                        "Architecture Paths"
-                );
-
-                System.out.println(
-                        "======================================"
-                );
-
-
-                System.out.println();
-
-                System.out.println(
-                        "Paths from StudentService (depth 2):"
-                );
-
-
-                for (String path :
-                        graphRepository.getArchitecturePaths(
-                                "Default Package.StudentService",
-                                2
-                        )) {
+                    System.out.println();
 
                     System.out.println(
-                            "  -> " + path
+                            "======================================"
                     );
 
-                }
+                    System.out.println(
+                            "Architecture Paths"
+                    );
 
+                    System.out.println(
+                            "======================================"
+                    );
+
+                    printNeo4jResults(
+                            "Paths from "
+                                    + primaryClass.getId()
+                                    + " (depth 2):",
+                            graphRepository.getArchitecturePaths(
+                                    primaryClass.getId(),
+                                    2
+                            )
+                    );
+                }
 
                 /*
                  * =================================================
@@ -818,36 +816,35 @@ for (ArchitectureRecommendation recommendation :
                  * =================================================
                  */
 
-                System.out.println();
+                if (primaryClass != null) {
 
-                System.out.println(
-                        "======================================"
-                );
-
-                System.out.println(
-                        "Dependency Architecture Paths"
-                );
-
-                System.out.println(
-                        "======================================"
-                );
-
-
-                for (String path :
-                        graphRepository.getArchitecturePaths(
-                                "Default Package.StudentService",
-                                2,
-                                java.util.Set.of(
-                                        EdgeType.DEPENDS_ON
-                                )
-                        )) {
+                    System.out.println();
 
                     System.out.println(
-                            "  -> " + path
+                            "======================================"
                     );
 
-                }
+                    System.out.println(
+                            "Dependency Architecture Paths"
+                    );
 
+                    System.out.println(
+                            "======================================"
+                    );
+
+                    printNeo4jResults(
+                            "Dependency paths from "
+                                    + primaryClass.getId()
+                                    + " (depth 2):",
+                            graphRepository.getArchitecturePaths(
+                                    primaryClass.getId(),
+                                    2,
+                                    Set.of(
+                                            EdgeType.DEPENDS_ON
+                                    )
+                            )
+                    );
+                }
 
                 /*
                  * =================================================
@@ -855,58 +852,45 @@ for (ArchitectureRecommendation recommendation :
                  * =================================================
                  */
 
-                System.out.println();
+                if (primaryMethod != null) {
 
-                System.out.println(
-                        "======================================"
-                );
-
-                System.out.println(
-                        "Explainable Impact Analysis"
-                );
-
-                System.out.println(
-                        "======================================"
-                );
-
-
-                System.out.println();
-
-                System.out.println(
-                        "Impact paths of changing Teacher.teach():"
-                );
-
-
-                for (String path :
-                        graphRepository.getImpactPaths(
-                                "Default Package.Teacher#teach()",
-                                2,
-                                java.util.Set.of(
-                                        EdgeType.CALLS
-                                )
-                        )) {
+                    System.out.println();
 
                     System.out.println(
-                            "  -> " + path
+                            "======================================"
                     );
 
+                    System.out.println(
+                            "Explainable Impact Analysis"
+                    );
+
+                    System.out.println(
+                            "======================================"
+                    );
+
+                    printNeo4jResults(
+                            "Impact paths of changing "
+                                    + primaryMethod.getId()
+                                    + ":",
+                            graphRepository.getImpactPaths(
+                                    primaryMethod.getId(),
+                                    2,
+                                    Set.of(
+                                            EdgeType.CALLS
+                                    )
+                            )
+                    );
                 }
-
             }
-
 
             /*
              * =================================================
-             * Existing In-Memory Knowledge Graph Queries
+             * In-Memory Knowledge Graph Queries
              * =================================================
-             *
-             * Kept temporarily as a reference implementation
-             * while validating Neo4j results.
              */
 
             KnowledgeGraphQuery query =
                     new KnowledgeGraphQuery(graph);
-
 
             System.out.println();
 
@@ -922,30 +906,23 @@ for (ArchitectureRecommendation recommendation :
                     "======================================"
             );
 
-
             /*
              * -------------------------------------------------
              * Dependencies
              * -------------------------------------------------
              */
 
-            System.out.println();
+            if (primaryClass != null) {
 
-            System.out.println(
-                    "Dependencies of StudentService:"
-            );
-
-            for (GraphNode node :
-                    query.getDependencies(
-                            "Default Package.StudentService"
-                    )) {
-
-                System.out.println(
-                        "  -> " + node.getName()
+                printGraphNodeResults(
+                        "Dependencies of "
+                                + primaryClass.getId()
+                                + ":",
+                        query.getDependencies(
+                                primaryClass.getId()
+                        )
                 );
-
             }
-
 
             /*
              * -------------------------------------------------
@@ -953,23 +930,28 @@ for (ArchitectureRecommendation recommendation :
              * -------------------------------------------------
              */
 
-            System.out.println();
+            if (secondaryClass != null) {
 
-            System.out.println(
-                    "Dependents of Student:"
-            );
-
-            for (GraphNode node :
-                    query.getDependents(
-                            "Default Package.Student"
-                    )) {
-
-                System.out.println(
-                        "  -> " + node.getName()
+                printGraphNodeResults(
+                        "Dependents of "
+                                + secondaryClass.getId()
+                                + ":",
+                        query.getDependents(
+                                secondaryClass.getId()
+                        )
                 );
 
-            }
+            } else if (primaryClass != null) {
 
+                printGraphNodeResults(
+                        "Dependents of "
+                                + primaryClass.getId()
+                                + ":",
+                        query.getDependents(
+                                primaryClass.getId()
+                        )
+                );
+            }
 
             /*
              * -------------------------------------------------
@@ -977,23 +959,17 @@ for (ArchitectureRecommendation recommendation :
              * -------------------------------------------------
              */
 
-            System.out.println();
+            if (primaryMethod != null) {
 
-            System.out.println(
-                    "Callees of Student.study():"
-            );
-
-            for (GraphNode node :
-                    query.getCallees(
-                            "Default Package.Student#study()"
-                    )) {
-
-                System.out.println(
-                        "  -> " + node.getName()
+                printGraphNodeResults(
+                        "Callees of "
+                                + primaryMethod.getId()
+                                + ":",
+                        query.getCallees(
+                                primaryMethod.getId()
+                        )
                 );
-
             }
-
 
             /*
              * -------------------------------------------------
@@ -1001,23 +977,28 @@ for (ArchitectureRecommendation recommendation :
              * -------------------------------------------------
              */
 
-            System.out.println();
+            if (secondaryMethod != null) {
 
-            System.out.println(
-                    "Callers of Teacher.teach():"
-            );
-
-            for (GraphNode node :
-                    query.getCallers(
-                            "Default Package.Teacher#teach()"
-                    )) {
-
-                System.out.println(
-                        "  -> " + node.getName()
+                printGraphNodeResults(
+                        "Callers of "
+                                + secondaryMethod.getId()
+                                + ":",
+                        query.getCallers(
+                                secondaryMethod.getId()
+                        )
                 );
 
-            }
+            } else if (primaryMethod != null) {
 
+                printGraphNodeResults(
+                        "Callers of "
+                                + primaryMethod.getId()
+                                + ":",
+                        query.getCallers(
+                                primaryMethod.getId()
+                        )
+                );
+            }
 
             /*
              * -------------------------------------------------
@@ -1025,23 +1006,17 @@ for (ArchitectureRecommendation recommendation :
              * -------------------------------------------------
              */
 
-            System.out.println();
+            if (primaryClass != null) {
 
-            System.out.println(
-                    "Subclasses of Animal:"
-            );
-
-            for (GraphNode node :
-                    query.getSubclasses(
-                            "Default Package.Animal"
-                    )) {
-
-                System.out.println(
-                        "  -> " + node.getName()
+                printGraphNodeResults(
+                        "Subclasses of "
+                                + primaryClass.getId()
+                                + ":",
+                        query.getSubclasses(
+                                primaryClass.getId()
+                        )
                 );
-
             }
-
 
             /*
              * -------------------------------------------------
@@ -1049,23 +1024,28 @@ for (ArchitectureRecommendation recommendation :
              * -------------------------------------------------
              */
 
-            System.out.println();
+            if (secondaryClass != null) {
 
-            System.out.println(
-                    "Superclass of Mammal:"
-            );
-
-            for (GraphNode node :
-                    query.getSuperclass(
-                            "Default Package.Mammal"
-                    )) {
-
-                System.out.println(
-                        "  -> " + node.getName()
+                printGraphNodeResults(
+                        "Superclass of "
+                                + secondaryClass.getId()
+                                + ":",
+                        query.getSuperclass(
+                                secondaryClass.getId()
+                        )
                 );
 
-            }
+            } else if (primaryClass != null) {
 
+                printGraphNodeResults(
+                        "Superclass of "
+                                + primaryClass.getId()
+                                + ":",
+                        query.getSuperclass(
+                                primaryClass.getId()
+                        )
+                );
+            }
 
             /*
              * -------------------------------------------------
@@ -1073,23 +1053,17 @@ for (ArchitectureRecommendation recommendation :
              * -------------------------------------------------
              */
 
-            System.out.println();
+            if (primaryClass != null) {
 
-            System.out.println(
-                    "Interfaces implemented by Report:"
-            );
-
-            for (GraphNode node :
-                    query.getImplementedInterfaces(
-                            "demo.Report"
-                    )) {
-
-                System.out.println(
-                        "  -> " + node.getName()
+                printGraphNodeResults(
+                        "Interfaces implemented by "
+                                + primaryClass.getId()
+                                + ":",
+                        query.getImplementedInterfaces(
+                                primaryClass.getId()
+                        )
                 );
-
             }
-
 
             /*
              * -------------------------------------------------
@@ -1097,33 +1071,26 @@ for (ArchitectureRecommendation recommendation :
              * -------------------------------------------------
              */
 
-            System.out.println();
+            if (interfaceNode != null) {
 
-            System.out.println(
-                    "Implementations of Printable:"
-            );
-
-            for (GraphNode node :
-                    query.getImplementations(
-                            "com.demo.Printable"
-                    )) {
-
-                System.out.println(
-                        "  -> " + node.getName()
+                printGraphNodeResults(
+                        "Implementations of "
+                                + interfaceNode.getId()
+                                + ":",
+                        query.getImplementations(
+                                interfaceNode.getId()
+                        )
                 );
-
             }
-
 
             /*
              * =================================================
-             * Existing In-Memory Impact Analysis
+             * In-Memory Impact Analysis
              * =================================================
              */
 
             ImpactAnalyzer impactAnalyzer =
                     new ImpactAnalyzer(query);
-
 
             System.out.println();
 
@@ -1139,57 +1106,44 @@ for (ArchitectureRecommendation recommendation :
                     "======================================"
             );
 
-
             /*
              * -------------------------------------------------
-             * Impact of changing Student
+             * Class Impact
              * -------------------------------------------------
              */
 
-            System.out.println();
+            if (primaryClass != null) {
 
-            System.out.println(
-                    "Impact of changing Student:"
-            );
-
-            for (GraphNode node :
-                    impactAnalyzer.getImpact(
-                            "Default Package.Student"
-                    )) {
-
-                System.out.println(
-                        "  -> " + node.getName()
+                printGraphNodeResults(
+                        "Impact of changing "
+                                + primaryClass.getId()
+                                + ":",
+                        impactAnalyzer.getImpact(
+                                primaryClass.getId()
+                        )
                 );
-
             }
-
 
             /*
              * -------------------------------------------------
-             * Impact through method calls
+             * Method Call Impact
              * -------------------------------------------------
              */
 
-            System.out.println();
+            if (primaryMethod != null) {
 
-            System.out.println(
-                    "Impact of changing Teacher.teach():"
-            );
-
-            for (GraphNode node :
-                    impactAnalyzer.getImpact(
-                            "Default Package.Teacher#teach()",
-                            java.util.Set.of(
-                                    EdgeType.CALLS
-                            )
-                    )) {
-
-                System.out.println(
-                        "  -> " + node.getName()
+                printGraphNodeResults(
+                        "Impact through method calls from "
+                                + primaryMethod.getId()
+                                + ":",
+                        impactAnalyzer.getImpact(
+                                primaryMethod.getId(),
+                                Set.of(
+                                        EdgeType.CALLS
+                                )
+                        )
                 );
-
             }
-
 
             /*
              * -------------------------------------------------
@@ -1197,29 +1151,40 @@ for (ArchitectureRecommendation recommendation :
              * -------------------------------------------------
              */
 
-            System.out.println();
+            if (secondaryClass != null) {
 
-            System.out.println(
-                    "Containment-Aware Impact Analysis"
-            );
-
-            System.out.println();
-
-            System.out.println(
-                    "Impact of changing Teacher:"
-            );
-
-            for (GraphNode node :
-                    impactAnalyzer.getContainmentAwareImpact(
-                            "Default Package.Teacher"
-                    )) {
+                System.out.println();
 
                 System.out.println(
-                        "  -> " + node.getName()
+                        "Containment-Aware Impact Analysis"
                 );
 
-            }
+                printGraphNodeResults(
+                        "Impact of changing "
+                                + secondaryClass.getId()
+                                + ":",
+                        impactAnalyzer.getContainmentAwareImpact(
+                                secondaryClass.getId()
+                        )
+                );
 
+            } else if (primaryClass != null) {
+
+                System.out.println();
+
+                System.out.println(
+                        "Containment-Aware Impact Analysis"
+                );
+
+                printGraphNodeResults(
+                        "Impact of changing "
+                                + primaryClass.getId()
+                                + ":",
+                        impactAnalyzer.getContainmentAwareImpact(
+                                primaryClass.getId()
+                        )
+                );
+            }
 
             /*
              * =================================================
@@ -1227,11 +1192,10 @@ for (ArchitectureRecommendation recommendation :
              * =================================================
              */
 
-            KnowledgeGraphPrinter graphPrinter =
+            KnowledgeGraphPrinter knowledgeGraphPrinter =
                     new KnowledgeGraphPrinter();
 
-            graphPrinter.print(graph);
-
+            knowledgeGraphPrinter.print(graph);
 
             /*
              * =================================================
@@ -1249,11 +1213,123 @@ for (ArchitectureRecommendation recommendation :
         catch (Exception e) {
 
             e.printStackTrace();
+        }
+    }
 
+    /*
+     * =================================================
+     * Dynamic Node Selection
+     * =================================================
+     */
+
+    private static GraphNode findFirstNodeOfType(
+            List<GraphNode> nodes,
+            String typeName) {
+
+        for (GraphNode node : nodes) {
+
+            if (node.getType() != null
+                    && node.getType()
+                            .name()
+                            .equals(typeName)) {
+
+                return node;
+            }
         }
 
+        return null;
     }
-    
 
+    private static GraphNode findSecondNodeOfType(
+            List<GraphNode> nodes,
+            String typeName,
+            GraphNode firstNode) {
 
+        boolean firstFound = false;
+
+        for (GraphNode node : nodes) {
+
+            if (node.getType() != null
+                    && node.getType()
+                            .name()
+                            .equals(typeName)) {
+
+                if (firstNode == null) {
+                    return node;
+                }
+
+                if (!firstFound
+                        && node.getId()
+                                .equals(firstNode.getId())) {
+
+                    firstFound = true;
+                    continue;
+                }
+
+                if (firstFound) {
+                    return node;
+                }
+            }
+        }
+
+        return null;
+    }
+
+    /*
+     * =================================================
+     * Output Helpers
+     * =================================================
+     */
+
+    private static void printNeo4jResults(
+            String title,
+            List<String> results) {
+
+        System.out.println();
+
+        System.out.println(title);
+
+        if (results == null
+                || results.isEmpty()) {
+
+            System.out.println(
+                    "  None"
+            );
+
+            return;
+        }
+
+        for (String result : results) {
+
+            System.out.println(
+                    "  -> " + result
+            );
+        }
+    }
+
+    private static void printGraphNodeResults(
+            String title,
+            List<GraphNode> nodes) {
+
+        System.out.println();
+
+        System.out.println(title);
+
+        if (nodes == null
+                || nodes.isEmpty()) {
+
+            System.out.println(
+                    "  None"
+            );
+
+            return;
+        }
+
+        for (GraphNode node : nodes) {
+
+            System.out.println(
+                    "  -> " + node.getName()
+            );
+        }
+    }
 }
