@@ -123,37 +123,53 @@ public class ParserApplication {
                             graphNodeCollection
                     );
 
+                     KnowledgeGraphQuery query =
+                    new KnowledgeGraphQuery(graph);
+
+            /*
+             * Select representative nodes from actual graph relationships
+             * instead of simply taking the first class/method in the graph.
+             * This keeps the demo queries meaningful across repositories.
+             */
             GraphNode primaryClass =
-                    findFirstNodeOfType(
-                            graphNodes,
-                            "CLASS"
-                    );
+                    findNodeWithOutgoingEdge(
+                            query, graphNodes, "CLASS", EdgeType.DEPENDS_ON);
 
             GraphNode secondaryClass =
-                    findSecondNodeOfType(
-                            graphNodes,
-                            "CLASS",
-                            primaryClass
-                    );
+                    findNodeWithIncomingEdge(
+                            query, graphNodes, "CLASS", EdgeType.DEPENDS_ON, primaryClass);
+
+            if (primaryClass == null) {
+                primaryClass = findFirstNodeOfType(graphNodes, "CLASS");
+            }
+
+            if (secondaryClass == null) {
+                secondaryClass = findSecondNodeOfType(graphNodes, "CLASS", primaryClass);
+            }
 
             GraphNode primaryMethod =
-                    findFirstNodeOfType(
-                            graphNodes,
-                            "METHOD"
-                    );
+                    findNodeWithOutgoingEdge(
+                            query, graphNodes, "METHOD", EdgeType.CALLS);
 
             GraphNode secondaryMethod =
-                    findSecondNodeOfType(
-                            graphNodes,
-                            "METHOD",
-                            primaryMethod
-                    );
+                    findNodeWithIncomingEdge(
+                            query, graphNodes, "METHOD", EdgeType.CALLS, primaryMethod);
+
+            if (primaryMethod == null) {
+                primaryMethod = findFirstNodeOfType(graphNodes, "METHOD");
+            }
+
+            if (secondaryMethod == null) {
+                secondaryMethod = findSecondNodeOfType(graphNodes, "METHOD", primaryMethod);
+            }
 
             GraphNode interfaceNode =
-                    findFirstNodeOfType(
-                            graphNodes,
-                            "INTERFACE"
-                    );
+                    findNodeWithIncomingEdge(
+                            query, graphNodes, "INTERFACE", EdgeType.IMPLEMENTS, null);
+
+            if (interfaceNode == null) {
+                interfaceNode = findFirstNodeOfType(graphNodes, "INTERFACE");
+            }
 
             /*
              * =================================================
@@ -889,8 +905,6 @@ public class ParserApplication {
              * =================================================
              */
 
-            KnowledgeGraphQuery query =
-                    new KnowledgeGraphQuery(graph);
 
             System.out.println();
 
@@ -1273,6 +1287,59 @@ public class ParserApplication {
         }
 
         return null;
+    }
+
+    private static GraphNode findNodeWithOutgoingEdge(
+            KnowledgeGraphQuery query,
+            List<GraphNode> nodes,
+            String typeName,
+            EdgeType edgeType) {
+
+        for (GraphNode node : nodes) {
+            if (!hasType(node, typeName)) {
+                continue;
+            }
+
+            if (!query.getOutgoingEdges(node.getId(), edgeType).isEmpty()) {
+                return node;
+            }
+        }
+
+        return null;
+    }
+
+    private static GraphNode findNodeWithIncomingEdge(
+            KnowledgeGraphQuery query,
+            List<GraphNode> nodes,
+            String typeName,
+            EdgeType edgeType,
+            GraphNode excludedNode) {
+
+        for (GraphNode node : nodes) {
+            if (!hasType(node, typeName)) {
+                continue;
+            }
+
+            if (excludedNode != null
+                    && excludedNode.getId().equals(node.getId())) {
+                continue;
+            }
+
+            if (!query.getIncomingEdges(node.getId(), edgeType).isEmpty()) {
+                return node;
+            }
+        }
+
+        return null;
+    }
+
+    private static boolean hasType(
+            GraphNode node,
+            String typeName) {
+
+        return node != null
+                && node.getType() != null
+                && node.getType().name().equals(typeName);
     }
 
     /*

@@ -14,3 +14,4 @@ LAYERED|UNKNOWN|94.0|30.0||UserService --DEPENDS_ON--> UserRepository~UserContro
 UNKNOWN|LAYERED|30.0|94.0|UserService --DEPENDS_ON--> UserRepository~UserController --DEPENDS_ON--> UserService|||
 LAYERED|LAYERED|94.0|94.0||||
 LAYERED|LAYERED|94.0|94.0||||
+LAYERED|LAYERED|94.0|94.0||||
