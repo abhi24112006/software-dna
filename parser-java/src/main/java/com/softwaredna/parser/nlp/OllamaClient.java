@@ -15,22 +15,34 @@ import java.time.Duration;
  *
  * Default model:
  * llama3:latest
+ *
+ * The model can be configured using the
+ * SOFTWARE_DNA_OLLAMA_MODEL environment variable.
  */
 public class OllamaClient implements LLMClient {
 
-    private static final String DEFAULT_BASE_URL = "http://localhost:11434";
-    private static final String DEFAULT_MODEL = "llama3:latest";
+    private static final String DEFAULT_BASE_URL =
+            "http://localhost:11434";
+
+    private static final String DEFAULT_MODEL =
+            "llama3:latest";
+
+    private static final String MODEL_ENVIRONMENT_VARIABLE =
+            "SOFTWARE_DNA_OLLAMA_MODEL";
 
     private final HttpClient httpClient;
     private final String baseUrl;
     private final String model;
 
     /**
-     * Creates an Ollama client using the default local Ollama server
-     * and llama3:latest model.
+     * Creates an Ollama client using the default local
+     * Ollama server and configured/default model.
      */
     public OllamaClient() {
-        this(DEFAULT_BASE_URL, DEFAULT_MODEL);
+        this(
+                DEFAULT_BASE_URL,
+                resolveDefaultModel()
+        );
     }
 
     /**
@@ -48,21 +60,34 @@ public class OllamaClient implements LLMClient {
      * @param baseUrl Ollama server base URL
      * @param model Ollama model name
      */
-    public OllamaClient(String baseUrl, String model) {
+    public OllamaClient(
+            String baseUrl,
+            String model) {
+
         if (baseUrl == null || baseUrl.isBlank()) {
-            throw new IllegalArgumentException("baseUrl must not be blank");
+            throw new IllegalArgumentException(
+                    "baseUrl must not be blank"
+            );
         }
 
         if (model == null || model.isBlank()) {
-            throw new IllegalArgumentException("model must not be blank");
+            throw new IllegalArgumentException(
+                    "model must not be blank"
+            );
         }
 
-        this.baseUrl = removeTrailingSlash(baseUrl);
-        this.model = model;
+        this.baseUrl =
+                removeTrailingSlash(baseUrl);
 
-        this.httpClient = HttpClient.newBuilder()
-                .connectTimeout(Duration.ofSeconds(10))
-                .build();
+        this.model =
+                model;
+
+        this.httpClient =
+                HttpClient.newBuilder()
+                        .connectTimeout(
+                                Duration.ofSeconds(10)
+                        )
+                        .build();
     }
 
     /**
@@ -75,10 +100,13 @@ public class OllamaClient implements LLMClient {
     public String generate(String prompt) {
 
         if (prompt == null || prompt.isBlank()) {
-            throw new IllegalArgumentException("prompt must not be blank");
+            throw new IllegalArgumentException(
+                    "prompt must not be blank"
+            );
         }
 
-        String escapedPrompt = escapeJson(prompt);
+        String escapedPrompt =
+                escapeJson(prompt);
 
         String requestBody = """
                 {
@@ -91,18 +119,38 @@ public class OllamaClient implements LLMClient {
                 escapedPrompt
         );
 
-        HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create(baseUrl + "/api/generate"))
-                .timeout(Duration.ofMinutes(5))
-                .header("Content-Type", "application/json")
-                .POST(HttpRequest.BodyPublishers.ofString(requestBody))
-                .build();
+        HttpRequest request =
+                HttpRequest.newBuilder()
+                        .uri(
+                                URI.create(
+                                        baseUrl
+                                                + "/api/generate"
+                                )
+                        )
+                        .timeout(
+                                Duration.ofMinutes(5)
+                        )
+                        .header(
+                                "Content-Type",
+                                "application/json"
+                        )
+                        .POST(
+                                HttpRequest.BodyPublishers
+                                        .ofString(requestBody)
+                        )
+                        .build();
 
         try {
-            HttpResponse<String> response =
-                    httpClient.send(request, HttpResponse.BodyHandlers.ofString());
 
-            if (response.statusCode() < 200 || response.statusCode() >= 300) {
+            HttpResponse<String> response =
+                    httpClient.send(
+                            request,
+                            HttpResponse.BodyHandlers.ofString()
+                    );
+
+            if (response.statusCode() < 200
+                    || response.statusCode() >= 300) {
+
                 throw new RuntimeException(
                         "Ollama request failed with HTTP "
                                 + response.statusCode()
@@ -111,14 +159,25 @@ public class OllamaClient implements LLMClient {
                 );
             }
 
-            return extractResponse(response.body());
+            return extractResponse(
+                    response.body()
+            );
 
         } catch (IOException e) {
-            throw new RuntimeException("Failed to communicate with Ollama", e);
+
+            throw new RuntimeException(
+                    "Failed to communicate with Ollama",
+                    e
+            );
 
         } catch (InterruptedException e) {
+
             Thread.currentThread().interrupt();
-            throw new RuntimeException("Ollama request was interrupted", e);
+
+            throw new RuntimeException(
+                    "Ollama request was interrupted",
+                    e
+            );
         }
     }
 
@@ -127,48 +186,87 @@ public class OllamaClient implements LLMClient {
      */
     private String extractResponse(String json) {
 
-        String key = "\"response\"";
+        String key =
+                "\"response\"";
 
-        int keyIndex = json.indexOf(key);
+        int keyIndex =
+                json.indexOf(key);
 
         if (keyIndex == -1) {
+
             throw new RuntimeException(
-                    "Ollama response did not contain a 'response' field: " + json
+                    "Ollama response did not contain "
+                            + "a 'response' field: "
+                            + json
             );
         }
 
-        int colonIndex = json.indexOf(':', keyIndex + key.length());
+        int colonIndex =
+                json.indexOf(
+                        ':',
+                        keyIndex + key.length()
+                );
 
         if (colonIndex == -1) {
+
             throw new RuntimeException(
-                    "Invalid Ollama response: " + json
+                    "Invalid Ollama response: "
+                            + json
             );
         }
 
-        int startQuote = json.indexOf('"', colonIndex + 1);
+        int startQuote =
+                json.indexOf(
+                        '"',
+                        colonIndex + 1
+                );
 
         if (startQuote == -1) {
+
             throw new RuntimeException(
-                    "Invalid Ollama response: " + json
+                    "Invalid Ollama response: "
+                            + json
             );
         }
 
-        StringBuilder result = new StringBuilder();
+        StringBuilder result =
+                new StringBuilder();
+
         boolean escaped = false;
 
-        for (int i = startQuote + 1; i < json.length(); i++) {
+        for (
+                int i = startQuote + 1;
+                i < json.length();
+                i++
+        ) {
 
-            char current = json.charAt(i);
+            char current =
+                    json.charAt(i);
 
             if (escaped) {
+
                 switch (current) {
-                    case 'n' -> result.append('\n');
-                    case 'r' -> result.append('\r');
-                    case 't' -> result.append('\t');
-                    case '"' -> result.append('"');
-                    case '\\' -> result.append('\\');
-                    case '/' -> result.append('/');
-                    default -> result.append(current);
+
+                    case 'n' ->
+                            result.append('\n');
+
+                    case 'r' ->
+                            result.append('\r');
+
+                    case 't' ->
+                            result.append('\t');
+
+                    case '"' ->
+                            result.append('"');
+
+                    case '\\' ->
+                            result.append('\\');
+
+                    case '/' ->
+                            result.append('/');
+
+                    default ->
+                            result.append(current);
                 }
 
                 escaped = false;
@@ -176,11 +274,13 @@ public class OllamaClient implements LLMClient {
             }
 
             if (current == '\\') {
+
                 escaped = true;
                 continue;
             }
 
             if (current == '"') {
+
                 return result.toString();
             }
 
@@ -188,7 +288,8 @@ public class OllamaClient implements LLMClient {
         }
 
         throw new RuntimeException(
-                "Invalid Ollama response: unterminated response string"
+                "Invalid Ollama response: "
+                        + "unterminated response string"
         );
     }
 
@@ -205,10 +306,37 @@ public class OllamaClient implements LLMClient {
                 .replace("\t", "\\t");
     }
 
-    private String removeTrailingSlash(String value) {
+    /**
+     * Resolves the default model from the environment.
+     *
+     * If SOFTWARE_DNA_OLLAMA_MODEL is not set or is blank,
+     * llama3:latest is used.
+     */
+    private static String resolveDefaultModel() {
+
+        String configuredModel =
+                System.getenv(
+                        MODEL_ENVIRONMENT_VARIABLE
+                );
+
+        if (configuredModel == null
+                || configuredModel.isBlank()) {
+
+            return DEFAULT_MODEL;
+        }
+
+        return configuredModel.trim();
+    }
+
+    private String removeTrailingSlash(
+            String value) {
 
         if (value.endsWith("/")) {
-            return value.substring(0, value.length() - 1);
+
+            return value.substring(
+                    0,
+                    value.length() - 1
+            );
         }
 
         return value;

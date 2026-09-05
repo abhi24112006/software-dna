@@ -6,6 +6,7 @@ import java.nio.file.Path;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
 
 import com.softwaredna.knowledge.KnowledgeGraph;
@@ -16,7 +17,7 @@ import com.softwaredna.parser.RepositoryParser;
 class NaturalLanguageQueryEngineOllamaRepositoryTest {
 
     @Test
-    void shouldAnswerQuestionFromParsedRepositoryUsingOllama()
+    void shouldAnswerMultipleQuestionsFromParsedRepositoryUsingOllama()
             throws Exception {
 
         Path repositoryPath =
@@ -99,23 +100,121 @@ class NaturalLanguageQueryEngineOllamaRepositoryTest {
                 );
 
         /*
-         * Phase 4:
-         * Ask a question about the
-         * actual parsed repository.
+         * ---------------------------------------------------------
+         * QUESTION 1:
+         * What does UserController depend on?
+         * ---------------------------------------------------------
          */
-        String answer =
+
+        QueryResult dependencyResult =
+                engine.ask(
+                        "What does UserController depend on?"
+                );
+
+        assertNotNull(dependencyResult);
+        assertTrue(
+                dependencyResult.getNodes()
+                        .stream()
+                        .anyMatch(node ->
+                                node.getName()
+                                        .equals("UserService")
+                        )
+        );
+
+        String dependencyAnswer =
                 engine.askAndAnswerWithLLM(
                         "What does UserController depend on?"
                 );
 
-        assertNotNull(answer);
-        assertFalse(answer.isBlank());
+        assertNotNull(dependencyAnswer);
+        assertFalse(dependencyAnswer.isBlank());
+
+        /*
+         * ---------------------------------------------------------
+         * QUESTION 2:
+         * What methods does UserController call?
+         * ---------------------------------------------------------
+         */
+
+        QueryResult calleeResult =
+                engine.ask(
+                        "What methods does UserController call?"
+                );
+
+        assertNotNull(calleeResult);
+
+        assertTrue(
+                calleeResult.getNodes()
+                        .stream()
+                        .anyMatch(node ->
+                                node.getName()
+                                        .contains("UserService.createUser()")
+                        )
+        );
+
+        String calleeAnswer =
+                engine.askAndAnswerWithLLM(
+                        "What methods does UserController call?"
+                );
+
+        assertNotNull(calleeAnswer);
+        assertFalse(calleeAnswer.isBlank());
+
+        /*
+         * ---------------------------------------------------------
+         * QUESTION 3:
+         * Who calls UserService.createUser()?
+         * ---------------------------------------------------------
+         */
+
+        QueryResult callerResult =
+                engine.ask(
+                        "Who calls UserService.createUser()?"
+                );
+
+        assertNotNull(callerResult);
+
+        assertTrue(
+                callerResult.getNodes()
+                        .stream()
+                        .anyMatch(node ->
+                                node.getName()
+                                        .contains("UserController.createUser()")
+                        )
+        );
+
+        String callerAnswer =
+                engine.askAndAnswerWithLLM(
+                        "Who calls UserService.createUser()?"
+                );
+
+        assertNotNull(callerAnswer);
+        assertFalse(callerAnswer.isBlank());
+
+        /*
+         * ---------------------------------------------------------
+         * Print all real Ollama answers.
+         * ---------------------------------------------------------
+         */
 
         System.out.println();
         System.out.println("==========================================");
-        System.out.println("REAL REPOSITORY OLLAMA ANSWER");
+        System.out.println("REAL REPOSITORY OLLAMA ANSWERS");
         System.out.println("==========================================");
-        System.out.println(answer);
+
+        System.out.println();
+        System.out.println("Q1: What does UserController depend on?");
+        System.out.println("A1: " + dependencyAnswer);
+
+        System.out.println();
+        System.out.println("Q2: What methods does UserController call?");
+        System.out.println("A2: " + calleeAnswer);
+
+        System.out.println();
+        System.out.println("Q3: Who calls UserService.createUser()?");
+        System.out.println("A3: " + callerAnswer);
+
+        System.out.println();
         System.out.println("==========================================");
     }
 }

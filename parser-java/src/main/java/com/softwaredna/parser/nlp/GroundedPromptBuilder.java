@@ -37,7 +37,9 @@ public class GroundedPromptBuilder {
                 .append("present in the graph facts.\n");
         prompt.append("4. If the supplied facts are insufficient to answer ")
                 .append("the question, say so clearly.\n");
-        prompt.append("5. Give a concise and technically accurate answer.\n\n");
+        prompt.append("5. Give a concise and technically accurate answer.\n");
+        prompt.append("6. The QUERY INTENT defines how the target entity and ")
+                .append("graph-derived entities are related.\n\n");
 
         prompt.append("USER QUESTION:\n");
         prompt.append(context.getQuestion())
@@ -54,6 +56,15 @@ public class GroundedPromptBuilder {
                 .append(" [")
                 .append(entity.getType())
                 .append("]\n\n");
+
+        prompt.append("RELATIONSHIP INTERPRETATION:\n");
+
+        appendRelationshipInterpretation(
+                prompt,
+                context
+        );
+
+        prompt.append("\n");
 
         prompt.append("GRAPH-DERIVED FACTS:\n");
 
@@ -77,5 +88,64 @@ public class GroundedPromptBuilder {
         prompt.append("ANSWER:\n");
 
         return prompt.toString();
+    }
+
+    /**
+     * Explains how the query result nodes relate to the target entity
+     * according to the detected query intent.
+     */
+    private void appendRelationshipInterpretation(
+            StringBuilder prompt,
+            GroundedContext context) {
+
+        QueryIntent intent = context.getIntent();
+
+        switch (intent) {
+
+            case DEPENDENCIES:
+                prompt.append("- The target entity DEPENDS ON each entity ")
+                        .append("listed in GRAPH-DERIVED FACTS.\n");
+                break;
+
+            case DEPENDENTS:
+                prompt.append("- Each entity listed in GRAPH-DERIVED FACTS ")
+                        .append("DEPENDS ON the target entity.\n");
+                break;
+
+            case CALLEES:
+                prompt.append("- The target entity CALLS each method ")
+                        .append("listed in GRAPH-DERIVED FACTS.\n");
+                break;
+
+            case CALLERS:
+                prompt.append("- Each method listed in GRAPH-DERIVED FACTS ")
+                        .append("CALLS the target method.\n");
+                break;
+
+            case SUBCLASSES:
+                prompt.append("- Each class listed in GRAPH-DERIVED FACTS ")
+                        .append("EXTENDS the target class.\n");
+                break;
+
+            case SUPERCLASS:
+                prompt.append("- The target class EXTENDS the class listed ")
+                        .append("in GRAPH-DERIVED FACTS.\n");
+                break;
+
+            case IMPLEMENTED_INTERFACES:
+                prompt.append("- The target class IMPLEMENTS each interface ")
+                        .append("listed in GRAPH-DERIVED FACTS.\n");
+                break;
+
+            case IMPLEMENTATIONS:
+                prompt.append("- Each class listed in GRAPH-DERIVED FACTS ")
+                        .append("IMPLEMENTS the target interface.\n");
+                break;
+
+            default:
+                prompt.append("- Interpret the graph-derived entities only ")
+                        .append("according to the QUERY INTENT.\n");
+                break;
+        }
     }
 }
