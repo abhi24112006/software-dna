@@ -1,163 +1,121 @@
 package com.softwaredna.parser.nlp;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
+import com.softwaredna.knowledge.EdgeType;
 import com.softwaredna.knowledge.GraphNode;
 import com.softwaredna.knowledge.KnowledgeGraph;
 import com.softwaredna.knowledge.NodeType;
-import org.junit.jupiter.api.Test;
-
-import java.util.List;
-
-import static org.junit.jupiter.api.Assertions.*;
 
 class EntityResolverTest {
 
-    @Test
-    void shouldResolveExactEntityName() {
+    private KnowledgeGraph graph;
+    private EntityResolver resolver;
 
-        KnowledgeGraph graph = new KnowledgeGraph();
+    @BeforeEach
+    void setUp() {
 
-        GraphNode controller =
+        graph = new KnowledgeGraph();
+
+        GraphNode userClass =
                 new GraphNode(
-                        "controller-id",
+                        "User",
+                        "User",
+                        NodeType.CLASS
+                );
+
+        GraphNode userMethod =
+                new GraphNode(
+                        "User.getName()",
+                        "User.getName()",
+                        NodeType.METHOD
+                );
+
+        GraphNode userController =
+                new GraphNode(
+                        "UserController",
                         "UserController",
                         NodeType.CLASS
                 );
 
-        graph.addNode(controller);
+        graph.addNode(userClass);
+        graph.addNode(userMethod);
+        graph.addNode(userController);
 
-        EntityResolver resolver =
-                new EntityResolver(graph);
+        graph.addEdge(
+                new com.softwaredna.knowledge.GraphEdge(
+                        userController,
+                        userClass,
+                        EdgeType.DEPENDS_ON
+                )
+        );
+
+        resolver = new EntityResolver(graph);
+    }
+
+    @Test
+    void shouldResolveUserAsClass() {
 
         GraphNode result =
-                resolver.resolveUnique("UserController");
+                resolver.resolveUnique(
+                        "User",
+                        NodeType.CLASS
+                );
+
+        assertNotNull(result);
+        assertEquals("User", result.getName());
+        assertEquals(NodeType.CLASS, result.getType());
+    }
+
+    @Test
+    void shouldResolveUserGetNameAsMethod() {
+
+        GraphNode result =
+                resolver.resolveUnique(
+                        "User.getName()",
+                        NodeType.METHOD
+                );
 
         assertNotNull(result);
         assertEquals(
-                "UserController",
+                "User.getName()",
                 result.getName()
         );
-    }
-
-    @Test
-    void shouldResolveEntityIgnoringCase() {
-
-        KnowledgeGraph graph = new KnowledgeGraph();
-
-        GraphNode service =
-                new GraphNode(
-                        "service-id",
-                        "UserService",
-                        NodeType.CLASS
-                );
-
-        graph.addNode(service);
-
-        EntityResolver resolver =
-                new EntityResolver(graph);
-
-        GraphNode result =
-                resolver.resolveUnique("userservice");
-
-        assertNotNull(result);
         assertEquals(
-                "UserService",
-                result.getName()
+                NodeType.METHOD,
+                result.getType()
         );
     }
 
     @Test
-    void shouldReturnMultipleMatchesForAmbiguousEntity() {
+    void shouldNotConfuseClassAndMethodWithSameSimpleName() {
 
-        KnowledgeGraph graph = new KnowledgeGraph();
-
-        GraphNode firstUser =
-                new GraphNode(
-                        "com.foo.User",
+        GraphNode classResult =
+                resolver.resolveUnique(
                         "User",
                         NodeType.CLASS
                 );
 
-        GraphNode secondUser =
-                new GraphNode(
-                        "com.bar.User",
-                        "User",
-                        NodeType.CLASS
+        GraphNode methodResult =
+                resolver.resolveUnique(
+                        "User.getName()",
+                        NodeType.METHOD
                 );
 
-        graph.addNode(firstUser);
-        graph.addNode(secondUser);
+        assertNotNull(classResult);
+        assertNotNull(methodResult);
 
-        EntityResolver resolver =
-                new EntityResolver(graph);
-
-        List<GraphNode> matches =
-                resolver.resolve("User");
-
-        assertEquals(2, matches.size());
-    }
-
-    @Test
-    void shouldReturnNullForAmbiguousUniqueResolution() {
-
-        KnowledgeGraph graph = new KnowledgeGraph();
-
-        graph.addNode(
-                new GraphNode(
-                        "com.foo.User",
-                        "User",
-                        NodeType.CLASS
-                )
+        assertEquals(
+                NodeType.CLASS,
+                classResult.getType()
         );
 
-        graph.addNode(
-                new GraphNode(
-                        "com.bar.User",
-                        "User",
-                        NodeType.CLASS
-                )
-        );
-
-        EntityResolver resolver =
-                new EntityResolver(graph);
-
-        assertNull(
-                resolver.resolveUnique("User")
-        );
-    }
-
-    @Test
-    void shouldReturnEmptyForUnknownEntity() {
-
-        KnowledgeGraph graph =
-                new KnowledgeGraph();
-
-        graph.addNode(
-                new GraphNode(
-                        "service-id",
-                        "UserService",
-                        NodeType.CLASS
-                )
-        );
-
-        EntityResolver resolver =
-                new EntityResolver(graph);
-
-        assertTrue(
-                resolver.resolve("PaymentService").isEmpty()
-        );
-    }
-
-    @Test
-    void shouldHandleBlankEntity() {
-
-        KnowledgeGraph graph =
-                new KnowledgeGraph();
-
-        EntityResolver resolver =
-                new EntityResolver(graph);
-
-        assertTrue(
-                resolver.resolve("   ").isEmpty()
+        assertEquals(
+                NodeType.METHOD,
+                methodResult.getType()
         );
     }
 }

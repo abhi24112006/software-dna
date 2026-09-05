@@ -1,7 +1,12 @@
-STYLE=LAYERED
+STYLE=MICROSERVICES
 CONFIDENCE=0.8
-HEALTH=94.0
+HEALTH=73.78571428571428
 DEPENDENCIES
 UserController --DEPENDS_ON--> UserService
+UserController --DEPENDS_ON--> UserView
+OrderService --DEPENDS_ON--> OrderRepository
+PaymentService --DEPENDS_ON--> PaymentRepository
+UserService --DEPENDS_ON--> UserRepository
 UserService --DEPENDS_ON--> UserRepository
 ANOMALIES
+UserRepository --DEPENDS_ON--> UserService : Repository depends on Service. This reverses the expected layered dependency direction. [HIGH]

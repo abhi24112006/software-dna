@@ -6,6 +6,7 @@ import java.util.regex.Pattern;
 
 import com.softwaredna.knowledge.GraphNode;
 import com.softwaredna.knowledge.KnowledgeGraph;
+import com.softwaredna.knowledge.NodeType;
 import com.softwaredna.knowledge.query.KnowledgeGraphQuery;
 
 /**
@@ -28,10 +29,14 @@ import com.softwaredna.knowledge.query.KnowledgeGraphQuery;
  * QueryExecutor
  *        ↓
  * QueryResult
+ *        ↓
+ * AnswerGenerator
+ *        ↓
+ * Natural-language answer
  *
- * This is the deterministic NLP foundation.
- * An LLM can be added later for more flexible language
- * understanding and answer generation.
+ * The graph remains the source of truth.
+ * AnswerGenerator only converts graph-derived results
+ * into a human-readable answer.
  */
 public class NaturalLanguageQueryEngine {
 
@@ -39,8 +44,33 @@ public class NaturalLanguageQueryEngine {
     private final EntityResolver entityResolver;
     private final QueryPlanner queryPlanner;
     private final QueryExecutor queryExecutor;
+    private final AnswerGenerator answerGenerator;
+    private final LLMAnswerGenerator llmAnswerGenerator;
 
+    /**
+     * Creates a natural-language query engine using
+     * deterministic answer generation.
+     *
+     * @param graph Knowledge Graph to query
+     */
     public NaturalLanguageQueryEngine(KnowledgeGraph graph) {
+
+        this(graph, null);
+    }
+
+    /**
+     * Creates a natural-language query engine with optional
+     * LLM-backed answer generation.
+     *
+     * If the LLM client is null, deterministic answer generation
+     * remains the default.
+     *
+     * @param graph Knowledge Graph to query
+     * @param llmClient optional LLM client
+     */
+    public NaturalLanguageQueryEngine(
+            KnowledgeGraph graph,
+            LLMClient llmClient) {
 
         if (graph == null) {
             throw new IllegalArgumentException(
@@ -55,13 +85,22 @@ public class NaturalLanguageQueryEngine {
         this.entityResolver = new EntityResolver(graph);
         this.queryPlanner = new QueryPlanner();
         this.queryExecutor = new QueryExecutor(graphQuery);
+        this.answerGenerator = new AnswerGenerator();
+
+        if (llmClient != null) {
+            this.llmAnswerGenerator =
+                    new LLMAnswerGenerator(llmClient);
+        } else {
+            this.llmAnswerGenerator = null;
+        }
     }
 
     /**
-     * Processes a natural-language question.
+     * Processes a natural-language question and returns
+     * the structured graph-derived result.
      *
      * @param question natural-language question
-     * @return structured graph query result
+     * @return QueryResult containing graph-derived facts
      */
     public QueryResult ask(String question) {
 
@@ -71,9 +110,6 @@ public class NaturalLanguageQueryEngine {
             );
         }
 
-        /*
-         * Step 1: Detect intent.
-         */
         QueryIntent intent =
                 intentDetector.detectIntent(question);
 
@@ -84,14 +120,6 @@ public class NaturalLanguageQueryEngine {
             );
         }
 
-        /*
-         * Architecture queries currently do not require
-         * an entity, but QueryExecutor does not yet support
-         * architecture execution.
-         *
-         * Therefore this will be handled explicitly rather
-         * than attempting entity resolution.
-         */
         if (intent == QueryIntent.ARCHITECTURE) {
             throw new UnsupportedOperationException(
                     "Architecture queries are not yet supported " +
@@ -99,9 +127,6 @@ public class NaturalLanguageQueryEngine {
             );
         }
 
-        /*
-         * Step 2: Extract the entity mentioned in the question.
-         */
         String entityName =
                 extractEntityName(question, intent);
 
@@ -112,9 +137,6 @@ public class NaturalLanguageQueryEngine {
             );
         }
 
-        /*
-         * Step 3: Create the QueryRequest.
-         */
         QueryRequest request =
                 new QueryRequest(
                         question,
@@ -122,13 +144,23 @@ public class NaturalLanguageQueryEngine {
                         entityName
                 );
 
-        /*
-         * Step 4: Resolve the entity against the graph.
-         */
-        List<GraphNode> matches =
-                entityResolver.resolve(
-                        request.getEntityName()
-                );
+        NodeType expectedType =
+                getExpectedNodeType(intent);
+
+        List<GraphNode> matches;
+
+        if (expectedType != null) {
+            matches =
+                    entityResolver.resolve(
+                            request.getEntityName(),
+                            expectedType
+                    );
+        } else {
+            matches =
+                    entityResolver.resolve(
+                            request.getEntityName()
+                    );
+        }
 
         if (matches.isEmpty()) {
             throw new IllegalArgumentException(
@@ -147,18 +179,12 @@ public class NaturalLanguageQueryEngine {
 
         GraphNode entity = matches.get(0);
 
-        /*
-         * Step 5: Create the query plan.
-         */
         QueryPlan plan =
                 queryPlanner.plan(
                         request.getIntent(),
                         entity
                 );
 
-        /*
-         * Step 6: Execute the plan.
-         */
         return queryExecutor.execute(
                 plan,
                 request.getOriginalQuestion()
@@ -166,22 +192,97 @@ public class NaturalLanguageQueryEngine {
     }
 
     /**
-     * Extracts the graph entity from the natural-language
-     * question using deterministic patterns.
+     * Determines the expected graph node type for a query intent.
      *
-     * Examples:
+     * @param intent detected query intent
+     * @return expected NodeType, or null when no specific type is required
+     */
+    private NodeType getExpectedNodeType(QueryIntent intent) {
+
+        switch (intent) {
+
+            case DEPENDENCIES:
+                return NodeType.CLASS;
+
+            case DEPENDENTS:
+                return NodeType.CLASS;
+
+            case CALLEES:
+                return NodeType.CLASS;
+
+            case CALLERS:
+                return NodeType.METHOD;
+
+            case SUBCLASSES:
+                return NodeType.CLASS;
+
+            case SUPERCLASS:
+                return NodeType.CLASS;
+
+            case IMPLEMENTED_INTERFACES:
+                return NodeType.CLASS;
+
+            case IMPLEMENTATIONS:
+                return NodeType.INTERFACE;
+
+            case IMPACT:
+                return NodeType.CLASS;
+
+            case REACHABILITY:
+                return NodeType.CLASS;
+
+            default:
+                return null;
+        }
+    }
+
+    /**
+     * Generates a deterministic natural-language answer.
      *
-     * "What does UserController depend on?"
-     *     → UserController
+     * This method preserves the original answer-generation behavior.
      *
-     * "Who depends on UserService?"
-     *     → UserService
+     * @param question natural-language question
+     * @return deterministic graph-based answer
+     */
+    public String askAndAnswer(String question) {
+
+        QueryResult result = ask(question);
+
+        return answerGenerator.generate(result);
+    }
+
+    /**
+     * Generates an LLM-backed answer using only graph-derived
+     * context.
      *
-     * "What methods does UserService call?"
-     *     → UserService
+     * The deterministic AnswerGenerator remains available through
+     * askAndAnswer(String).
      *
-     * "Who calls UserRepository.save?"
-     *     → UserRepository.save
+     * If the configured LLM fails, LLMAnswerGenerator falls back
+     * to the deterministic AnswerGenerator.
+     *
+     * @param question natural-language question
+     * @return grounded LLM-generated answer
+     */
+    public String askAndAnswerWithLLM(String question) {
+
+        if (llmAnswerGenerator == null) {
+            throw new IllegalStateException(
+                    "No LLMClient has been configured."
+            );
+        }
+
+        QueryResult result = ask(question);
+
+        return llmAnswerGenerator.generate(result);
+    }
+
+    /**
+     * Extracts the entity referenced by the question.
+     *
+     * @param question natural-language question
+     * @param intent detected query intent
+     * @return extracted entity name, or null if it cannot be extracted
      */
     private String extractEntityName(
             String question,
@@ -251,7 +352,11 @@ public class NaturalLanguageQueryEngine {
     }
 
     /**
-     * Extracts an entity using a case-insensitive regex.
+     * Extracts an entity using a regular expression.
+     *
+     * @param question question text
+     * @param regex extraction pattern
+     * @return extracted entity name
      */
     private String extractUsingPattern(
             String question,
@@ -276,11 +381,10 @@ public class NaturalLanguageQueryEngine {
     }
 
     /**
-     * Extracts an entity from impact questions.
+     * Extracts the entity from an impact question.
      *
-     * Examples:
-     * "What would be affected if UserRepository changes?"
-     * "What breaks if UserService changes?"
+     * @param question question text
+     * @return entity name
      */
     private String extractImpactEntity(String question) {
 
@@ -300,10 +404,10 @@ public class NaturalLanguageQueryEngine {
     }
 
     /**
-     * Extracts an entity from reachability questions.
+     * Extracts the starting entity from a reachability question.
      *
-     * Example:
-     * "What is reachable from UserController?"
+     * @param question question text
+     * @return entity name
      */
     private String extractReachabilityEntity(String question) {
 

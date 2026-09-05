@@ -1,25 +1,29 @@
 package com.softwaredna.knowledge.query;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import com.softwaredna.knowledge.EdgeType;
 import com.softwaredna.knowledge.GraphEdge;
 import com.softwaredna.knowledge.GraphNode;
 import com.softwaredna.knowledge.KnowledgeGraph;
-
-import java.util.ArrayList;
-import java.util.List;
+import com.softwaredna.knowledge.NodeType;
 
 public class KnowledgeGraphQuery {
 
     private final KnowledgeGraph graph;
 
-
     public KnowledgeGraphQuery(
             KnowledgeGraph graph) {
 
+        if (graph == null) {
+            throw new IllegalArgumentException(
+                    "KnowledgeGraph cannot be null."
+            );
+        }
+
         this.graph = graph;
-
     }
-
 
     /*
      * -------------------------------------------------------
@@ -31,9 +35,7 @@ public class KnowledgeGraphQuery {
             String nodeId) {
 
         return graph.getNode(nodeId);
-
     }
-
 
     /*
      * -------------------------------------------------------
@@ -47,23 +49,18 @@ public class KnowledgeGraphQuery {
         List<GraphEdge> result =
                 new ArrayList<>();
 
-        for (GraphEdge edge :
-                graph.getEdges()) {
+        for (GraphEdge edge : graph.getEdges()) {
 
             if (edge.getSource()
                     .getId()
                     .equals(nodeId)) {
 
                 result.add(edge);
-
             }
-
         }
 
         return result;
-
     }
-
 
     /*
      * -------------------------------------------------------
@@ -77,23 +74,18 @@ public class KnowledgeGraphQuery {
         List<GraphEdge> result =
                 new ArrayList<>();
 
-        for (GraphEdge edge :
-                graph.getEdges()) {
+        for (GraphEdge edge : graph.getEdges()) {
 
             if (edge.getTarget()
                     .getId()
                     .equals(nodeId)) {
 
                 result.add(edge);
-
             }
-
         }
 
         return result;
-
     }
-
 
     /*
      * -------------------------------------------------------
@@ -108,8 +100,7 @@ public class KnowledgeGraphQuery {
         List<GraphEdge> result =
                 new ArrayList<>();
 
-        for (GraphEdge edge :
-                graph.getEdges()) {
+        for (GraphEdge edge : graph.getEdges()) {
 
             if (edge.getSource()
                     .getId()
@@ -117,15 +108,11 @@ public class KnowledgeGraphQuery {
                     && edge.getType() == type) {
 
                 result.add(edge);
-
             }
-
         }
 
         return result;
-
     }
-
 
     /*
      * -------------------------------------------------------
@@ -140,8 +127,7 @@ public class KnowledgeGraphQuery {
         List<GraphEdge> result =
                 new ArrayList<>();
 
-        for (GraphEdge edge :
-                graph.getEdges()) {
+        for (GraphEdge edge : graph.getEdges()) {
 
             if (edge.getTarget()
                     .getId()
@@ -149,15 +135,11 @@ public class KnowledgeGraphQuery {
                     && edge.getType() == type) {
 
                 result.add(edge);
-
             }
-
         }
 
         return result;
-
     }
-
 
     /*
      * -------------------------------------------------------
@@ -173,20 +155,13 @@ public class KnowledgeGraphQuery {
                 new ArrayList<>();
 
         for (GraphEdge edge :
-                getOutgoingEdges(
-                        nodeId,
-                        type)) {
+                getOutgoingEdges(nodeId, type)) {
 
-            result.add(
-                    edge.getTarget()
-            );
-
+            result.add(edge.getTarget());
         }
 
         return result;
-
     }
-
 
     /*
      * -------------------------------------------------------
@@ -202,20 +177,13 @@ public class KnowledgeGraphQuery {
                 new ArrayList<>();
 
         for (GraphEdge edge :
-                getIncomingEdges(
-                        nodeId,
-                        type)) {
+                getIncomingEdges(nodeId, type)) {
 
-            result.add(
-                    edge.getSource()
-            );
-
+            result.add(edge.getSource());
         }
 
         return result;
-
     }
-
 
     /*
      * =======================================================
@@ -223,18 +191,9 @@ public class KnowledgeGraphQuery {
      * =======================================================
      */
 
-
     /*
      * -------------------------------------------------------
      * Dependencies
-     *
-     * Example:
-     *
-     * StudentService
-     *       |
-     *       | DEPENDS_ON
-     *       v
-     *    Student
      * -------------------------------------------------------
      */
 
@@ -245,27 +204,11 @@ public class KnowledgeGraphQuery {
                 nodeId,
                 EdgeType.DEPENDS_ON
         );
-
     }
-
 
     /*
      * -------------------------------------------------------
      * Dependents
-     *
-     * Reverse of DEPENDS_ON.
-     *
-     * Example:
-     *
-     * StudentService
-     *       |
-     *       | DEPENDS_ON
-     *       v
-     *    Student
-     *
-     * getDependents(Student)
-     *
-     * -> StudentService
      * -------------------------------------------------------
      */
 
@@ -276,21 +219,11 @@ public class KnowledgeGraphQuery {
                 nodeId,
                 EdgeType.DEPENDS_ON
         );
-
     }
-
 
     /*
      * -------------------------------------------------------
      * Methods Called By A Method
-     *
-     * Example:
-     *
-     * Student.study()
-     *       |
-     *       | CALLS
-     *       v
-     * Teacher.teach()
      * -------------------------------------------------------
      */
 
@@ -301,27 +234,11 @@ public class KnowledgeGraphQuery {
                 methodId,
                 EdgeType.CALLS
         );
-
     }
-
 
     /*
      * -------------------------------------------------------
      * Methods Calling A Method
-     *
-     * Reverse of CALLS.
-     *
-     * Example:
-     *
-     * Student.study()
-     *       |
-     *       | CALLS
-     *       v
-     * Teacher.teach()
-     *
-     * getCallers(Teacher.teach())
-     *
-     * -> Student.study()
      * -------------------------------------------------------
      */
 
@@ -332,21 +249,166 @@ public class KnowledgeGraphQuery {
                 methodId,
                 EdgeType.CALLS
         );
-
     }
 
+    /*
+     * -------------------------------------------------------
+     * Methods Called By A Class
+     *
+     * Traversal:
+     *
+     * Class
+     *   |
+     *   | HAS_METHOD
+     *   v
+     * Method
+     *   |
+     *   | CALLS
+     *   v
+     * Called Method
+     *
+     * Example:
+     *
+     * UserController
+     *       |
+     *       | HAS_METHOD
+     *       v
+     * UserController.create()
+     *       |
+     *       | CALLS
+     *       v
+     * UserService.create_user()
+     * -------------------------------------------------------
+     */
+
+    public List<GraphNode> getClassCallees(
+            String classId) {
+
+        List<GraphNode> result =
+                new ArrayList<>();
+
+        List<GraphNode> methods =
+                getOutgoingNodes(
+                        classId,
+                        EdgeType.HAS_METHOD
+                );
+
+        for (GraphNode method : methods) {
+
+            List<GraphNode> callees =
+                    getCallees(
+                            method.getId()
+                    );
+
+            for (GraphNode callee : callees) {
+
+                if (!result.contains(callee)) {
+                    result.add(callee);
+                }
+            }
+        }
+
+        return result;
+    }
+
+    /*
+     * -------------------------------------------------------
+     * Classes Calling A Class
+     *
+     * Traversal:
+     *
+     * Calling Class
+     *       |
+     *       | HAS_METHOD
+     *       v
+     * Calling Method
+     *       |
+     *       | CALLS
+     *       v
+     * Target Method
+     *       ^
+     *       |
+     *       | HAS_METHOD
+     *       |
+     * Target Class
+     * -------------------------------------------------------
+     */
+
+    public List<GraphNode> getClassCallers(
+            String classId) {
+
+        List<GraphNode> result =
+                new ArrayList<>();
+
+        List<GraphNode> targetMethods =
+                getOutgoingNodes(
+                        classId,
+                        EdgeType.HAS_METHOD
+                );
+
+        for (GraphNode targetMethod : targetMethods) {
+
+            List<GraphNode> callers =
+                    getCallers(
+                            targetMethod.getId()
+                    );
+
+            for (GraphNode callerMethod : callers) {
+
+                GraphNode callerClass =
+                        findContainingClass(
+                                callerMethod
+                        );
+
+                if (callerClass != null
+                        && !result.contains(callerClass)) {
+
+                    result.add(callerClass);
+                }
+            }
+        }
+
+        return result;
+    }
+
+    /*
+     * -------------------------------------------------------
+     * Find Containing Class
+     * -------------------------------------------------------
+     */
+
+    private GraphNode findContainingClass(
+            GraphNode method) {
+
+        if (method == null) {
+            return null;
+        }
+
+        for (GraphEdge edge : graph.getEdges()) {
+
+            if (edge.getType() != EdgeType.HAS_METHOD) {
+                continue;
+            }
+
+            if (!edge.getTarget()
+                    .getId()
+                    .equals(method.getId())) {
+                continue;
+            }
+
+            GraphNode source = edge.getSource();
+
+            if (source.getType() == NodeType.CLASS) {
+                return source;
+            }
+        }
+
+        return null;
+    }
 
     /*
      * -------------------------------------------------------
      * Subclasses
-     *
-     * Example:
-     *
-     * Mammal ---- EXTENDS ----> Animal
-     *
-     * getSubclasses(Animal)
-     *
-     * -> Mammal
      * -------------------------------------------------------
      */
 
@@ -357,21 +419,11 @@ public class KnowledgeGraphQuery {
                 classId,
                 EdgeType.EXTENDS
         );
-
     }
-
 
     /*
      * -------------------------------------------------------
      * Superclass
-     *
-     * Example:
-     *
-     * Mammal ---- EXTENDS ----> Animal
-     *
-     * getSuperclass(Mammal)
-     *
-     * -> Animal
      * -------------------------------------------------------
      */
 
@@ -382,21 +434,11 @@ public class KnowledgeGraphQuery {
                 classId,
                 EdgeType.EXTENDS
         );
-
     }
-
 
     /*
      * -------------------------------------------------------
      * Implemented Interfaces
-     *
-     * Example:
-     *
-     * Report ---- IMPLEMENTS ----> Printable
-     *
-     * getImplementedInterfaces(Report)
-     *
-     * -> Printable
      * -------------------------------------------------------
      */
 
@@ -407,23 +449,11 @@ public class KnowledgeGraphQuery {
                 classId,
                 EdgeType.IMPLEMENTS
         );
-
     }
-
 
     /*
      * -------------------------------------------------------
      * Implementing Classes
-     *
-     * Reverse of IMPLEMENTS.
-     *
-     * Example:
-     *
-     * Report ---- IMPLEMENTS ----> Printable
-     *
-     * getImplementations(Printable)
-     *
-     * -> Report
      * -------------------------------------------------------
      */
 
@@ -434,7 +464,5 @@ public class KnowledgeGraphQuery {
                 interfaceId,
                 EdgeType.IMPLEMENTS
         );
-
     }
-
 }

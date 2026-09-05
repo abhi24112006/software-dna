@@ -42,6 +42,7 @@ import com.softwaredna.neo4j.Neo4jService;
 import com.softwaredna.parser.language.LanguageParser;
 import com.softwaredna.parser.language.ParserFactory;
 import com.softwaredna.parser.nlp.NaturalLanguageQueryEngine;
+import com.softwaredna.parser.nlp.QueryResult;
 import com.softwaredna.printer.RepositoryPrinter;
 
 public class ParserApplication {
@@ -57,7 +58,7 @@ public class ParserApplication {
              */
 
             String repositoryPath =
-                    "../sample_projects/python_test";
+                    "../sample_projects/java_test";
 
             LanguageDetector languageDetector =
                     new LanguageDetector();
@@ -1282,48 +1283,27 @@ public class ParserApplication {
  * Runs a natural-language question against the
  * Knowledge Graph and prints the resulting graph facts.
  */
+
 private static void runNaturalLanguageQuery(
         NaturalLanguageQueryEngine engine,
         String question) {
 
     System.out.println();
-
-    System.out.println(
-            "Question: " + question
-    );
+    System.out.println("Question: " + question);
 
     try {
+        QueryResult result = engine.ask(question);
 
-        com.softwaredna.parser.nlp.QueryResult result =
-                engine.ask(question);
-
-        System.out.println(
-                "Intent: " + result.getIntent()
-        );
-
+        System.out.println("Intent: " + result.getIntent());
         System.out.println(
                 "Entity: " + result.getEntity().getName()
         );
 
-        System.out.println(
-                "Answer:"
-        );
+        String answer =
+                engine.askAndAnswer(question);
 
-        if (result.getNodes().isEmpty()) {
-
-            System.out.println(
-                    "  None"
-            );
-
-        } else {
-
-            for (GraphNode node : result.getNodes()) {
-
-                System.out.println(
-                        "  -> " + node.getName()
-                );
-            }
-        }
+        System.out.println("Answer:");
+        System.out.println("  " + answer);
 
     } catch (Exception e) {
 
