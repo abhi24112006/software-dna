@@ -193,6 +193,60 @@ class NaturalLanguageQueryEngineOllamaRepositoryTest {
 
         /*
          * ---------------------------------------------------------
+         * QUESTION 4:
+         * What would be impacted if UserService changes?
+         * ---------------------------------------------------------
+         */
+
+        QueryResult impactResult =
+                engine.ask(
+                        "What would be impacted if UserService changes?"
+                );
+
+        assertNotNull(impactResult);
+
+        assertEquals(
+                QueryIntent.IMPACT,
+                impactResult.getIntent()
+        );
+
+        assertTrue(
+                impactResult.getNodes()
+                        .stream()
+                        .anyMatch(node ->
+                                node.getName()
+                                        .equals("UserController")
+                        )
+        );
+
+        assertTrue(
+                impactResult.getNodes()
+                        .stream()
+                        .anyMatch(node ->
+                                node.getName()
+                                        .contains("UserService.createUser()")
+                        )
+        );
+
+        assertTrue(
+                impactResult.getNodes()
+                        .stream()
+                        .anyMatch(node ->
+                                node.getName()
+                                        .contains("UserController.createUser()")
+                        )
+        );
+
+        String impactAnswer =
+                engine.askAndAnswerWithLLM(
+                        "What would be impacted if UserService changes?"
+                );
+
+        assertNotNull(impactAnswer);
+        assertFalse(impactAnswer.isBlank());
+
+        /*
+         * ---------------------------------------------------------
          * Print all real Ollama answers.
          * ---------------------------------------------------------
          */
@@ -213,6 +267,12 @@ class NaturalLanguageQueryEngineOllamaRepositoryTest {
         System.out.println();
         System.out.println("Q3: Who calls UserService.createUser()?");
         System.out.println("A3: " + callerAnswer);
+
+        System.out.println();
+        System.out.println(
+                "Q4: What would be impacted if UserService changes?"
+        );
+        System.out.println("A4: " + impactAnswer);
 
         System.out.println();
         System.out.println("==========================================");

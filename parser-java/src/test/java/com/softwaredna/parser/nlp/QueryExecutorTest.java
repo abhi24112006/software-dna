@@ -146,26 +146,85 @@ class QueryExecutorTest {
     }
 
     @Test
+    void shouldExecuteImpactQuery() {
+
+        GraphNode serviceMethod = new GraphNode(
+                "method:UserService.createUser",
+                "UserService.createUser()",
+                NodeType.METHOD
+        );
+
+        GraphNode controllerMethod = new GraphNode(
+                "method:UserController.createUser",
+                "UserController.createUser()",
+                NodeType.METHOD
+        );
+
+        graph.addNode(serviceMethod);
+        graph.addNode(controllerMethod);
+
+        /*
+         * UserService contains createUser().
+         */
+        graph.addEdge(
+                new GraphEdge(
+                        service,
+                        serviceMethod,
+                        EdgeType.HAS_METHOD
+                )
+        );
+
+        /*
+         * UserController.createUser() calls
+         * UserService.createUser().
+         */
+        graph.addEdge(
+                new GraphEdge(
+                        controllerMethod,
+                        serviceMethod,
+                        EdgeType.CALLS
+                )
+        );
+
+        QueryPlan plan = new QueryPlan(
+                QueryIntent.IMPACT,
+                service,
+                QueryOperation.GET_IMPACT
+        );
+
+        QueryResult result = executor.execute(plan);
+
+        assertEquals(
+                QueryIntent.IMPACT,
+                result.getIntent()
+        );
+
+        assertEquals(
+                service,
+                result.getEntity()
+        );
+
+        assertTrue(result.hasResults());
+
+        assertTrue(
+                result.getNodes().contains(controller)
+        );
+
+        assertTrue(
+                result.getNodes().contains(serviceMethod)
+        );
+
+        assertTrue(
+                result.getNodes().contains(controllerMethod)
+        );
+    }
+
+    @Test
     void shouldRejectNullPlan() {
 
         assertThrows(
                 IllegalArgumentException.class,
                 () -> executor.execute(null)
-        );
-    }
-
-    @Test
-    void shouldRejectUnsupportedOperation() {
-
-        QueryPlan plan = new QueryPlan(
-                QueryIntent.IMPACT,
-                controller,
-                QueryOperation.GET_IMPACT
-        );
-
-        assertThrows(
-                UnsupportedOperationException.class,
-                () -> executor.execute(plan)
         );
     }
 }

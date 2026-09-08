@@ -4,6 +4,7 @@ import java.util.List;
 
 import com.softwaredna.knowledge.GraphNode;
 import com.softwaredna.knowledge.NodeType;
+import com.softwaredna.knowledge.query.ImpactAnalyzer;
 import com.softwaredna.knowledge.query.KnowledgeGraphQuery;
 
 /**
@@ -13,6 +14,7 @@ import com.softwaredna.knowledge.query.KnowledgeGraphQuery;
 public class QueryExecutor {
 
     private final KnowledgeGraphQuery graphQuery;
+    private final ImpactAnalyzer impactAnalyzer;
 
     public QueryExecutor(KnowledgeGraphQuery graphQuery) {
 
@@ -23,6 +25,8 @@ public class QueryExecutor {
         }
 
         this.graphQuery = graphQuery;
+        this.impactAnalyzer =
+                new ImpactAnalyzer(graphQuery);
     }
 
     public QueryResult execute(
@@ -136,6 +140,14 @@ public class QueryExecutor {
                 break;
 
             case GET_IMPACT:
+
+                nodes =
+                        impactAnalyzer.getContainmentAwareImpact(
+                                entityId
+                        );
+
+                break;
+
             case GET_REACHABILITY:
             case GET_ARCHITECTURE:
             case NONE:
