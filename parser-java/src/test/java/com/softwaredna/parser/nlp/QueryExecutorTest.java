@@ -220,6 +220,56 @@ class QueryExecutorTest {
     }
 
     @Test
+    void shouldExecuteReachabilityQuery() {
+
+        QueryPlan plan = new QueryPlan(
+                QueryIntent.REACHABILITY,
+                controller,
+                QueryOperation.GET_REACHABILITY
+        );
+
+        QueryResult result = executor.execute(plan);
+
+        assertEquals(
+                QueryIntent.REACHABILITY,
+                result.getIntent()
+        );
+
+        assertEquals(
+                controller,
+                result.getEntity()
+        );
+
+        assertTrue(result.hasResults());
+
+        assertEquals(2, result.getResultCount());
+
+        assertTrue(
+                result.getNodes().contains(service)
+        );
+
+        assertTrue(
+                result.getNodes().contains(repository)
+        );
+    }
+
+    @Test
+    void shouldReturnEmptyWhenNoReachableNodesExist() {
+
+        QueryPlan plan = new QueryPlan(
+                QueryIntent.REACHABILITY,
+                repository,
+                QueryOperation.GET_REACHABILITY
+        );
+
+        QueryResult result = executor.execute(plan);
+
+        assertFalse(result.hasResults());
+        assertEquals(0, result.getResultCount());
+        assertTrue(result.getNodes().isEmpty());
+    }
+
+    @Test
     void shouldRejectNullPlan() {
 
         assertThrows(

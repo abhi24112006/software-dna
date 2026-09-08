@@ -4,6 +4,9 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import com.softwaredna.analysis.architecture.ArchitectureAnalyzer;
+import com.softwaredna.analysis.architecture.ArchitectureReport;
+import com.softwaredna.graph.GraphRepository;
 import com.softwaredna.knowledge.GraphNode;
 import com.softwaredna.knowledge.KnowledgeGraph;
 import com.softwaredna.knowledge.NodeType;
@@ -37,6 +40,9 @@ import com.softwaredna.knowledge.query.KnowledgeGraphQuery;
  * The graph remains the source of truth.
  * AnswerGenerator only converts graph-derived results
  * into a human-readable answer.
+ *
+ * Architecture analysis is optionally connected through
+ * GraphRepository and ArchitectureAnalyzer.
  */
 public class NaturalLanguageQueryEngine {
 
@@ -47,6 +53,15 @@ public class NaturalLanguageQueryEngine {
     private final AnswerGenerator answerGenerator;
     private final LLMAnswerGenerator llmAnswerGenerator;
 
+    /*
+     * Optional architecture-analysis dependencies.
+     *
+     * These are null when the engine is created using
+     * the original constructors.
+     */
+    private final GraphRepository graphRepository;
+    private final ArchitectureAnalyzer architectureAnalyzer;
+
     /**
      * Creates a natural-language query engine using
      * deterministic answer generation.
@@ -54,8 +69,7 @@ public class NaturalLanguageQueryEngine {
      * @param graph Knowledge Graph to query
      */
     public NaturalLanguageQueryEngine(KnowledgeGraph graph) {
-
-        this(graph, null);
+        this(graph, null, null);
     }
 
     /**
@@ -70,6 +84,36 @@ public class NaturalLanguageQueryEngine {
      */
     public NaturalLanguageQueryEngine(
             KnowledgeGraph graph,
+            LLMClient llmClient) {
+
+        this(graph, null, llmClient);
+    }
+
+    /**
+     * Creates a natural-language query engine with optional
+     * architecture-analysis support.
+     *
+     * @param graph Knowledge Graph to query
+     * @param graphRepository repository used for architecture analysis
+     */
+    public NaturalLanguageQueryEngine(
+            KnowledgeGraph graph,
+            GraphRepository graphRepository) {
+
+        this(graph, graphRepository, null);
+    }
+
+    /**
+     * Creates a natural-language query engine with optional
+     * architecture-analysis and LLM support.
+     *
+     * @param graph Knowledge Graph to query
+     * @param graphRepository repository used for architecture analysis
+     * @param llmClient optional LLM client
+     */
+    public NaturalLanguageQueryEngine(
+            KnowledgeGraph graph,
+            GraphRepository graphRepository,
             LLMClient llmClient) {
 
         if (graph == null) {
@@ -87,6 +131,15 @@ public class NaturalLanguageQueryEngine {
         this.queryExecutor = new QueryExecutor(graphQuery);
         this.answerGenerator = new AnswerGenerator();
 
+        this.graphRepository = graphRepository;
+
+        if (graphRepository != null) {
+            this.architectureAnalyzer =
+                    new ArchitectureAnalyzer(graphRepository);
+        } else {
+            this.architectureAnalyzer = null;
+        }
+
         if (llmClient != null) {
             this.llmAnswerGenerator =
                     new LLMAnswerGenerator(llmClient);
@@ -98,6 +151,10 @@ public class NaturalLanguageQueryEngine {
     /**
      * Processes a natural-language question and returns
      * the structured graph-derived result.
+     *
+     * Architecture queries are handled separately through
+     * askArchitecture(String), because architecture analysis
+     * produces an ArchitectureReport rather than a QueryResult.
      *
      * @param question natural-language question
      * @return QueryResult containing graph-derived facts
@@ -122,8 +179,8 @@ public class NaturalLanguageQueryEngine {
 
         if (intent == QueryIntent.ARCHITECTURE) {
             throw new UnsupportedOperationException(
-                    "Architecture queries are not yet supported " +
-                    "by the natural-language query executor."
+                    "Architecture queries return an ArchitectureReport. " +
+                    "Use askArchitecture(String) instead."
             );
         }
 
@@ -192,6 +249,63 @@ public class NaturalLanguageQueryEngine {
     }
 
     /**
+     * Analyzes the architecture of the repository.
+     *
+     * The architecture analyzer uses the GraphRepository as
+     * its source of graph information and analyzes all class nodes.
+     *
+     * @return architecture analysis report
+     * @throws IllegalStateException if architecture analysis was
+     *                               not configured
+     */
+    public ArchitectureReport analyzeArchitecture() {
+
+        if (architectureAnalyzer == null ||
+                graphRepository == null) {
+
+            throw new IllegalStateException(
+                    "Architecture analysis is not configured. " +
+                    "Create the engine with a GraphRepository."
+            );
+        }
+
+        List<String> classNodes =
+                graphRepository.getClassNodes();
+
+        return architectureAnalyzer.analyze(classNodes);
+    }
+
+    /**
+     * Processes an architecture-related natural-language question
+     * and returns the architecture analysis report.
+     *
+     * The question must be detected as an ARCHITECTURE intent.
+     *
+     * @param question architecture-related natural-language question
+     * @return ArchitectureReport containing the recovered architecture
+     */
+    public ArchitectureReport askArchitecture(String question) {
+
+        if (question == null || question.isBlank()) {
+            throw new IllegalArgumentException(
+                    "Question cannot be null or blank."
+            );
+        }
+
+        QueryIntent intent =
+                intentDetector.detectIntent(question);
+
+        if (intent != QueryIntent.ARCHITECTURE) {
+            throw new IllegalArgumentException(
+                    "Question is not an architecture query: " +
+                    question
+            );
+        }
+
+        return analyzeArchitecture();
+    }
+
+    /**
      * Determines the expected graph node type for a query intent.
      *
      * @param intent detected query intent
@@ -241,7 +355,7 @@ public class NaturalLanguageQueryEngine {
      *
      * This method preserves the original answer-generation behavior.
      *
-     * @param question natural-language question
+     * @param question question text
      * @return deterministic graph-based answer
      */
     public String askAndAnswer(String question) {
@@ -261,7 +375,7 @@ public class NaturalLanguageQueryEngine {
      * If the configured LLM fails, LLMAnswerGenerator falls back
      * to the deterministic AnswerGenerator.
      *
-     * @param question natural-language question
+     * @param question question text
      * @return grounded LLM-generated answer
      */
     public String askAndAnswerWithLLM(String question) {
@@ -280,7 +394,7 @@ public class NaturalLanguageQueryEngine {
     /**
      * Extracts the entity referenced by the question.
      *
-     * @param question natural-language question
+     * @param question question text
      * @param intent detected query intent
      * @return extracted entity name, or null if it cannot be extracted
      */
@@ -406,14 +520,48 @@ public class NaturalLanguageQueryEngine {
     /**
      * Extracts the starting entity from a reachability question.
      *
+     * Supports forms such as:
+     *
+     * "What is reachable from UserController?"
+     * "What can be reached from UserController?"
+     * "What can UserController reach?"
+     * "What does UserController reach?"
+     *
      * @param question question text
      * @return entity name
      */
     private String extractReachabilityEntity(String question) {
 
-        return extractUsingPattern(
+        String result = extractUsingPattern(
                 question,
                 "reachable from (.+)"
+        );
+
+        if (result != null) {
+            return result;
+        }
+
+        result = extractUsingPattern(
+                question,
+                "what can be reached from (.+)"
+        );
+
+        if (result != null) {
+            return result;
+        }
+
+        result = extractUsingPattern(
+                question,
+                "what can (.+?) reach"
+        );
+
+        if (result != null) {
+            return result;
+        }
+
+        return extractUsingPattern(
+                question,
+                "what does (.+?) reach"
         );
     }
 }

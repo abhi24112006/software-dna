@@ -55,14 +55,16 @@ public class QueryIntentDetector {
         }
 
         // Reachability
-        if (containsAny(normalized,
-                "what is reachable from",
-                "what can be reached from",
-                "reachable from",
-                "path from",
-                "paths from")) {
-            return QueryIntent.REACHABILITY;
-        }
+if (containsAny(normalized,
+        "what is reachable from",
+        "what can be reached from",
+        "reachable from",
+        "path from",
+        "paths from")
+        || normalized.matches(".*what can .+ reach.*")
+        || normalized.matches(".*what does .+ reach.*")) {
+    return QueryIntent.REACHABILITY;
+}
 
         // Callers
         if (containsAny(normalized,

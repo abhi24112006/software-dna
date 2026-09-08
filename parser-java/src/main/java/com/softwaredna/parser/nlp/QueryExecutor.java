@@ -149,6 +149,8 @@ public class QueryExecutor {
                 break;
 
             case GET_REACHABILITY:
+                nodes = graphQuery.getReachableNodes(entityId);
+                break;
             case GET_ARCHITECTURE:
             case NONE:
 

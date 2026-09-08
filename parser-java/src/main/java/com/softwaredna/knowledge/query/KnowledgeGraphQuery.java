@@ -206,6 +206,75 @@ public class KnowledgeGraphQuery {
         );
     }
 
+        /*
+     * -------------------------------------------------------
+     * Reachable Dependencies
+     *
+     * Traverses DEPENDS_ON relationships starting from
+     * the supplied node and returns every node reachable
+     * through the dependency graph.
+     *
+     * The starting node is not included in the result.
+     * Cycles are handled using a visited set.
+     * -------------------------------------------------------
+     */
+
+    public List<GraphNode> getReachableNodes(
+            String nodeId) {
+
+        List<GraphNode> result =
+                new ArrayList<>();
+
+        GraphNode start =
+                findNodeById(nodeId);
+
+        if (start == null) {
+            return result;
+        }
+
+        List<GraphNode> queue =
+                new ArrayList<>();
+
+        List<String> visited =
+                new ArrayList<>();
+
+        visited.add(start.getId());
+
+        queue.add(start);
+
+        int index = 0;
+
+        while (index < queue.size()) {
+
+            GraphNode current =
+                    queue.get(index++);
+
+            List<GraphNode> dependencies =
+                    getDependencies(
+                            current.getId()
+                    );
+
+            for (GraphNode dependency : dependencies) {
+
+                if (visited.contains(
+                        dependency.getId())) {
+
+                    continue;
+                }
+
+                visited.add(
+                        dependency.getId()
+                );
+
+                result.add(dependency);
+
+                queue.add(dependency);
+            }
+        }
+
+        return result;
+    }
+
     /*
      * -------------------------------------------------------
      * Dependents

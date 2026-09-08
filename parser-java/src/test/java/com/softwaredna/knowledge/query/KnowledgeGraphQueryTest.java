@@ -308,4 +308,166 @@ class KnowledgeGraphQueryTest {
                 result.get(0).getName()
         );
     }
+
+    @Test
+    void shouldGetTransitiveReachableDependencies() {
+
+        /*
+         * UserController -> UserService -> UserRepository
+         */
+        graph.addEdge(
+                new GraphEdge(
+                        controller,
+                        service,
+                        EdgeType.DEPENDS_ON
+                )
+        );
+
+        graph.addEdge(
+                new GraphEdge(
+                        service,
+                        repository,
+                        EdgeType.DEPENDS_ON
+                )
+        );
+
+        List<GraphNode> result =
+                query.getReachableNodes(
+                        controller.getId()
+                );
+
+        assertEquals(2, result.size());
+
+        assertTrue(
+                result.contains(service)
+        );
+
+        assertTrue(
+                result.contains(repository)
+        );
+    }
+
+    @Test
+    void shouldNotDuplicateReachableNodes() {
+
+        GraphNode utility =
+                new GraphNode(
+                        "class:UserUtility",
+                        "UserUtility",
+                        NodeType.CLASS
+                );
+
+        graph.addNode(utility);
+
+        /*
+         * UserController -> UserService -> UserUtility
+         * UserController -> UserRepository -> UserUtility
+         */
+        graph.addEdge(
+                new GraphEdge(
+                        controller,
+                        service,
+                        EdgeType.DEPENDS_ON
+                )
+        );
+
+        graph.addEdge(
+                new GraphEdge(
+                        controller,
+                        repository,
+                        EdgeType.DEPENDS_ON
+                )
+        );
+
+        graph.addEdge(
+                new GraphEdge(
+                        service,
+                        utility,
+                        EdgeType.DEPENDS_ON
+                )
+        );
+
+        graph.addEdge(
+                new GraphEdge(
+                        repository,
+                        utility,
+                        EdgeType.DEPENDS_ON
+                )
+        );
+
+        List<GraphNode> result =
+                query.getReachableNodes(
+                        controller.getId()
+                );
+
+        assertEquals(3, result.size());
+
+        assertTrue(
+                result.contains(service)
+        );
+
+        assertTrue(
+                result.contains(repository)
+        );
+
+        assertTrue(
+                result.contains(utility)
+        );
+    }
+
+    @Test
+    void shouldHandleCyclesDuringReachabilityTraversal() {
+
+        /*
+         * UserController -> UserService -> UserRepository
+         * UserRepository -> UserController
+         *
+         * The cycle must not cause infinite traversal.
+         */
+        graph.addEdge(
+                new GraphEdge(
+                        controller,
+                        service,
+                        EdgeType.DEPENDS_ON
+                )
+        );
+
+        graph.addEdge(
+                new GraphEdge(
+                        service,
+                        repository,
+                        EdgeType.DEPENDS_ON
+                )
+        );
+
+        graph.addEdge(
+                new GraphEdge(
+                        repository,
+                        controller,
+                        EdgeType.DEPENDS_ON
+                )
+        );
+
+        List<GraphNode> result =
+                query.getReachableNodes(
+                        controller.getId()
+                );
+
+        assertEquals(2, result.size());
+
+        assertTrue(
+                result.contains(service)
+        );
+
+        assertTrue(
+                result.contains(repository)
+        );
+
+        /*
+         * The starting node itself should not be returned.
+         */
+        assertFalse(
+                result.contains(controller)
+        );
+    }
 }
