@@ -1,14 +1,27 @@
 package com.softwaredna.builder;
 
-import com.softwaredna.analysis.ClassMetricsExtractor;
+import java.util.List;
+
 import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration;
 import com.github.javaparser.ast.body.EnumDeclaration;
-import com.softwaredna.extractor.*;
-import com.softwaredna.model.*;
 import com.github.javaparser.ast.body.RecordDeclaration;
-
-import java.util.List;
+import com.softwaredna.analysis.metrics.ClassMetricAggregator;
+import com.softwaredna.extractor.AnnotationExtractor;
+import com.softwaredna.extractor.ClassExtractor;
+import com.softwaredna.extractor.ConstructorExtractor;
+import com.softwaredna.extractor.EnumExtractor;
+import com.softwaredna.extractor.FieldExtractor;
+import com.softwaredna.extractor.ImportExtractor;
+import com.softwaredna.extractor.InterfaceExtractor;
+import com.softwaredna.extractor.MethodExtractor;
+import com.softwaredna.extractor.PackageExtractor;
+import com.softwaredna.extractor.RecordExtractor;
+import com.softwaredna.model.ParsedClass;
+import com.softwaredna.model.ParsedEnum;
+import com.softwaredna.model.ParsedFile;
+import com.softwaredna.model.ParsedInterface;
+import com.softwaredna.model.ParsedRecord;
 
 public class ParsedFileBuilder {
 
@@ -22,7 +35,7 @@ public class ParsedFileBuilder {
     private final EnumExtractor enumExtractor;
     private final RecordExtractor recordExtractor;
     private final AnnotationExtractor annotationExtractor;
-    private final ClassMetricsExtractor classMetricsExtractor;
+    private final ClassMetricAggregator classMetricAggregator;
 
     public ParsedFileBuilder() {
 
@@ -36,7 +49,7 @@ public class ParsedFileBuilder {
         enumExtractor = new EnumExtractor();
         recordExtractor = new RecordExtractor();
         annotationExtractor = new AnnotationExtractor();
-        classMetricsExtractor = new ClassMetricsExtractor();
+        classMetricAggregator = new ClassMetricAggregator();
 
     }
 
@@ -96,7 +109,7 @@ public class ParsedFileBuilder {
                 );
 
                 parsedClass.setMetrics(
-                        classMetricsExtractor.extract(parsedClass)
+                        classMetricAggregator.aggregate(parsedClass)
                 );
 
                 classIndex++;

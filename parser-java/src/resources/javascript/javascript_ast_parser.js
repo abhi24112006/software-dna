@@ -239,7 +239,13 @@ function extractMethods(classBody) {
                 extractCalls(body),
 
             assignments:
-                extractAssignments(body)
+                extractAssignments(body),
+
+            metrics:
+                calculateMethodMetrics(
+                    body,
+                    parameters
+                )
         });
     }
 
@@ -433,6 +439,413 @@ function extractAssignments(body) {
     }
 
     return assignments;
+}
+
+
+/*
+ * ============================================================
+ * METHOD METRICS
+ * ============================================================
+ *
+ * These metrics use the common Software DNA metric names.
+ *
+ * The JavaScript parser is responsible only for calculating
+ * language-specific source metrics. The Java adapter will
+ * later convert these values into the common MethodMetrics
+ * Java model.
+ */
+
+
+/*
+ * ------------------------------------------------------------
+ * LOCAL VARIABLES
+ * ------------------------------------------------------------
+ *
+ * Detect:
+ *
+ * let user = ...
+ * const user = ...
+ * var user = ...
+ *
+ * Multiple declarations are counted separately:
+ *
+ * const a = 1, b = 2;
+ *
+ * -> 2 local variables
+ */
+function countLocalVariables(body) {
+
+    let count = 0;
+
+    const declarationRegex =
+        /\b(?:let|const|var)\s+([^;]+)/g;
+
+    let match;
+
+    while (
+        (match =
+            declarationRegex.exec(body))
+            !== null
+    ) {
+
+        const declaration =
+            match[1];
+
+        count +=
+            declaration
+                .split(",")
+                .length;
+    }
+
+    return count;
+}
+
+
+/*
+ * ------------------------------------------------------------
+ * METHOD CALL COUNT
+ * ------------------------------------------------------------
+ *
+ * Counts call expressions such as:
+ *
+ * service.createUser()
+ * console.log()
+ * save()
+ *
+ * Constructor calls using "new" are excluded here and are
+ * counted separately as object creations.
+ */
+function countMethodCalls(body) {
+
+    const withoutConstructors =
+        body.replace(
+            /\bnew\s+[A-Za-z_$][\w$]*(?:\s*<[^>]+>)?\s*\(/g,
+            ""
+        );
+
+    /*
+     * Control-flow constructs are not method calls.
+     *
+     * Examples:
+     *
+     * if (...)
+     * for (...)
+     * while (...)
+     * switch (...)
+     * catch (...)
+     */
+    const withoutControlFlow =
+        withoutConstructors.replace(
+            /\b(?:if|for|while|switch|catch|with)\s*\(/g,
+            ""
+        );
+
+    const callRegex =
+        /\b[A-Za-z_$][\w$]*(?:\.[A-Za-z_$][\w$]*)*\s*\(/g;
+
+    const matches =
+        withoutControlFlow.match(
+            callRegex
+        );
+
+    return matches
+        ? matches.length
+        : 0;
+}
+
+
+/*
+ * ------------------------------------------------------------
+ * OBJECT CREATION COUNT
+ * ------------------------------------------------------------
+ *
+ * JavaScript uses:
+ *
+ * new User()
+ * new UserService()
+ */
+function countObjectCreations(body) {
+
+    const matches =
+        body.match(
+            /\bnew\s+[A-Za-z_$][\w$]*(?:\s*<[^>]+>)?\s*\(/g
+        );
+
+    return matches
+        ? matches.length
+        : 0;
+}
+
+
+/*
+ * ------------------------------------------------------------
+ * RETURN COUNT
+ * ------------------------------------------------------------
+ */
+function countReturns(body) {
+
+    const matches =
+        body.match(
+            /\breturn\b/g
+        );
+
+    return matches
+        ? matches.length
+        : 0;
+}
+
+
+/*
+ * ------------------------------------------------------------
+ * LOOP COUNT
+ * ------------------------------------------------------------
+ *
+ * Detect:
+ *
+ * for
+ * while
+ * do
+ */
+function countLoops(body) {
+
+    const matches =
+        body.match(
+            /\b(?:for|while|do)\b/g
+        );
+
+    return matches
+        ? matches.length
+        : 0;
+}
+
+
+/*
+ * ------------------------------------------------------------
+ * CONDITIONAL COUNT
+ * ------------------------------------------------------------
+ *
+ * Detect:
+ *
+ * if
+ * else if
+ * switch
+ * case
+ * ternary expressions
+ */
+function countConditionals(body) {
+
+    let count = 0;
+
+    const keywordMatches =
+        body.match(
+            /\b(?:if|else\s+if|switch|case)\b/g
+        );
+
+    if (keywordMatches) {
+        count += keywordMatches.length;
+    }
+
+    const ternaryMatches =
+        body.match(
+            /\?/g
+        );
+
+    if (ternaryMatches) {
+        count += ternaryMatches.length;
+    }
+
+    return count;
+}
+
+
+/*
+ * ------------------------------------------------------------
+ * CYCLOMATIC COMPLEXITY
+ * ------------------------------------------------------------
+ *
+ * Base complexity = 1.
+ *
+ * Add one for each decision point:
+ *
+ * if
+ * else if
+ * for
+ * while
+ * case
+ * catch
+ * &&
+ * ||
+ * ternary
+ */
+function calculateCyclomaticComplexity(body) {
+
+    let complexity = 1;
+
+    const decisionMatches =
+        body.match(
+            /\b(?:if|else\s+if|for|while|case|catch)\b/g
+        );
+
+    if (decisionMatches) {
+        complexity +=
+            decisionMatches.length;
+    }
+
+    const logicalMatches =
+        body.match(
+            /&&|\|\|/g
+        );
+
+    if (logicalMatches) {
+        complexity +=
+            logicalMatches.length;
+    }
+
+    const ternaryMatches =
+        body.match(
+            /\?/g
+        );
+
+    if (ternaryMatches) {
+        complexity +=
+            ternaryMatches.length;
+    }
+
+    return complexity;
+}
+
+
+/*
+ * ------------------------------------------------------------
+ * MAXIMUM NESTING DEPTH
+ * ------------------------------------------------------------
+ *
+ * Braces are used as a lightweight approximation for
+ * JavaScript block nesting.
+ *
+ * The method body itself starts at depth 0.
+ */
+function calculateMaximumNestingDepth(body) {
+
+    let currentDepth = 0;
+    let maximumDepth = 0;
+
+    for (
+        let i = 0;
+        i < body.length;
+        i++
+    ) {
+
+        if (body[i] === "{") {
+
+            currentDepth++;
+
+            if (
+                currentDepth >
+                maximumDepth
+            ) {
+
+                maximumDepth =
+                    currentDepth;
+            }
+
+        } else if (
+            body[i] === "}"
+        ) {
+
+            currentDepth--;
+
+            if (currentDepth < 0) {
+                currentDepth = 0;
+            }
+        }
+    }
+
+    return maximumDepth;
+}
+
+
+/*
+ * ------------------------------------------------------------
+ * LINES OF CODE
+ * ------------------------------------------------------------
+ *
+ * Counts physical lines in the extracted method body.
+ *
+ * Empty lines are ignored.
+ */
+function calculateLinesOfCode(body) {
+
+    const lines =
+        body.split(/\r?\n/);
+
+    return lines.filter(
+        line =>
+            line.trim().length > 0
+    ).length;
+}
+
+
+/*
+ * ------------------------------------------------------------
+ * COMMON METHOD METRICS OBJECT
+ * ------------------------------------------------------------
+ */
+function calculateMethodMetrics(
+    body,
+    parameters
+) {
+
+    return {
+
+        linesOfCode:
+            calculateLinesOfCode(
+                body
+            ),
+
+        parameterCount:
+            parameters.length,
+
+        localVariableCount:
+            countLocalVariables(
+                body
+            ),
+
+        methodCallCount:
+            countMethodCalls(
+                body
+            ),
+
+        objectCreationCount:
+            countObjectCreations(
+                body
+            ),
+
+        returnCount:
+            countReturns(
+                body
+            ),
+
+        cyclomaticComplexity:
+            calculateCyclomaticComplexity(
+                body
+            ),
+
+        maximumNestingDepth:
+            calculateMaximumNestingDepth(
+                body
+            ),
+
+        loopCount:
+            countLoops(
+                body
+            ),
+
+        conditionalCount:
+            countConditionals(
+                body
+            )
+    };
 }
 
 

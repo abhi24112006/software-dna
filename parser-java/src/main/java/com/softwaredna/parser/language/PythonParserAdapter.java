@@ -2,8 +2,10 @@ package com.softwaredna.parser.language;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.softwaredna.analysis.repository.RepositoryAnalyzer;
 import com.softwaredna.identifier.IdentifierAssigner;
 import com.softwaredna.language.Language;
+import com.softwaredna.model.MethodMetrics;
 import com.softwaredna.model.ParsedClass;
 import com.softwaredna.model.ParsedField;
 import com.softwaredna.model.ParsedFile;
@@ -30,6 +32,8 @@ public class PythonParserAdapter
 
     private final EntityRegistrar registrar;
 
+        private final RepositoryAnalyzer repositoryAnalyzer;
+
     private final List<PythonCall> pythonCalls;
 
     private final PythonRelationshipExtractor
@@ -45,6 +49,9 @@ public class PythonParserAdapter
 
         registrar =
                 new EntityRegistrar();
+
+        repositoryAnalyzer =
+                new RepositoryAnalyzer();
 
         pythonCalls =
                 new ArrayList<>();
@@ -121,6 +128,8 @@ public class PythonParserAdapter
                 repository,
                 pythonCalls
         );
+
+        repositoryAnalyzer.analyze(repository);
 
         return repository;
     }
@@ -442,7 +451,120 @@ public class PythonParserAdapter
             }
         }
 
+        /*
+         * Convert Python metric JSON into
+         * the common MethodMetrics model.
+         */
+        Map<String, Object> metricsData =
+                (Map<String, Object>)
+                        methodData.get(
+                                "metrics"
+                        );
+
+        if (metricsData != null) {
+
+            method.setMetrics(
+                    convertMetrics(
+                            metricsData
+                    )
+            );
+        }
+
         return method;
+    }
+
+    private MethodMetrics convertMetrics(
+            Map<String, Object> metricsData) {
+
+        MethodMetrics metrics =
+                new MethodMetrics();
+
+        metrics.setLinesOfCode(
+                getIntMetric(
+                        metricsData,
+                        "linesOfCode"
+                )
+        );
+
+        metrics.setCyclomaticComplexity(
+                getIntMetric(
+                        metricsData,
+                        "cyclomaticComplexity"
+                )
+        );
+
+        metrics.setParameterCount(
+                getIntMetric(
+                        metricsData,
+                        "parameterCount"
+                )
+        );
+
+        metrics.setLocalVariableCount(
+                getIntMetric(
+                        metricsData,
+                        "localVariableCount"
+                )
+        );
+
+        metrics.setMethodCallCount(
+                getIntMetric(
+                        metricsData,
+                        "methodCallCount"
+                )
+        );
+
+        metrics.setObjectCreationCount(
+                getIntMetric(
+                        metricsData,
+                        "objectCreationCount"
+                )
+        );
+
+        metrics.setLoopCount(
+                getIntMetric(
+                        metricsData,
+                        "loopCount"
+                )
+        );
+
+        metrics.setConditionalCount(
+                getIntMetric(
+                        metricsData,
+                        "conditionalCount"
+                )
+        );
+
+        metrics.setReturnCount(
+                getIntMetric(
+                        metricsData,
+                        "returnCount"
+                )
+        );
+
+        metrics.setMaximumNestingDepth(
+                getIntMetric(
+                        metricsData,
+                        "maximumNestingDepth"
+                )
+        );
+
+        return metrics;
+    }
+
+    private int getIntMetric(
+            Map<String, Object> metricsData,
+            String metricName) {
+
+        Object value =
+                metricsData.get(metricName);
+
+        if (value instanceof Number) {
+
+            return ((Number) value).intValue();
+        }
+
+        return 0;
     }
 
     @SuppressWarnings("unchecked")

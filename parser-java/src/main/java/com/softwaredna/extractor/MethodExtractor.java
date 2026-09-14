@@ -1,14 +1,14 @@
 package com.softwaredna.extractor;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration;
 import com.github.javaparser.ast.body.MethodDeclaration;
 import com.softwaredna.analysis.MethodAnalysisResult;
 import com.softwaredna.analysis.MethodBodyAnalyzer;
-import com.softwaredna.analysis.MethodMetricsExtractor;
+import com.softwaredna.analysis.metrics.java.JavaMethodMetricProvider;
 import com.softwaredna.model.ParsedMethod;
-
-import java.util.ArrayList;
-import java.util.List;
 
 public class MethodExtractor {
 
@@ -18,8 +18,14 @@ public class MethodExtractor {
     private final MethodBodyAnalyzer methodBodyAnalyzer =
             new MethodBodyAnalyzer();
 
-    private final MethodMetricsExtractor metricsExtractor =
-            new MethodMetricsExtractor();
+    /*
+     * Java-specific metric provider.
+     *
+     * The provider converts JavaParser AST nodes into
+     * the common MethodMetrics model.
+     */
+    private final JavaMethodMetricProvider metricProvider =
+            new JavaMethodMetricProvider();
 
     public List<ParsedMethod> extractMethods(
             ClassOrInterfaceDeclaration clazz) {
@@ -27,30 +33,44 @@ public class MethodExtractor {
         List<ParsedMethod> methods =
                 new ArrayList<>();
 
-        for (MethodDeclaration method : clazz.getMethods()) {
+        for (MethodDeclaration method :
+                clazz.getMethods()) {
 
             ParsedMethod parsedMethod =
                     new ParsedMethod();
 
             parsedMethod.setName(
-                    method.getNameAsString());
+                    method.getNameAsString()
+            );
 
             parsedMethod.setReturnType(
-                    method.getType().asString());
+                    method.getType().asString()
+            );
 
             parsedMethod.setParameters(
-                    parameterExtractor.extractParameters(method));
+                    parameterExtractor.extractParameters(
+                            method
+                    )
+            );
 
             MethodAnalysisResult analysisResult =
-                    methodBodyAnalyzer.analyze(method);
+                    methodBodyAnalyzer.analyze(
+                            method
+                    );
 
             parsedMethod.setAnalysisResult(
-                    analysisResult);
+                    analysisResult
+            );
 
             parsedMethod.setMetrics(
-                    metricsExtractor.extract(method));
+                    metricProvider.calculate(
+                            method
+                    )
+            );
 
-            methods.add(parsedMethod);
+            methods.add(
+                    parsedMethod
+            );
         }
 
         return methods;

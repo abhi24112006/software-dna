@@ -2,8 +2,10 @@ package com.softwaredna.parser.language;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.softwaredna.analysis.repository.RepositoryAnalyzer;
 import com.softwaredna.identifier.IdentifierAssigner;
 import com.softwaredna.language.Language;
+import com.softwaredna.model.MethodMetrics;
 import com.softwaredna.model.ParsedClass;
 import com.softwaredna.model.ParsedField;
 import com.softwaredna.model.ParsedFile;
@@ -30,6 +32,8 @@ public class JavaScriptParserAdapter
 
     private final EntityRegistrar registrar;
 
+        private final RepositoryAnalyzer repositoryAnalyzer;
+
     private final List<JavaScriptCall> calls;
 
     private final JavaScriptRelationshipExtractor
@@ -46,6 +50,9 @@ public class JavaScriptParserAdapter
         registrar =
                 new EntityRegistrar();
 
+        repositoryAnalyzer =
+                new RepositoryAnalyzer();
+
         calls =
                 new ArrayList<>();
 
@@ -55,7 +62,6 @@ public class JavaScriptParserAdapter
 
     @Override
     public Language getLanguage() {
-
         return Language.JAVASCRIPT;
     }
 
@@ -121,6 +127,8 @@ public class JavaScriptParserAdapter
                 repository,
                 calls
         );
+
+        repositoryAnalyzer.analyze(repository);
 
         return repository;
     }
@@ -425,7 +433,117 @@ public class JavaScriptParserAdapter
             }
         }
 
+        /*
+         * Convert language-specific JavaScript
+         * metrics into the common MethodMetrics model.
+         */
+        Map<String, Object> metricsData =
+                (Map<String, Object>)
+                        methodData.get(
+                                "metrics"
+                        );
+
+        if (metricsData != null) {
+
+            method.setMetrics(
+                    convertMetrics(metricsData)
+            );
+        }
+
         return method;
+    }
+
+    private MethodMetrics convertMetrics(
+            Map<String, Object> metricsData) {
+
+        MethodMetrics metrics =
+                new MethodMetrics();
+
+        metrics.setLinesOfCode(
+                getIntMetric(
+                        metricsData,
+                        "linesOfCode"
+                )
+        );
+
+        metrics.setParameterCount(
+                getIntMetric(
+                        metricsData,
+                        "parameterCount"
+                )
+        );
+
+        metrics.setLocalVariableCount(
+                getIntMetric(
+                        metricsData,
+                        "localVariableCount"
+                )
+        );
+
+        metrics.setMethodCallCount(
+                getIntMetric(
+                        metricsData,
+                        "methodCallCount"
+                )
+        );
+
+        metrics.setObjectCreationCount(
+                getIntMetric(
+                        metricsData,
+                        "objectCreationCount"
+                )
+        );
+
+        metrics.setReturnCount(
+                getIntMetric(
+                        metricsData,
+                        "returnCount"
+                )
+        );
+
+        metrics.setCyclomaticComplexity(
+                getIntMetric(
+                        metricsData,
+                        "cyclomaticComplexity"
+                )
+        );
+
+        metrics.setMaximumNestingDepth(
+                getIntMetric(
+                        metricsData,
+                        "maximumNestingDepth"
+                )
+        );
+
+        metrics.setLoopCount(
+                getIntMetric(
+                        metricsData,
+                        "loopCount"
+                )
+        );
+
+        metrics.setConditionalCount(
+                getIntMetric(
+                        metricsData,
+                        "conditionalCount"
+                )
+        );
+
+        return metrics;
+    }
+
+    private int getIntMetric(
+            Map<String, Object> metricsData,
+            String metricName) {
+
+        Object value =
+                metricsData.get(metricName);
+
+        if (value instanceof Number) {
+            return ((Number) value).intValue();
+        }
+
+        return 0;
     }
 
     @SuppressWarnings("unchecked")
