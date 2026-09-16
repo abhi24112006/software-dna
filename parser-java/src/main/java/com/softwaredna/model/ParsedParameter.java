@@ -7,51 +7,75 @@ public class ParsedParameter {
 
     private String name;
     private String id;
-
     private String type;
+
+    /**
+     * Source line where this parameter is declared.
+     */
+    private int sourceLineNumber;
 
     private List<ParsedAnnotation> annotations =
             new ArrayList<>();
 
+
     public ParsedParameter() {
     }
 
-    public String getId() {
-    return id;
-}
 
-public void setId(String id) {
-    this.id = id;
-}
+    public String getId() {
+        return id;
+    }
+
+
+    public void setId(String id) {
+        this.id = id;
+    }
+
 
     public ParsedParameter(String name, String type) {
         this.name = name;
         this.type = type;
     }
 
+
     public String getName() {
         return name;
     }
+
 
     public void setName(String name) {
         this.name = name;
     }
 
+
     public String getType() {
         return type;
     }
+
 
     public void setType(String type) {
         this.type = type;
     }
 
+
+    public int getSourceLineNumber() {
+        return sourceLineNumber;
+    }
+
+
+    public void setSourceLineNumber(int sourceLineNumber) {
+        this.sourceLineNumber = sourceLineNumber;
+    }
+
+
     public List<ParsedAnnotation> getAnnotations() {
         return annotations;
     }
 
+
     public void setAnnotations(
             List<ParsedAnnotation> annotations) {
+
         this.annotations = annotations;
     }
-
 }

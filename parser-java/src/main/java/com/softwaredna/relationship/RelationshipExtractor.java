@@ -1,9 +1,6 @@
 package com.softwaredna.relationship;
 
 import com.softwaredna.analysis.MethodAnalysisResult;
-import com.softwaredna.model.ParsedMethodCall;
-import com.softwaredna.resolver.MethodResolver;
-import com.softwaredna.resolver.ReceiverResolver;
 import com.softwaredna.graph.KnowledgeGraphBuilder;
 import com.softwaredna.mapper.EntityReferenceMapper;
 import com.softwaredna.model.EntityReference;
@@ -12,10 +9,14 @@ import com.softwaredna.model.ParsedField;
 import com.softwaredna.model.ParsedFile;
 import com.softwaredna.model.ParsedInterface;
 import com.softwaredna.model.ParsedMethod;
+import com.softwaredna.model.ParsedMethodCall;
 import com.softwaredna.model.ParsedParameter;
 import com.softwaredna.model.RelationshipType;
 import com.softwaredna.model.RepositoryModel;
+import com.softwaredna.model.SourceEvidence;
 import com.softwaredna.resolver.EntityResolver;
+import com.softwaredna.resolver.MethodResolver;
+import com.softwaredna.resolver.ReceiverResolver;
 import com.softwaredna.type.TypeReferenceExtractor;
 
 public class RelationshipExtractor {
@@ -56,7 +57,6 @@ public class RelationshipExtractor {
         extractReturnDependencies(repository);
 
         extractMethodCalls(repository);
-
     }
 
 
@@ -79,8 +79,8 @@ public class RelationshipExtractor {
                         || child.getSuperClass().isBlank()) {
 
                     continue;
-
                 }
+
 
                 ParsedClass parent =
                         resolver.resolveClass(
@@ -90,21 +90,28 @@ public class RelationshipExtractor {
                                 repository.getEntityRegistry()
                         );
 
+
                 if (parent == null) {
                     continue;
                 }
+
+
+                SourceEvidence sourceEvidence =
+                        new SourceEvidence(
+                                file.getSourcePath(),
+                                child.getSourceLineNumber()
+                        );
+
 
                 graphBuilder.addRelationship(
                         repository,
                         EntityReferenceMapper.fromClass(child),
                         EntityReferenceMapper.fromClass(parent),
-                        RelationshipType.EXTENDS
+                        RelationshipType.EXTENDS,
+                        sourceEvidence
                 );
-
             }
-
         }
-
     }
 
 
@@ -141,6 +148,7 @@ public class RelationshipExtractor {
                                     repository.getEntityRegistry()
                             );
 
+
                     /*
                      * If interface cannot be resolved
                      * unambiguously, do not create a
@@ -151,20 +159,25 @@ public class RelationshipExtractor {
                         continue;
                     }
 
+
+                    SourceEvidence sourceEvidence =
+                            new SourceEvidence(
+                                    file.getSourcePath(),
+                                    parsedClass.getSourceLineNumber()
+                            );
+
+
                     graphBuilder.addRelationship(
                             repository,
                             source,
                             EntityReferenceMapper.fromInterface(
                                     parsedInterface),
-                            RelationshipType.IMPLEMENTS
+                            RelationshipType.IMPLEMENTS,
+                            sourceEvidence
                     );
-
                 }
-
             }
-
         }
-
     }
 
 
@@ -190,21 +203,25 @@ public class RelationshipExtractor {
                 for (ParsedField field :
                         parsedClass.getFields()) {
 
+                    SourceEvidence sourceEvidence =
+                            new SourceEvidence(
+                                    file.getSourcePath(),
+                                    field.getSourceLineNumber()
+                            );
+
+
                     addTypeDependencies(
                             repository,
                             source,
                             field.getType(),
                             file.getPackageName(),
                             file.getImports(),
-                            RelationshipType.FIELD_DEPENDENCY
+                            RelationshipType.FIELD_DEPENDENCY,
+                            sourceEvidence
                     );
-
                 }
-
             }
-
         }
-
     }
 
 
@@ -233,23 +250,26 @@ public class RelationshipExtractor {
                     for (ParsedParameter parameter :
                             method.getParameters()) {
 
+                        SourceEvidence sourceEvidence =
+                                new SourceEvidence(
+                                        file.getSourcePath(),
+                                        parameter.getSourceLineNumber()
+                                );
+
+
                         addTypeDependencies(
                                 repository,
                                 source,
                                 parameter.getType(),
                                 file.getPackageName(),
                                 file.getImports(),
-                                RelationshipType.PARAMETER_DEPENDENCY
+                                RelationshipType.PARAMETER_DEPENDENCY,
+                                sourceEvidence
                         );
-
                     }
-
                 }
-
             }
-
         }
-
     }
 
 
@@ -260,37 +280,40 @@ public class RelationshipExtractor {
      */
 
     private void extractReturnDependencies(
-            RepositoryModel repository) {
+        RepositoryModel repository) {
 
-        for (ParsedFile file :
-                repository.getFiles()) {
+    for (ParsedFile file :
+            repository.getFiles()) {
 
-            for (ParsedClass parsedClass :
-                    file.getClasses()) {
+        for (ParsedClass parsedClass :
+                file.getClasses()) {
 
-                EntityReference source =
-                        EntityReferenceMapper.fromClass(
-                                parsedClass);
+            EntityReference source =
+                    EntityReferenceMapper.fromClass(
+                            parsedClass);
 
-                for (ParsedMethod method :
-                        parsedClass.getMethods()) {
+            for (ParsedMethod method :
+                    parsedClass.getMethods()) {
 
-                    addTypeDependencies(
-                            repository,
-                            source,
-                            method.getReturnType(),
-                            file.getPackageName(),
-                            file.getImports(),
-                            RelationshipType.RETURN_DEPENDENCY
-                    );
+                SourceEvidence sourceEvidence =
+                        new SourceEvidence(
+                                file.getSourcePath(),
+                                method.getSourceLineNumber()
+                        );
 
-                }
-
+                addTypeDependencies(
+                        repository,
+                        source,
+                        method.getReturnType(),
+                        file.getPackageName(),
+                        file.getImports(),
+                        RelationshipType.RETURN_DEPENDENCY,
+                        sourceEvidence
+                );
             }
-
         }
-
     }
+}
 
 
     /*
@@ -318,6 +341,7 @@ public class RelationshipExtractor {
                         continue;
                     }
 
+
                     for (ParsedMethodCall methodCall :
                             analysisResult.getMethodCalls()) {
 
@@ -328,9 +352,11 @@ public class RelationshipExtractor {
                                         analysisResult.getScope()
                                 );
 
+
                         if (receiverType == null) {
                             continue;
                         }
+
 
                         ParsedMethod targetMethod =
                                 methodResolver.resolveMethod(
@@ -340,9 +366,18 @@ public class RelationshipExtractor {
                                         parsedClass
                                 );
 
+
                         if (targetMethod == null) {
                             continue;
                         }
+
+
+                        SourceEvidence sourceEvidence =
+                                new SourceEvidence(
+                                        file.getSourcePath(),
+                                        methodCall.getLineNumber()
+                                );
+
 
                         graphBuilder.addRelationship(
                                 repository,
@@ -350,23 +385,20 @@ public class RelationshipExtractor {
                                         method),
                                 EntityReferenceMapper.fromMethod(
                                         targetMethod),
-                                RelationshipType.METHOD_CALL_INTERNAL
+                                RelationshipType.METHOD_CALL_INTERNAL,
+                                sourceEvidence
                         );
-
                     }
-
                 }
-
             }
-
         }
-
     }
 
 
     /*
      * -------------------------------------------------------
      * COMMON TYPE DEPENDENCY HELPER
+     * WITHOUT SOURCE EVIDENCE
      * -------------------------------------------------------
      */
 
@@ -389,9 +421,11 @@ public class RelationshipExtractor {
                             repository.getEntityRegistry()
                     );
 
+
             if (target == null) {
                 continue;
             }
+
 
             graphBuilder.addRelationship(
                     repository,
@@ -399,9 +433,50 @@ public class RelationshipExtractor {
                     target,
                     relationshipType
             );
-
         }
-
     }
 
+
+    /*
+     * -------------------------------------------------------
+     * COMMON TYPE DEPENDENCY HELPER
+     * WITH SOURCE EVIDENCE
+     * -------------------------------------------------------
+     */
+
+    private void addTypeDependencies(
+            RepositoryModel repository,
+            EntityReference source,
+            String type,
+            String packageName,
+            java.util.List<String> imports,
+            RelationshipType relationshipType,
+            SourceEvidence sourceEvidence) {
+
+        for (String referencedType :
+                typeExtractor.extractReferencedTypes(type)) {
+
+            EntityReference target =
+                    resolver.resolveType(
+                            referencedType,
+                            packageName,
+                            imports,
+                            repository.getEntityRegistry()
+                    );
+
+
+            if (target == null) {
+                continue;
+            }
+
+
+            graphBuilder.addRelationship(
+                    repository,
+                    source,
+                    target,
+                    relationshipType,
+                    sourceEvidence
+            );
+        }
+    }
 }

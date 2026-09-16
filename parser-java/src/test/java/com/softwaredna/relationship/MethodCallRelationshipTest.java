@@ -4,6 +4,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Optional;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -230,6 +232,81 @@ class MethodCallRelationshipTest {
                         .getMethodCalls()
                         .isEmpty(),
                 "Expected the study method to contain a parsed method call"
+        );
+    }
+
+
+    @Test
+    void shouldAttachSourceEvidenceToMethodCallRelationship()
+            throws Exception {
+
+        Path studentFile =
+                tempDir.resolve("Student.java");
+
+        Files.writeString(
+                studentFile,
+                """
+                class Student {
+                    Teacher teacher = new Teacher();
+
+                    void study() {
+                        teacher.teach();
+                    }
+                }
+                """
+        );
+
+        Path teacherFile =
+                tempDir.resolve("Teacher.java");
+
+        Files.writeString(
+                teacherFile,
+                """
+                class Teacher {
+                    void teach() {
+                    }
+                }
+                """
+        );
+
+        RepositoryParser parser =
+                new RepositoryParser();
+
+        var repository =
+                parser.parseRepository(
+                        tempDir.toString()
+                );
+
+        Relationship methodCall =
+                repository.getRelationships()
+                        .stream()
+                        .filter(
+                                relationship ->
+                                        relationship.getType()
+                                                == RelationshipType.METHOD_CALL_INTERNAL
+                        )
+                        .findFirst()
+                        .orElseThrow(
+                                () -> new AssertionError(
+                                        "Expected an internal method call relationship"
+                                )
+                        );
+
+        assertNotNull(
+                methodCall.getSourceEvidence(),
+                "Expected method call relationship to contain source evidence"
+        );
+
+        assertEquals(
+                studentFile.toString(),
+                methodCall.getSourceEvidence().getFilePath(),
+                "Expected source evidence to point to Student.java"
+        );
+
+        assertEquals(
+                5,
+                methodCall.getSourceEvidence().getLineNumber(),
+                "Expected source evidence to point to the method call line"
         );
     }
 }

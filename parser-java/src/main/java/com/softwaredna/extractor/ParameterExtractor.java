@@ -1,11 +1,11 @@
 package com.softwaredna.extractor;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import com.github.javaparser.ast.body.CallableDeclaration;
 import com.github.javaparser.ast.body.Parameter;
 import com.softwaredna.model.ParsedParameter;
-
-import java.util.ArrayList;
-import java.util.List;
 
 public class ParameterExtractor {
 
@@ -26,12 +26,20 @@ public class ParameterExtractor {
             parsedParameter.setType(
                     parameter.getType().asString());
 
-            parameters.add(parsedParameter);
+            /*
+             * Capture the source line where the
+             * parameter is declared.
+             */
+            if (parameter.getBegin().isPresent()) {
 
+                parsedParameter.setSourceLineNumber(
+                        parameter.getBegin().get().line
+                );
+            }
+
+            parameters.add(parsedParameter);
         }
 
         return parameters;
-
     }
-
 }

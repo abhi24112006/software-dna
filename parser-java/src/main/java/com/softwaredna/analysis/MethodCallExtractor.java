@@ -20,7 +20,7 @@ public class MethodCallExtractor {
                      * Receiver
                      *
                      * teacher.study()
-                     * ^
+                     * ^ 
                      */
                     methodCall.getScope().ifPresent(scope ->
                             parsedMethodCall.setReceiverExpression(
@@ -49,6 +49,21 @@ public class MethodCallExtractor {
                                     argument.toString()
                             )
                     );
+
+                    /*
+                     * Source line
+                     *
+                     * JavaParser provides the exact source
+                     * position of the MethodCallExpr.
+                     */
+                    if (methodCall.getBegin().isPresent()) {
+
+                        parsedMethodCall.setLineNumber(
+                                methodCall.getBegin()
+                                        .get()
+                                        .line
+                        );
+                    }
 
                     /*
                      * Store the completed method call

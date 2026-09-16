@@ -47,6 +47,17 @@ public class MethodExtractor {
                     method.getType().asString()
             );
 
+            /*
+             * Capture the source line where the
+             * method is declared.
+             */
+            if (method.getBegin().isPresent()) {
+
+                parsedMethod.setSourceLineNumber(
+                        method.getBegin().get().line
+                );
+            }
+
             parsedMethod.setParameters(
                     parameterExtractor.extractParameters(
                             method

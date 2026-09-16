@@ -1,6 +1,13 @@
 package com.softwaredna.parser;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.stream.Stream;
+
 import com.github.javaparser.ast.CompilationUnit;
+import com.softwaredna.analysis.repository.RepositoryAnalyzer;
 import com.softwaredna.ast.ASTGenerator;
 import com.softwaredna.builder.ParsedFileBuilder;
 import com.softwaredna.identifier.IdentifierAssigner;
@@ -9,11 +16,6 @@ import com.softwaredna.model.RepositoryModel;
 import com.softwaredna.reader.JavaFileReader;
 import com.softwaredna.registry.EntityRegistrar;
 import com.softwaredna.relationship.RelationshipExtractor;
-import com.softwaredna.analysis.repository.RepositoryAnalyzer;
-
-import java.io.IOException;
-import java.nio.file.*;
-import java.util.stream.Stream;
 
 public class RepositoryParser {
 
@@ -36,7 +38,6 @@ public class RepositoryParser {
         registrar = new EntityRegistrar();
         relationshipExtractor = new RelationshipExtractor();
         repositoryAnalyzer = new RepositoryAnalyzer();
-
     }
 
     public RepositoryModel parseRepository(String repositoryPath)
@@ -53,22 +54,28 @@ public class RepositoryParser {
         try (Stream<Path> paths = Files.walk(repoPath)) {
 
             paths.filter(Files::isRegularFile)
-                    .filter(path -> path.toString().endsWith(".java"))
+                    .filter(path ->
+                            path.toString().endsWith(".java"))
                     .forEach(path -> {
 
                         try {
 
                             String source =
-                                    reader.readFile(path.toString());
+                                    reader.readFile(
+                                            path.toString()
+                                    );
 
                             CompilationUnit cu =
                                     generator.generateAST(source);
 
                             ParsedFile parsedFile =
-                                    builder.build(cu);
+                                    builder.build(
+                                            cu,
+                                            path.toString()
+                                    );
 
-                            repository.getFiles().add(parsedFile);
-
+                            repository.getFiles()
+                                    .add(parsedFile);
                         }
 
                         catch (Exception e) {
@@ -79,11 +86,8 @@ public class RepositoryParser {
                             );
 
                             e.printStackTrace();
-
                         }
-
                     });
-
         }
 
         /*
@@ -104,14 +108,12 @@ public class RepositoryParser {
          */
         relationshipExtractor.extractRelationships(repository);
 
-
         /*
-            * Phase 4
-            * Analyze repository
-        */
+         * Phase 4
+         * Analyze repository
+         */
         repositoryAnalyzer.analyze(repository);
+
         return repository;
-
     }
-
 }

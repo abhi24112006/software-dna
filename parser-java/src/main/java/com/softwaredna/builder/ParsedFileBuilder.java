@@ -50,12 +50,15 @@ public class ParsedFileBuilder {
         recordExtractor = new RecordExtractor();
         annotationExtractor = new AnnotationExtractor();
         classMetricAggregator = new ClassMetricAggregator();
-
     }
 
-    public ParsedFile build(CompilationUnit cu) {
+    public ParsedFile build(
+            CompilationUnit cu,
+            String sourcePath) {
 
         ParsedFile parsedFile = new ParsedFile();
+
+        parsedFile.setSourcePath(sourcePath);
 
         parsedFile.setPackageName(
                 packageExtractor.extractPackageName(cu)
@@ -76,7 +79,6 @@ public class ParsedFileBuilder {
         parsedFile.setRecords(
                 recordExtractor.extractRecords(cu)
         );
-        
 
         // ---------------- CLASSES ----------------
 
@@ -88,34 +90,44 @@ public class ParsedFileBuilder {
 
         int classIndex = 0;
 
-        for (ClassOrInterfaceDeclaration declaration : declarations) {
+        for (ClassOrInterfaceDeclaration declaration :
+                declarations) {
 
             if (!declaration.isInterface()) {
 
-                ParsedClass parsedClass = classes.get(classIndex);
+                ParsedClass parsedClass =
+                        classes.get(classIndex);
 
-                parsedClass.setPackageName(parsedFile.getPackageName());
+                parsedClass.setPackageName(
+                        parsedFile.getPackageName()
+                );
 
                 parsedClass.setFields(
-                        fieldExtractor.extractFields(declaration)
+                        fieldExtractor.extractFields(
+                                declaration
+                        )
                 );
 
                 parsedClass.setConstructors(
-                        constructorExtractor.extractConstructors(declaration)
+                        constructorExtractor.extractConstructors(
+                                declaration
+                        )
                 );
 
                 parsedClass.setMethods(
-                        methodExtractor.extractMethods(declaration)
+                        methodExtractor.extractMethods(
+                                declaration
+                        )
                 );
 
                 parsedClass.setMetrics(
-                        classMetricAggregator.aggregate(parsedClass)
+                        classMetricAggregator.aggregate(
+                                parsedClass
+                        )
                 );
 
                 classIndex++;
-
             }
-
         }
 
         parsedFile.setClasses(classes);
@@ -130,14 +142,15 @@ public class ParsedFileBuilder {
         List<ParsedInterface> interfaces =
                 parsedFile.getInterfaces();
 
-        for (int i = 0; i < interfaceDeclarations.size(); i++) {
+        for (int i = 0;
+             i < interfaceDeclarations.size();
+             i++) {
 
             interfaces.get(i).setAnnotations(
                     annotationExtractor.extractAnnotations(
                             interfaceDeclarations.get(i)
                     )
             );
-
         }
 
         // ---------------- ENUMS ----------------
@@ -148,34 +161,36 @@ public class ParsedFileBuilder {
         List<ParsedEnum> enums =
                 parsedFile.getEnums();
 
-        for (int i = 0; i < enumDeclarations.size(); i++) {
+        for (int i = 0;
+             i < enumDeclarations.size();
+             i++) {
 
             enums.get(i).setAnnotations(
                     annotationExtractor.extractAnnotations(
                             enumDeclarations.get(i)
                     )
             );
-
         }
 
+        // ---------------- RECORDS ----------------
+
         List<RecordDeclaration> recordDeclarations =
-        cu.findAll(RecordDeclaration.class);
+                cu.findAll(RecordDeclaration.class);
 
-List<ParsedRecord> records =
-        parsedFile.getRecords();
+        List<ParsedRecord> records =
+                parsedFile.getRecords();
 
-for (int i = 0; i < recordDeclarations.size(); i++) {
+        for (int i = 0;
+             i < recordDeclarations.size();
+             i++) {
 
-    records.get(i).setAnnotations(
-            annotationExtractor.extractAnnotations(
-                    recordDeclarations.get(i)
-            )
-    );
-
-}
+            records.get(i).setAnnotations(
+                    annotationExtractor.extractAnnotations(
+                            recordDeclarations.get(i)
+                    )
+            );
+        }
 
         return parsedFile;
-
     }
-
 }

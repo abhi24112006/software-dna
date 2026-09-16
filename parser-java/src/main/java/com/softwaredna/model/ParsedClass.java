@@ -13,6 +13,8 @@ public class ParsedClass {
 
     private String superClass;
 
+    private int sourceLineNumber;
+
     private List<String> implementedInterfaces;
 
     private List<ParsedField> fields;
@@ -25,6 +27,7 @@ public class ParsedClass {
 
     private ClassMetrics metrics;
 
+
     public ParsedClass() {
 
         implementedInterfaces = new ArrayList<>();
@@ -35,6 +38,7 @@ public class ParsedClass {
 
     }
 
+
     public ParsedClass(String name) {
 
         this();
@@ -43,81 +47,117 @@ public class ParsedClass {
 
     }
 
+
     public String getId() {
         return id;
     }
+
 
     public void setId(String id) {
         this.id = id;
     }
 
+
     public String getName() {
         return name;
     }
+
 
     public void setName(String name) {
         this.name = name;
     }
 
+
     public String getPackageName() {
         return packageName;
     }
+
 
     public void setPackageName(String packageName) {
         this.packageName = packageName;
     }
 
+
     public String getSuperClass() {
         return superClass;
     }
+
 
     public void setSuperClass(String superClass) {
         this.superClass = superClass;
     }
 
+
+    public int getSourceLineNumber() {
+        return sourceLineNumber;
+    }
+
+
+    public void setSourceLineNumber(int sourceLineNumber) {
+        this.sourceLineNumber = sourceLineNumber;
+    }
+
+
     public List<String> getImplementedInterfaces() {
         return implementedInterfaces;
     }
 
-    public void setImplementedInterfaces(List<String> implementedInterfaces) {
+
+    public void setImplementedInterfaces(
+            List<String> implementedInterfaces) {
+
         this.implementedInterfaces = implementedInterfaces;
     }
+
 
     public List<ParsedField> getFields() {
         return fields;
     }
 
+
     public void setFields(List<ParsedField> fields) {
         this.fields = fields;
     }
+
 
     public List<ParsedConstructor> getConstructors() {
         return constructors;
     }
 
-    public void setConstructors(List<ParsedConstructor> constructors) {
+
+    public void setConstructors(
+            List<ParsedConstructor> constructors) {
+
         this.constructors = constructors;
     }
+
 
     public List<ParsedMethod> getMethods() {
         return methods;
     }
 
+
     public void setMethods(List<ParsedMethod> methods) {
         this.methods = methods;
     }
+
 
     public List<ParsedAnnotation> getAnnotations() {
         return annotations;
     }
 
-    public void setAnnotations(List<ParsedAnnotation> annotations) {
+
+    public void setAnnotations(
+            List<ParsedAnnotation> annotations) {
+
         this.annotations = annotations;
     }
+
 
     public ClassMetrics getMetrics() {
         return metrics;
     }
+
 
     public void setMetrics(ClassMetrics metrics) {
         this.metrics = metrics;

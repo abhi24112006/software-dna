@@ -58,7 +58,7 @@ public class ParserApplication {
              */
 
             String repositoryPath =
-                    "../sample_projects/java_test";
+                    "../sample_projects/python_test";
 
             LanguageDetector languageDetector =
                     new LanguageDetector();

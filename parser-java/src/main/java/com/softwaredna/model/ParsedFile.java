@@ -5,6 +5,8 @@ import java.util.List;
 
 public class ParsedFile {
 
+    private String sourcePath;
+
     private String packageName;
 
     private List<String> imports;
@@ -24,7 +26,14 @@ public class ParsedFile {
         interfaces = new ArrayList<>();
         enums = new ArrayList<>();
         records = new ArrayList<>();
+    }
 
+    public String getSourcePath() {
+        return sourcePath;
+    }
+
+    public void setSourcePath(String sourcePath) {
+        this.sourcePath = sourcePath;
     }
 
     public String getPackageName() {
@@ -74,5 +83,4 @@ public class ParsedFile {
     public void setRecords(List<ParsedRecord> records) {
         this.records = records;
     }
-
 }

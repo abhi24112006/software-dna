@@ -42,6 +42,14 @@ public class ParsedMethodCall {
     private List<String> argumentExpressions =
             new ArrayList<>();
 
+    /*
+     * Source line where the method call occurs.
+     *
+     * This is language-neutral metadata. Language-specific
+     * parsers are responsible for populating it.
+     */
+    private int lineNumber;
+
     public ParsedMethodCall() {
 
     }
@@ -82,6 +90,19 @@ public class ParsedMethodCall {
             List<String> argumentExpressions) {
 
         this.argumentExpressions = argumentExpressions;
+
+    }
+
+    public int getLineNumber() {
+
+        return lineNumber;
+
+    }
+
+    public void setLineNumber(
+            int lineNumber) {
+
+        this.lineNumber = lineNumber;
 
     }
 
