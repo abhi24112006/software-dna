@@ -6,6 +6,7 @@ import com.softwaredna.analysis.graph.DependencyGraphBuilder;
 import com.softwaredna.analysis.graph.GraphQueryService;
 import com.softwaredna.analysis.inheritance.RepositoryInheritanceAnalyzer;
 import com.softwaredna.analysis.metrics.ClassMetricAggregator;
+import com.softwaredna.analysis.metrics.RepositoryMetricsAggregator;
 import com.softwaredna.analysis.rfc.RepositoryRFCAnalyzer;
 import com.softwaredna.model.ParsedClass;
 import com.softwaredna.model.ParsedFile;
@@ -14,6 +15,7 @@ import com.softwaredna.model.RepositoryModel;
 public class RepositoryAnalyzer {
 
     private final ClassMetricAggregator classMetricAggregator;
+    private final RepositoryMetricsAggregator repositoryMetricsAggregator;
     private final DependencyGraphBuilder graphBuilder;
     private final RepositoryCouplingAnalyzer couplingAnalyzer;
     private final RepositoryInheritanceAnalyzer inheritanceAnalyzer;
@@ -23,6 +25,9 @@ public class RepositoryAnalyzer {
 
         classMetricAggregator =
                 new ClassMetricAggregator();
+
+        repositoryMetricsAggregator =
+                new RepositoryMetricsAggregator();
 
         graphBuilder =
                 new DependencyGraphBuilder();
@@ -90,6 +95,21 @@ public class RepositoryAnalyzer {
         rfcAnalyzer.analyze(
                 repository,
                 query
+        );
+
+        /*
+         * Phase 6
+         * Repository-level metric aggregation.
+         *
+         * This runs after coupling, inheritance, and RFC
+         * analysis so that RepositoryMetrics contains the
+         * final values for Fan-In, Fan-Out, CBO, DIT, NOC,
+         * and RFC.
+         */
+        repository.setMetrics(
+                repositoryMetricsAggregator.aggregate(
+                        repository
+                )
         );
 
         /*

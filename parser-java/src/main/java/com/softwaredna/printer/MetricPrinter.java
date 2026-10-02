@@ -2,6 +2,7 @@ package com.softwaredna.printer;
 
 import com.softwaredna.model.ClassMetrics;
 import com.softwaredna.model.MethodMetrics;
+import com.softwaredna.model.RepositoryMetrics;
 
 public class MetricPrinter {
 
@@ -175,31 +176,167 @@ public class MetricPrinter {
                         + metrics.getMaximumNestingDepth());
 
         System.out.println();
-System.out.println("      Architecture Metrics");
 
-System.out.printf(
-        "        Fan-Out                   : %d%n",
-        metrics.getFanOut());
-
-System.out.printf(
-        "        Fan-In                    : %d%n",
-        metrics.getFanIn());
+        System.out.println("      Architecture Metrics");
 
         System.out.printf(
-        "        CBO                       : %d%n",
-        metrics.getCbo());
-
-System.out.printf(
-        "        DIT                       : %d%n",
-        metrics.getDit()
-);
-
-System.out.printf(
-        "        NOC                       : %d%n",
-        metrics.getNoc());
+                "        Fan-Out                   : %d%n",
+                metrics.getFanOut());
 
         System.out.printf(
-        "        RFC                       : %d%n",
-        metrics.getRfc());
+                "        Fan-In                    : %d%n",
+                metrics.getFanIn());
+
+        System.out.printf(
+                "        CBO                       : %d%n",
+                metrics.getCbo());
+
+        System.out.printf(
+                "        DIT                       : %d%n",
+                metrics.getDit());
+
+        System.out.printf(
+                "        NOC                       : %d%n",
+                metrics.getNoc());
+
+        System.out.printf(
+                "        RFC                       : %d%n",
+                metrics.getRfc());
+    }
+
+    public void print(RepositoryMetrics metrics) {
+
+        System.out.println("Repository Metrics");
+
+        if (metrics == null) {
+
+            System.out.println("  None");
+            return;
+        }
+
+        System.out.println();
+
+        System.out.println("  Repository Structure");
+
+        System.out.println(
+                "    Files                       : "
+                        + metrics.getTotalFiles());
+
+        System.out.println(
+                "    Classes                     : "
+                        + metrics.getTotalClasses());
+
+        System.out.println(
+                "    Interfaces                  : "
+                        + metrics.getTotalInterfaces());
+
+        System.out.println(
+                "    Enums                       : "
+                        + metrics.getTotalEnums());
+
+        System.out.println(
+                "    Records                     : "
+                        + metrics.getTotalRecords());
+
+        System.out.println(
+                "    Methods                     : "
+                        + metrics.getTotalMethods());
+
+        System.out.println(
+                "    Fields                      : "
+                        + metrics.getTotalFields());
+
+        System.out.println(
+                "    Constructors                : "
+                        + metrics.getTotalConstructors());
+
+        System.out.println();
+
+        System.out.println("  Code Statistics");
+
+        System.out.println(
+                "    Total Method LOC            : "
+                        + metrics.getTotalLinesOfCode());
+
+        System.out.println(
+                "    Average Method LOC          : "
+                        + metrics.getAverageMethodLinesOfCode());
+
+        System.out.println(
+                "    Total Parameters            : "
+                        + metrics.getTotalParameters());
+
+        System.out.println(
+                "    Total Local Variables       : "
+                        + metrics.getTotalLocalVariables());
+
+        System.out.println(
+                "    Total Method Calls          : "
+                        + metrics.getTotalMethodCalls());
+
+        System.out.println(
+                "    Total Object Creations      : "
+                        + metrics.getTotalObjectCreations());
+
+        System.out.println(
+                "    Total Return Statements     : "
+                        + metrics.getTotalReturnStatements());
+
+        System.out.println();
+
+        System.out.println("  Complexity Summary");
+
+        System.out.println(
+                "    Total Cyclomatic Complexity : "
+                        + metrics.getTotalCyclomaticComplexity());
+
+        System.out.println(
+                "    Average Cyclomatic Comp.    : "
+                        + metrics.getAverageCyclomaticComplexity());
+
+        System.out.println(
+                "    Maximum Cyclomatic Comp.    : "
+                        + metrics.getMaximumCyclomaticComplexity());
+
+        System.out.println();
+
+        System.out.println("    Total Loop Count            : "
+                + metrics.getTotalLoops());
+
+        System.out.println(
+                "    Total Conditional Count     : "
+                        + metrics.getTotalConditionals());
+
+        System.out.println(
+                "    Maximum Nesting Depth       : "
+                        + metrics.getMaximumNestingDepth());
+
+        System.out.println();
+
+        System.out.println("  Architecture Metrics");
+
+        System.out.printf(
+                "    Average Fan-In              : %.2f%n",
+                metrics.getAverageFanIn());
+
+        System.out.printf(
+                "    Average Fan-Out             : %.2f%n",
+                metrics.getAverageFanOut());
+
+        System.out.printf(
+                "    Average CBO                 : %.2f%n",
+                metrics.getAverageCbo());
+
+        System.out.println(
+                "    Maximum DIT                 : "
+                        + metrics.getMaximumDit());
+
+        System.out.println(
+                "    Total NOC                   : "
+                        + metrics.getTotalNoc());
+
+        System.out.printf(
+                "    Average RFC                 : %.2f%n",
+                metrics.getAverageRfc());
     }
 }
