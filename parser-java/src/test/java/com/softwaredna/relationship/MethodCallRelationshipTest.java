@@ -309,4 +309,211 @@ class MethodCallRelationshipTest {
                 "Expected source evidence to point to the method call line"
         );
     }
+
+    @Test
+void shouldCreateMethodCallRelationshipForImplicitReceiver()
+        throws Exception {
+
+    Path studentFile =
+            tempDir.resolve("Student.java");
+
+    Files.writeString(
+            studentFile,
+            """
+            class Student {
+
+                void study() {
+                    revise();
+                }
+
+                void revise() {
+                }
+            }
+            """
+    );
+
+    RepositoryParser parser =
+            new RepositoryParser();
+
+    var repository =
+            parser.parseRepository(
+                    tempDir.toString()
+            );
+
+    boolean relationshipExists =
+            repository.getRelationships()
+                    .stream()
+                    .anyMatch(
+                            relationship ->
+                                    relationship.getType()
+                                            == RelationshipType.METHOD_CALL_INTERNAL
+                    );
+
+    assertTrue(
+            relationshipExists,
+            "Expected an internal relationship for an implicit same-class method call"
+    );
+}
+
+@Test
+void shouldResolveOverloadedMethodByArgumentCount()
+        throws Exception {
+
+    Path callerFile =
+            tempDir.resolve("Caller.java");
+
+    Files.writeString(
+            callerFile,
+            """
+            class Caller {
+
+                Worker worker = new Worker();
+
+                void run() {
+                    worker.process("hello");
+                }
+            }
+            """
+    );
+
+    Path workerFile =
+            tempDir.resolve("Worker.java");
+
+    Files.writeString(
+            workerFile,
+            """
+            class Worker {
+
+                void process() {
+                }
+
+                void process(String value) {
+                }
+            }
+            """
+    );
+
+    RepositoryParser parser =
+            new RepositoryParser();
+
+    var repository =
+            parser.parseRepository(
+                    tempDir.toString()
+            );
+
+    var workerClass =
+            repository.getFiles()
+                    .stream()
+                    .flatMap(
+                            file ->
+                                    file.getClasses()
+                                            .stream()
+                    )
+                    .filter(
+                            parsedClass ->
+                                    "Worker".equals(
+                                            parsedClass.getName()
+                                    )
+                    )
+                    .findFirst()
+                    .orElseThrow();
+
+    var targetMethod =
+            workerClass.getMethods()
+                    .stream()
+                    .filter(
+                            method ->
+                                    "process".equals(
+                                            method.getName()
+                                    )
+                    )
+                    .filter(
+                            method ->
+                                    method.getParameters()
+                                            .size() == 1
+                    )
+                    .findFirst()
+                    .orElseThrow();
+
+    boolean relationshipExists =
+            repository.getRelationships()
+                    .stream()
+                    .anyMatch(
+                            relationship ->
+                                    relationship.getType()
+                                            == RelationshipType.METHOD_CALL_INTERNAL
+                                            &&
+                                    relationship.getTarget()
+                                            .getId()
+                                            .equals(
+                                                    targetMethod.getId()
+                                            )
+                    );
+
+    assertTrue(
+            relationshipExists,
+            "Expected the one-argument overload to be selected"
+    );
+}
+
+@Test
+void shouldNotCreateMethodCallRelationshipForUnknownMethod()
+        throws Exception {
+
+    Path callerFile =
+            tempDir.resolve("Caller.java");
+
+    Files.writeString(
+            callerFile,
+            """
+            class Caller {
+
+                Worker worker = new Worker();
+
+                void run() {
+                    worker.unknownMethod();
+                }
+            }
+            """
+    );
+
+    Path workerFile =
+            tempDir.resolve("Worker.java");
+
+    Files.writeString(
+            workerFile,
+            """
+            class Worker {
+
+                void process() {
+                }
+            }
+            """
+    );
+
+    RepositoryParser parser =
+            new RepositoryParser();
+
+    var repository =
+            parser.parseRepository(
+                    tempDir.toString()
+            );
+
+    boolean relationshipExists =
+            repository.getRelationships()
+                    .stream()
+                    .anyMatch(
+                            relationship ->
+                                    relationship.getType()
+                                            == RelationshipType.METHOD_CALL_INTERNAL
+                                            ||
+                                    relationship.getType()
+                                            == RelationshipType.METHOD_CALL_EXTERNAL
+                    );
+
+    assertTrue(
+            !relationshipExists,
+            "Unknown method should not create a method call relationship"
+    );
+}
 }

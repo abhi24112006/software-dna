@@ -1,13 +1,21 @@
 package com.softwaredna.registry;
 
-import com.softwaredna.model.*;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+
+import com.softwaredna.model.EntityReference;
+import com.softwaredna.model.ParsedClass;
+import com.softwaredna.model.ParsedConstructor;
+import com.softwaredna.model.ParsedEnum;
+import com.softwaredna.model.ParsedField;
+import com.softwaredna.model.ParsedInterface;
+import com.softwaredna.model.ParsedMethod;
+import com.softwaredna.model.ParsedParameter;
+import com.softwaredna.model.ParsedRecord;
 
 public class EntityRegistry {
 
@@ -53,7 +61,7 @@ public class EntityRegistry {
     public void registerClass(
             ParsedClass parsedClass) {
 
-        parsedEntitiesById.put(
+        registerParsedEntity(
                 parsedClass.getId(),
                 parsedClass
         );
@@ -69,7 +77,7 @@ public class EntityRegistry {
     public void registerInterface(
             ParsedInterface parsedInterface) {
 
-        parsedEntitiesById.put(
+        registerParsedEntity(
                 parsedInterface.getId(),
                 parsedInterface
         );
@@ -85,7 +93,7 @@ public class EntityRegistry {
     public void registerEnum(
             ParsedEnum parsedEnum) {
 
-        parsedEntitiesById.put(
+        registerParsedEntity(
                 parsedEnum.getId(),
                 parsedEnum
         );
@@ -96,7 +104,7 @@ public class EntityRegistry {
     public void registerRecord(
             ParsedRecord parsedRecord) {
 
-        parsedEntitiesById.put(
+        registerParsedEntity(
                 parsedRecord.getId(),
                 parsedRecord
         );
@@ -107,7 +115,7 @@ public class EntityRegistry {
     public void registerField(
             ParsedField parsedField) {
 
-        parsedEntitiesById.put(
+        registerParsedEntity(
                 parsedField.getId(),
                 parsedField
         );
@@ -118,7 +126,7 @@ public class EntityRegistry {
     public void registerMethod(
             ParsedMethod parsedMethod) {
 
-        parsedEntitiesById.put(
+        registerParsedEntity(
                 parsedMethod.getId(),
                 parsedMethod
         );
@@ -129,7 +137,7 @@ public class EntityRegistry {
     public void registerConstructor(
             ParsedConstructor parsedConstructor) {
 
-        parsedEntitiesById.put(
+        registerParsedEntity(
                 parsedConstructor.getId(),
                 parsedConstructor
         );
@@ -140,11 +148,48 @@ public class EntityRegistry {
     public void registerParameter(
             ParsedParameter parsedParameter) {
 
-        parsedEntitiesById.put(
+        registerParsedEntity(
                 parsedParameter.getId(),
                 parsedParameter
         );
 
+    }
+
+
+    /*
+     * -------------------------------------------------------
+     * Central Parsed Entity Registration
+     * -------------------------------------------------------
+     */
+
+    private void registerParsedEntity(
+            String id,
+            Object entity) {
+
+        if (id == null || id.isBlank()) {
+            throw new IllegalArgumentException(
+                    "Entity ID cannot be null or blank."
+            );
+        }
+
+        if (entity == null) {
+            throw new IllegalArgumentException(
+                    "Entity cannot be null."
+            );
+        }
+
+        Object existingEntity =
+                parsedEntitiesById.get(id);
+
+        if (existingEntity != null
+                && existingEntity != entity) {
+
+            throw new IllegalArgumentException(
+                    "Duplicate entity ID detected: " + id
+            );
+        }
+
+        parsedEntitiesById.put(id, entity);
     }
 
 
@@ -157,8 +202,33 @@ public class EntityRegistry {
     public void registerEntityReference(
             EntityReference entityReference) {
 
+        if (entityReference == null) {
+            throw new IllegalArgumentException(
+                    "Entity reference cannot be null."
+            );
+        }
+
+        String id = entityReference.getId();
+
+        if (id == null || id.isBlank()) {
+            throw new IllegalArgumentException(
+                    "Entity reference ID cannot be null or blank."
+            );
+        }
+
+        EntityReference existingReference =
+                entityReferences.get(id);
+
+        if (existingReference != null
+                && existingReference != entityReference) {
+
+            throw new IllegalArgumentException(
+                    "Duplicate entity reference ID detected: " + id
+            );
+        }
+
         entityReferences.put(
-                entityReference.getId(),
+                id,
                 entityReference
         );
 
@@ -297,6 +367,7 @@ public class EntityRegistry {
             }
 
         }
+
 
         if (defaultPackageCandidate != null) {
 

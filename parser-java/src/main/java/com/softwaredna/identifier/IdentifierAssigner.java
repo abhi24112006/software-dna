@@ -1,6 +1,15 @@
 package com.softwaredna.identifier;
 
-import com.softwaredna.model.*;
+import com.softwaredna.model.ParsedClass;
+import com.softwaredna.model.ParsedConstructor;
+import com.softwaredna.model.ParsedEnum;
+import com.softwaredna.model.ParsedField;
+import com.softwaredna.model.ParsedFile;
+import com.softwaredna.model.ParsedInterface;
+import com.softwaredna.model.ParsedMethod;
+import com.softwaredna.model.ParsedParameter;
+import com.softwaredna.model.ParsedRecord;
+import com.softwaredna.model.RepositoryModel;
 import com.softwaredna.util.IdentifierGenerator;
 
 public class IdentifierAssigner {
@@ -8,13 +17,14 @@ public class IdentifierAssigner {
     public void assignIds(
             RepositoryModel repository) {
 
-        for (ParsedFile file : repository.getFiles()) {
+        for (ParsedFile file :
+                repository.getFiles()) {
 
             assignClassIds(file);
             assignInterfaceIds(file);
-
+            assignEnumIds(file);
+            assignRecordIds(file);
         }
-
     }
 
     /*
@@ -26,7 +36,8 @@ public class IdentifierAssigner {
     private void assignClassIds(
             ParsedFile file) {
 
-        for (ParsedClass parsedClass : file.getClasses()) {
+        for (ParsedClass parsedClass :
+                file.getClasses()) {
 
             String classId =
                     IdentifierGenerator.classId(
@@ -36,13 +47,9 @@ public class IdentifierAssigner {
             parsedClass.setId(classId);
 
             assignFieldIds(parsedClass);
-
             assignConstructorIds(parsedClass);
-
             assignMethodIds(parsedClass);
-
         }
-
     }
 
     /*
@@ -63,9 +70,49 @@ public class IdentifierAssigner {
                             parsedInterface.getName());
 
             parsedInterface.setId(interfaceId);
-
         }
+    }
 
+    /*
+     * -------------------------------------------------------
+     * Enums
+     * -------------------------------------------------------
+     */
+
+    private void assignEnumIds(
+            ParsedFile file) {
+
+        for (ParsedEnum parsedEnum :
+                file.getEnums()) {
+
+            String enumId =
+                    IdentifierGenerator.enumId(
+                            file.getPackageName(),
+                            parsedEnum.getName());
+
+            parsedEnum.setId(enumId);
+        }
+    }
+
+    /*
+     * -------------------------------------------------------
+     * Records
+     * -------------------------------------------------------
+     */
+
+    private void assignRecordIds(
+            ParsedFile file) {
+
+        for (ParsedRecord parsedRecord :
+                file.getRecords()) {
+
+            String recordId =
+                    IdentifierGenerator.recordId(
+                            file.getPackageName(),
+                            parsedRecord.getName());
+
+            parsedRecord.setId(recordId);
+        }
     }
 
     /*
@@ -84,9 +131,7 @@ public class IdentifierAssigner {
                     IdentifierGenerator.fieldId(
                             parsedClass.getId(),
                             field.getName()));
-
         }
-
     }
 
     /*
@@ -109,9 +154,7 @@ public class IdentifierAssigner {
             assignParameterIds(
                     constructor.getId(),
                     constructor.getParameters());
-
         }
-
     }
 
     /*
@@ -134,9 +177,7 @@ public class IdentifierAssigner {
             assignParameterIds(
                     method.getId(),
                     method.getParameters());
-
         }
-
     }
 
     /*
@@ -156,9 +197,6 @@ public class IdentifierAssigner {
                     IdentifierGenerator.parameterId(
                             ownerId,
                             parameter.getName()));
-
         }
-
     }
-
 }
