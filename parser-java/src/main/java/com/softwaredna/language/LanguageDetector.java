@@ -11,6 +11,26 @@ public class LanguageDetector {
 
     public Map<Language, Integer> detect(Path repositoryPath) {
 
+        if (repositoryPath == null) {
+            throw new IllegalArgumentException(
+                    "Repository path cannot be null."
+            );
+        }
+
+        if (!Files.exists(repositoryPath)) {
+            throw new IllegalArgumentException(
+                    "Repository path does not exist: "
+                            + repositoryPath
+            );
+        }
+
+        if (!Files.isDirectory(repositoryPath)) {
+            throw new IllegalArgumentException(
+                    "Repository path is not a directory: "
+                            + repositoryPath
+            );
+        }
+
         Map<Language, Integer> languageCounts =
                 new EnumMap<>(Language.class);
 
@@ -56,11 +76,13 @@ public class LanguageDetector {
             return Language.PYTHON;
         }
 
-        if (fileName.endsWith(".js")) {
+        if (fileName.endsWith(".js")
+                || fileName.endsWith(".jsx")) {
             return Language.JAVASCRIPT;
         }
 
-        if (fileName.endsWith(".ts")) {
+        if (fileName.endsWith(".ts")
+                || fileName.endsWith(".tsx")) {
             return Language.TYPESCRIPT;
         }
 

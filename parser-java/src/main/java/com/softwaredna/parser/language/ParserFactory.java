@@ -8,7 +8,6 @@ public class ParserFactory {
             Language language) {
 
         if (language == null) {
-
             throw new IllegalArgumentException(
                     "Language cannot be null."
             );
@@ -23,6 +22,14 @@ public class ParserFactory {
                 return new PythonParserAdapter();
 
             case JAVASCRIPT:
+                return new JavaScriptParserAdapter();
+
+            case TYPESCRIPT:
+                /*
+                 * TypeScript currently uses the JavaScript parser
+                 * because JavaScriptParserAdapter already supports
+                 * .ts and .tsx source files.
+                 */
                 return new JavaScriptParserAdapter();
 
             default:

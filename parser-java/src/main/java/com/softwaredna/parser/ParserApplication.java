@@ -1,6 +1,5 @@
 package com.softwaredna.parser;
 
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -33,14 +32,9 @@ import com.softwaredna.knowledge.KnowledgeGraphBuilder;
 import com.softwaredna.knowledge.printer.KnowledgeGraphPrinter;
 import com.softwaredna.knowledge.query.ImpactAnalyzer;
 import com.softwaredna.knowledge.query.KnowledgeGraphQuery;
-import com.softwaredna.language.Language;
-import com.softwaredna.language.LanguageDetector;
-import com.softwaredna.language.LanguageReport;
 import com.softwaredna.model.RepositoryModel;
 import com.softwaredna.neo4j.Neo4jConfig;
 import com.softwaredna.neo4j.Neo4jService;
-import com.softwaredna.parser.language.LanguageParser;
-import com.softwaredna.parser.language.ParserFactory;
 import com.softwaredna.parser.nlp.NaturalLanguageQueryEngine;
 import com.softwaredna.parser.nlp.QueryResult;
 import com.softwaredna.printer.RepositoryPrinter;
@@ -60,37 +54,27 @@ public class ParserApplication {
             String repositoryPath =
                     "../sample_projects/python_test";
 
-            LanguageDetector languageDetector =
-                    new LanguageDetector();
-
-            LanguageReport languageReport =
-                    new LanguageReport(
-                            languageDetector.detect(
-                                    Path.of(repositoryPath)
-                            )
-                    );
-
-            languageReport.print();
-
             /*
              * =================================================
-             * Run Language-Specific Parser
+             * Multi-Language Repository Parsing
              * =================================================
              *
-             * The repository is parsed exactly once using
-             * the parser selected by the detected language.
+             * The repository is parsed through the unified
+             * multi-language entry point. Each supported
+             * language is handled by its existing adapter,
+             * and the results are combined into one
+             * RepositoryModel.
              */
 
-            Language primaryLanguage =
-                    languageReport.getPrimaryLanguage();
+            MultiLanguageRepositoryParser repositoryParser =
+                    new MultiLanguageRepositoryParser();
 
-            LanguageParser languageParser =
-                    ParserFactory.getParser(
-                            primaryLanguage
-                    );
+            repositoryParser
+                    .detectLanguages(repositoryPath)
+                    .print();
 
             RepositoryModel repository =
-                    languageParser.parse(
+                    repositoryParser.parseRepository(
                             repositoryPath
                     );
 
