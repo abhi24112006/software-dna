@@ -37,6 +37,7 @@ import com.softwaredna.neo4j.Neo4jConfig;
 import com.softwaredna.neo4j.Neo4jService;
 import com.softwaredna.parser.nlp.NaturalLanguageQueryEngine;
 import com.softwaredna.parser.nlp.QueryResult;
+import com.softwaredna.printer.MetricPrinter;
 import com.softwaredna.printer.RepositoryPrinter;
 
 public class ParserApplication {
@@ -52,7 +53,7 @@ public class ParserApplication {
              */
 
             String repositoryPath =
-                    "../sample_projects/python_test";
+                    "../sample_projects/java_test/architecture_test";
 
             /*
              * =================================================
@@ -77,6 +78,19 @@ public class ParserApplication {
                     repositoryParser.parseRepository(
                             repositoryPath
                     );
+
+            /*
+             * =================================================
+             * Repository Metrics
+             * =================================================
+             */
+
+            MetricPrinter metricPrinter =
+                    new MetricPrinter();
+
+            metricPrinter.print(
+                    repository.getMetrics()
+            );
 
             /*
              * =================================================

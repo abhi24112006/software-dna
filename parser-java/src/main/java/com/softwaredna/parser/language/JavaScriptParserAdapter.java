@@ -32,7 +32,7 @@ public class JavaScriptParserAdapter
 
     private final EntityRegistrar registrar;
 
-        private final RepositoryAnalyzer repositoryAnalyzer;
+    private final RepositoryAnalyzer repositoryAnalyzer;
 
     private final List<JavaScriptCall> calls;
 
@@ -74,7 +74,9 @@ public class JavaScriptParserAdapter
                 new RepositoryModel();
 
         Path root =
-                Path.of(repositoryPath);
+                Path.of(repositoryPath)
+                        .toAbsolutePath()
+                        .normalize();
 
         repository.setRepositoryName(
                 root.getFileName().toString()
@@ -99,7 +101,10 @@ public class JavaScriptParserAdapter
                 files) {
 
             ParsedFile file =
-                    convertFile(fileData);
+                    convertFile(
+                            fileData,
+                            root
+                    );
 
             repository.getFiles().add(
                     file
@@ -225,7 +230,8 @@ public class JavaScriptParserAdapter
 
     @SuppressWarnings("unchecked")
     private ParsedFile convertFile(
-            Map<String, Object> fileData) {
+            Map<String, Object> fileData,
+            Path repositoryRoot) {
 
         ParsedFile file =
                 new ParsedFile();
@@ -237,7 +243,8 @@ public class JavaScriptParserAdapter
 
         file.setPackageName(
                 derivePackageName(
-                        filePath
+                        filePath,
+                        repositoryRoot
                 )
         );
 
@@ -600,7 +607,8 @@ public class JavaScriptParserAdapter
     }
 
     private String derivePackageName(
-            String filePath) {
+            String filePath,
+            Path repositoryRoot) {
 
         if (filePath == null ||
                 filePath.isBlank()) {
@@ -609,17 +617,39 @@ public class JavaScriptParserAdapter
         }
 
         Path path =
-                Path.of(filePath);
+                Path.of(filePath)
+                        .toAbsolutePath()
+                        .normalize();
+
+        Path root =
+                repositoryRoot
+                        .toAbsolutePath()
+                        .normalize();
+
+        Path relativePath;
+
+        try {
+
+            relativePath =
+                    root.relativize(path);
+
+        } catch (IllegalArgumentException e) {
+
+            return "";
+        }
 
         Path parent =
-                path.getParent();
+                relativePath.getParent();
 
         if (parent == null) {
             return "";
         }
 
-        return parent.toString()
-                .replace('\\', '.')
-                .replace('/', '.');
+        String packageName =
+                parent.toString()
+                        .replace('\\', '.')
+                        .replace('/', '.');
+
+        return packageName;
     }
 }

@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import com.softwaredna.analysis.repository.RepositoryAnalyzer;
 import com.softwaredna.language.Language;
 import com.softwaredna.language.LanguageDetector;
 import com.softwaredna.language.LanguageReport;
@@ -22,9 +23,11 @@ import com.softwaredna.parser.language.ParserFactory;
 public class MultiLanguageRepositoryParser {
 
     private final LanguageDetector languageDetector;
+        private final RepositoryAnalyzer repositoryAnalyzer;
 
     public MultiLanguageRepositoryParser() {
         languageDetector = new LanguageDetector();
+                repositoryAnalyzer = new RepositoryAnalyzer();
     }
 
     /**
@@ -152,6 +155,8 @@ public class MultiLanguageRepositoryParser {
                     parsedRepository
             );
         }
+
+        repositoryAnalyzer.analyze(unifiedRepository);
 
         return unifiedRepository;
     }

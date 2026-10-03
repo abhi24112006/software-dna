@@ -5,12 +5,14 @@ import java.nio.file.Path;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
 
 import com.softwaredna.language.Language;
 import com.softwaredna.language.LanguageReport;
+import com.softwaredna.model.ParsedClass;
 import com.softwaredna.model.RepositoryModel;
 
 class MultiLanguageRepositoryParserTest {
@@ -122,6 +124,17 @@ class MultiLanguageRepositoryParserTest {
                 );
 
         assertNotNull(repositoryModel);
+        assertNotNull(repositoryModel.getMetrics());
+
+        assertEquals(
+                3,
+                repositoryModel.getMetrics().getTotalFiles()
+        );
+
+        assertEquals(
+                3,
+                repositoryModel.getMetrics().getTotalClasses()
+        );
 
         assertEquals(
                 3,
@@ -172,6 +185,79 @@ class MultiLanguageRepositoryParserTest {
         assertEquals(
                 1,
                 repositoryModel.getFiles().size()
+        );
+    }
+
+    @Test
+    void usesRepositoryRelativePackageForNestedJavaScriptFiles()
+            throws Exception {
+
+        Path repository =
+                Files.createTempDirectory(
+                        "software-dna-javascript"
+                );
+
+        Path modelDirectory =
+                Files.createDirectories(
+                        repository.resolve("model")
+                );
+
+        Files.writeString(
+                modelDirectory.resolve("User.js"),
+                """
+                class User {
+                    getName() {
+                        return "Abhishek";
+                    }
+                }
+                """
+        );
+
+        MultiLanguageRepositoryParser parser =
+                new MultiLanguageRepositoryParser();
+
+        RepositoryModel repositoryModel =
+                parser.parseRepository(
+                        repository.toString()
+                );
+
+        assertNotNull(repositoryModel);
+
+        ParsedClass userClass =
+                repositoryModel.getFiles()
+                        .stream()
+                        .flatMap(
+                                file ->
+                                        file.getClasses()
+                                                .stream()
+                        )
+                        .filter(
+                                parsedClass ->
+                                        "User".equals(
+                                                parsedClass.getName()
+                                        )
+                        )
+                        .findFirst()
+                        .orElse(null);
+
+        assertNotNull(userClass);
+
+        assertEquals(
+                "model",
+                userClass.getPackageName()
+        );
+
+        assertEquals(
+                "model.User",
+                userClass.getId()
+        );
+
+        assertFalse(
+                userClass.getId()
+                        .contains(
+                                repository.toAbsolutePath()
+                                        .toString()
+                        )
         );
     }
 }
