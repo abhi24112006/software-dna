@@ -85,6 +85,29 @@ public class GroundedPromptBuilder {
         }
 
         prompt.append("\n");
+
+        prompt.append("GRAPH-DERIVED RELATIONSHIPS:\n");
+
+        if (context.getRelationships().isEmpty()) {
+
+            prompt.append("- No relevant graph relationships were found.\n");
+
+        } else {
+
+            for (GroundedRelationship relationship
+                    : context.getRelationships()) {
+
+                prompt.append("- ")
+                        .append(relationship.getSource().getName())
+                        .append(" -- ")
+                        .append(relationship.getType())
+                        .append(" --> ")
+                        .append(relationship.getTarget().getName())
+                        .append("\n");
+            }
+        }
+
+        prompt.append("\n");
         prompt.append("ANSWER:\n");
 
         return prompt.toString();
@@ -143,30 +166,30 @@ public class GroundedPromptBuilder {
                 break;
 
             case IMPACT:
-    prompt.append("- GRAPH-DERIVED FACTS contains the entities ")
-            .append("identified by the impact analysis as potentially ")
-            .append("affected by changes to the TARGET ENTITY.\n");
+                prompt.append("- GRAPH-DERIVED FACTS contains the entities ")
+                        .append("identified by the impact analysis as potentially ")
+                        .append("affected by changes to the TARGET ENTITY.\n");
 
-    prompt.append("- Every entity listed in GRAPH-DERIVED FACTS MUST ")
-            .append("be reported as an impacted entity.\n");
+                prompt.append("- Every entity listed in GRAPH-DERIVED FACTS MUST ")
+                        .append("be reported as an impacted entity.\n");
 
-    prompt.append("- Do not exclude any entity listed in ")
-            .append("GRAPH-DERIVED FACTS.\n");
+                prompt.append("- Do not exclude any entity listed in ")
+                        .append("GRAPH-DERIVED FACTS.\n");
 
-    prompt.append("- Do not state that any listed entity is not impacted.\n");
+                prompt.append("- Do not state that any listed entity is not impacted.\n");
 
-    prompt.append("- Do not independently determine or reinterpret ")
-            .append("whether an entity is impacted.\n");
+                prompt.append("- Do not independently determine or reinterpret ")
+                        .append("whether an entity is impacted.\n");
 
-    prompt.append("- The impact analysis has already been performed ")
-            .append("by the graph engine.\n");
+                prompt.append("- The impact analysis has already been performed ")
+                        .append("by the graph engine.\n");
 
-    prompt.append("- Do not infer additional affected entities or ")
-            .append("consequences beyond the supplied facts.\n");
+                prompt.append("- Do not infer additional affected entities or ")
+                        .append("consequences beyond the supplied facts.\n");
 
-    prompt.append("- Distinguish classes and methods using their ")
-            .append("provided entity types.\n");
-    break;
+                prompt.append("- Distinguish classes and methods using their ")
+                        .append("provided entity types.\n");
+                break;
         }
     }
 }

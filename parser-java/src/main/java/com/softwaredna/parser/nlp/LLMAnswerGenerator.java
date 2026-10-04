@@ -1,5 +1,7 @@
 package com.softwaredna.parser.nlp;
 
+import com.softwaredna.knowledge.KnowledgeGraph;
+
 /**
  * Generates natural-language answers using an LLM.
  *
@@ -14,13 +16,29 @@ public class LLMAnswerGenerator {
     private final GroundedPromptBuilder promptBuilder;
     private final LLMClient llmClient;
     private final AnswerGenerator fallbackGenerator;
+    private final KnowledgeGraph knowledgeGraph;
 
     /**
-     * Creates an LLM-backed answer generator.
+     * Creates an LLM-backed answer generator without a Knowledge Graph.
+     *
+     * This constructor preserves the existing behavior.
      *
      * @param llmClient configured LLM client
      */
     public LLMAnswerGenerator(LLMClient llmClient) {
+
+        this(llmClient, null);
+    }
+
+    /**
+     * Creates an LLM-backed answer generator with a Knowledge Graph.
+     *
+     * @param llmClient configured LLM client
+     * @param knowledgeGraph source Knowledge Graph for grounded relationships
+     */
+    public LLMAnswerGenerator(
+            LLMClient llmClient,
+            KnowledgeGraph knowledgeGraph) {
 
         if (llmClient == null) {
             throw new IllegalArgumentException(
@@ -31,6 +49,7 @@ public class LLMAnswerGenerator {
         this.promptBuilder = new GroundedPromptBuilder();
         this.llmClient = llmClient;
         this.fallbackGenerator = new AnswerGenerator();
+        this.knowledgeGraph = knowledgeGraph;
     }
 
     /**
@@ -50,8 +69,16 @@ public class LLMAnswerGenerator {
             );
         }
 
-        GroundedContext context =
-                new GroundedContext(result);
+        GroundedContext context;
+
+        if (knowledgeGraph == null) {
+            context = new GroundedContext(result);
+        } else {
+            context = new GroundedContext(
+                    result,
+                    knowledgeGraph
+            );
+        }
 
         String prompt =
                 promptBuilder.build(context);
