@@ -4,6 +4,7 @@ import java.util.Objects;
 
 import com.softwaredna.knowledge.EdgeType;
 import com.softwaredna.knowledge.GraphNode;
+import com.softwaredna.model.SourceEvidence;
 
 /**
  * Represents a verified relationship retrieved from the
@@ -17,9 +18,12 @@ public class GroundedRelationship {
     private final GraphNode source;
     private final GraphNode target;
     private final EdgeType type;
+    private final SourceEvidence sourceEvidence;
 
     /**
-     * Creates a grounded relationship.
+     * Creates a grounded relationship without source evidence.
+     *
+     * <p>Kept for backward compatibility.</p>
      *
      * @param source source graph entity
      * @param target target graph entity
@@ -29,6 +33,23 @@ public class GroundedRelationship {
             GraphNode source,
             GraphNode target,
             EdgeType type) {
+
+        this(source, target, type, null);
+    }
+
+    /**
+     * Creates a grounded relationship with source evidence.
+     *
+     * @param source source graph entity
+     * @param target target graph entity
+     * @param type graph relationship type
+     * @param sourceEvidence source-level evidence for the relationship
+     */
+    public GroundedRelationship(
+            GraphNode source,
+            GraphNode target,
+            EdgeType type,
+            SourceEvidence sourceEvidence) {
 
         if (source == null) {
             throw new IllegalArgumentException(
@@ -48,6 +69,7 @@ public class GroundedRelationship {
         this.source = source;
         this.target = target;
         this.type = type;
+        this.sourceEvidence = sourceEvidence;
     }
 
     public GraphNode getSource() {
@@ -60,6 +82,15 @@ public class GroundedRelationship {
 
     public EdgeType getType() {
         return type;
+    }
+
+    /**
+     * Returns the source-level evidence associated with this relationship.
+     *
+     * @return source evidence, or null when evidence is unavailable
+     */
+    public SourceEvidence getSourceEvidence() {
+        return sourceEvidence;
     }
 
     @Override

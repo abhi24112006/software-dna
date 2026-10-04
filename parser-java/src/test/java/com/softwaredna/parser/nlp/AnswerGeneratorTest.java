@@ -8,6 +8,7 @@ import org.junit.jupiter.api.Test;
 
 import com.softwaredna.knowledge.GraphNode;
 import com.softwaredna.knowledge.NodeType;
+import com.softwaredna.model.ClassMetrics;
 
 class AnswerGeneratorTest {
 
@@ -144,26 +145,86 @@ class AnswerGeneratorTest {
     }
 
     @Test
-void shouldGenerateMultipleResults() {
+    void shouldGenerateMultipleResults() {
 
-    GraphNode user = new GraphNode(
-            "class:User",
-            "User",
-            NodeType.CLASS
-    );
+        GraphNode user = new GraphNode(
+                "class:User",
+                "User",
+                NodeType.CLASS
+        );
 
-    QueryResult result = new QueryResult(
-            "Who depends on User?",
-            QueryIntent.DEPENDENTS,
-            user,
-            List.of(controller, service)
-    );
+        QueryResult result = new QueryResult(
+                "Who depends on User?",
+                QueryIntent.DEPENDENTS,
+                user,
+                List.of(controller, service)
+        );
 
-    String answer = answerGenerator.generate(result);
+        String answer = answerGenerator.generate(result);
 
-    assertEquals(
-            "User is depended on by UserController, UserService.",
-            answer
-    );
-}
+        assertEquals(
+                "User is depended on by UserController, UserService.",
+                answer
+        );
+    }
+
+    @Test
+    void shouldGenerateMetricsAnswer() {
+
+        ClassMetrics metrics = new ClassMetrics();
+
+        metrics.setMethodCount(5);
+        metrics.setFieldCount(3);
+        metrics.setTotalLinesOfCode(120);
+        metrics.setTotalCyclomaticComplexity(8);
+        metrics.setFanIn(4);
+        metrics.setFanOut(2);
+        metrics.setCbo(6);
+        metrics.setDit(2);
+        metrics.setNoc(3);
+        metrics.setRfc(10);
+
+        QueryResult result = new QueryResult(
+                "What are the metrics of UserController?",
+                QueryIntent.METRICS,
+                controller,
+                List.of(),
+                metrics
+        );
+
+        String answer = answerGenerator.generate(result);
+
+        assertEquals(
+                "UserController metrics: " +
+                        "Methods: 5, " +
+                        "Fields: 3, " +
+                        "LOC: 120, " +
+                        "Cyclomatic Complexity: 8, " +
+                        "Fan-In: 4, " +
+                        "Fan-Out: 2, " +
+                        "CBO: 6, " +
+                        "DIT: 2, " +
+                        "NOC: 3, " +
+                        "RFC: 10.",
+                answer
+        );
+    }
+
+    @Test
+    void shouldHandleMissingMetrics() {
+
+        QueryResult result = new QueryResult(
+                "What are the metrics of UserController?",
+                QueryIntent.METRICS,
+                controller,
+                List.of()
+        );
+
+        String answer = answerGenerator.generate(result);
+
+        assertEquals(
+                "No metrics are available for UserController.",
+                answer
+        );
+    }
 }

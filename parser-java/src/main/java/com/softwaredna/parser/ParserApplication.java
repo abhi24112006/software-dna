@@ -123,7 +123,7 @@ public class ParserApplication {
                             graphNodeCollection
                     );
 
-                     KnowledgeGraphQuery query =
+            KnowledgeGraphQuery query =
                     new KnowledgeGraphQuery(graph);
 
             /*
@@ -131,6 +131,7 @@ public class ParserApplication {
              * instead of simply taking the first class/method in the graph.
              * This keeps the demo queries meaningful across repositories.
              */
+
             GraphNode primaryClass =
                     findNodeWithOutgoingEdge(
                             query, graphNodes, "CLASS", EdgeType.DEPENDS_ON);
@@ -144,7 +145,8 @@ public class ParserApplication {
             }
 
             if (secondaryClass == null) {
-                secondaryClass = findSecondNodeOfType(graphNodes, "CLASS", primaryClass);
+                secondaryClass = findSecondNodeOfType(
+                        graphNodes, "CLASS", primaryClass);
             }
 
             GraphNode primaryMethod =
@@ -160,7 +162,8 @@ public class ParserApplication {
             }
 
             if (secondaryMethod == null) {
-                secondaryMethod = findSecondNodeOfType(graphNodes, "METHOD", primaryMethod);
+                secondaryMethod = findSecondNodeOfType(
+                        graphNodes, "METHOD", primaryMethod);
             }
 
             GraphNode interfaceNode =
@@ -168,7 +171,8 @@ public class ParserApplication {
                             query, graphNodes, "INTERFACE", EdgeType.IMPLEMENTS, null);
 
             if (interfaceNode == null) {
-                interfaceNode = findFirstNodeOfType(graphNodes, "INTERFACE");
+                interfaceNode = findFirstNodeOfType(
+                        graphNodes, "INTERFACE");
             }
 
             /*
@@ -905,7 +909,6 @@ public class ParserApplication {
              * =================================================
              */
 
-
             System.out.println();
 
             System.out.println(
@@ -1210,7 +1213,7 @@ public class ParserApplication {
              */
 
             NaturalLanguageQueryEngine naturalLanguageQueryEngine =
-                    new NaturalLanguageQueryEngine(graph);
+                    new NaturalLanguageQueryEngine(graph,repository);
 
             System.out.println();
             System.out.println("======================================");
@@ -1220,25 +1223,47 @@ public class ParserApplication {
             if (primaryClass != null) {
                 runNaturalLanguageQuery(
                         naturalLanguageQueryEngine,
-                        "What does " + primaryClass.getName() + " depend on?");
+                        "What does " + primaryClass.getName() + " depend on?"
+                );
             }
 
             if (secondaryClass != null) {
                 runNaturalLanguageQuery(
                         naturalLanguageQueryEngine,
-                        "Who depends on " + secondaryClass.getName() + "?");
+                        "Who depends on " + secondaryClass.getName() + "?"
+                );
             }
 
             if (primaryClass != null) {
                 runNaturalLanguageQuery(
                         naturalLanguageQueryEngine,
-                        "What methods does " + primaryClass.getName() + " call?");
+                        "What methods does " + primaryClass.getName() + " call?"
+                );
             }
 
             if (secondaryMethod != null) {
                 runNaturalLanguageQuery(
                         naturalLanguageQueryEngine,
-                        "Who calls " + secondaryMethod.getName() + "?");
+                        "Who calls " + secondaryMethod.getName() + "?"
+                );
+            }
+
+            /*
+             * -------------------------------------------------
+             * Metric Queries
+             * -------------------------------------------------
+             */
+
+            if (primaryClass != null) {
+                runNaturalLanguageQuery(
+                        naturalLanguageQueryEngine,
+                        "What are the metrics of " + primaryClass.getName() + "?"
+                );
+
+                runNaturalLanguageQuery(
+                        naturalLanguageQueryEngine,
+                        "How many methods does " + primaryClass.getName() + " have?"
+                );
             }
 
             /*
@@ -1272,45 +1297,46 @@ public class ParserApplication {
     }
 
     /*
- * =================================================
- * Natural Language Query Helpers
- * =================================================
- */
+     * =================================================
+     * Natural Language Query Helpers
+     * =================================================
+     */
 
-/**
- * Runs a natural-language question against the
- * Knowledge Graph and prints the resulting graph facts.
- */
+    /**
+     * Runs a natural-language question against the
+     * Knowledge Graph and prints the resulting graph facts.
+     */
 
-private static void runNaturalLanguageQuery(
-        NaturalLanguageQueryEngine engine,
-        String question) {
+    private static void runNaturalLanguageQuery(
+            NaturalLanguageQueryEngine engine,
+            String question) {
 
-    System.out.println();
-    System.out.println("Question: " + question);
+        System.out.println();
+        System.out.println("Question: " + question);
 
-    try {
-        QueryResult result = engine.ask(question);
+        try {
 
-        System.out.println("Intent: " + result.getIntent());
-        System.out.println(
-                "Entity: " + result.getEntity().getName()
-        );
+            QueryResult result = engine.ask(question);
 
-        String answer =
-                engine.askAndAnswer(question);
+            System.out.println("Intent: " + result.getIntent());
+            System.out.println(
+                    "Entity: " + result.getEntity().getName()
+            );
 
-        System.out.println("Answer:");
-        System.out.println("  " + answer);
+            String answer =
+                    engine.askAndAnswer(question);
 
-    } catch (Exception e) {
+            System.out.println("Answer:");
+            System.out.println("  " + answer);
 
-        System.out.println(
-                "  NLP query could not be executed: "
-                        + e.getMessage()
-        );
+        } catch (Exception e) {
+
+            System.out.println(
+                    "  NLP query could not be executed: "
+                            + e.getMessage()
+            );
+        }
     }
-}
 
     /*
      * =================================================
@@ -1378,11 +1404,14 @@ private static void runNaturalLanguageQuery(
             EdgeType edgeType) {
 
         for (GraphNode node : nodes) {
+
             if (!hasType(node, typeName)) {
                 continue;
             }
 
-            if (!query.getOutgoingEdges(node.getId(), edgeType).isEmpty()) {
+            if (!query.getOutgoingEdges(
+                    node.getId(), edgeType).isEmpty()) {
+
                 return node;
             }
         }
@@ -1398,16 +1427,21 @@ private static void runNaturalLanguageQuery(
             GraphNode excludedNode) {
 
         for (GraphNode node : nodes) {
+
             if (!hasType(node, typeName)) {
                 continue;
             }
 
             if (excludedNode != null
-                    && excludedNode.getId().equals(node.getId())) {
+                    && excludedNode.getId()
+                            .equals(node.getId())) {
+
                 continue;
             }
 
-            if (!query.getIncomingEdges(node.getId(), edgeType).isEmpty()) {
+            if (!query.getIncomingEdges(
+                    node.getId(), edgeType).isEmpty()) {
+
                 return node;
             }
         }

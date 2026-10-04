@@ -3,8 +3,10 @@ package com.softwaredna.parser.nlp;
 /**
  * Represents the type of question asked by the user.
  *
+ * <p>
  * The NLP layer uses this intent to determine which
  * Software DNA graph operation should be executed.
+ * </p>
  */
 public enum QueryIntent {
 
@@ -57,6 +59,11 @@ public enum QueryIntent {
      * Find entities reachable from the target.
      */
     REACHABILITY,
+
+    /**
+     * Retrieve software metrics for the target entity.
+     */
+    METRICS,
 
     /**
      * Explain or identify the recovered architecture.

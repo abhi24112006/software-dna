@@ -7,6 +7,7 @@ import java.util.Set;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -17,10 +18,15 @@ import com.softwaredna.knowledge.GraphEdge;
 import com.softwaredna.knowledge.GraphNode;
 import com.softwaredna.knowledge.KnowledgeGraph;
 import com.softwaredna.knowledge.NodeType;
+import com.softwaredna.model.ClassMetrics;
+import com.softwaredna.model.ParsedClass;
+import com.softwaredna.model.ParsedFile;
+import com.softwaredna.model.RepositoryModel;
 
 class NaturalLanguageQueryEngineTest {
 
     private KnowledgeGraph graph;
+    private RepositoryModel repositoryModel;
     private NaturalLanguageQueryEngine engine;
 
     private GraphNode controller;
@@ -193,10 +199,34 @@ class NaturalLanguageQueryEngineTest {
         );
 
         // -------------------------------------------------
+        // Repository model and class metrics
+        // -------------------------------------------------
+
+        repositoryModel = new RepositoryModel();
+
+        ParsedFile file = new ParsedFile();
+        ParsedClass parsedController =
+                new ParsedClass("UserController");
+
+        ClassMetrics controllerMetrics =
+                new ClassMetrics();
+        controllerMetrics.setMethodCount(5);
+        controllerMetrics.setFieldCount(3);
+        controllerMetrics.setTotalLinesOfCode(120);
+        controllerMetrics.setTotalCyclomaticComplexity(8);
+
+        parsedController.setMetrics(controllerMetrics);
+        file.getClasses().add(parsedController);
+        repositoryModel.getFiles().add(file);
+
+        // -------------------------------------------------
         // Create NLP engine
         // -------------------------------------------------
 
-        engine = new NaturalLanguageQueryEngine(graph);
+        engine = new NaturalLanguageQueryEngine(
+                graph,
+                repositoryModel
+        );
     }
 
     @Test
@@ -432,6 +462,71 @@ class NaturalLanguageQueryEngineTest {
                 "UserController can reach UserService, User, UserRepository.",
                 answer
         );
+    }
+
+    @Test
+    void shouldAnswerMetricsQuestion() {
+
+        QueryResult result =
+                engine.ask(
+                        "What are the metrics of UserController?"
+                );
+
+        assertEquals(
+                QueryIntent.METRICS,
+                result.getIntent()
+        );
+
+        assertEquals(
+                "UserController",
+                result.getEntity().getName()
+        );
+
+        assertTrue(result.hasMetrics());
+        assertEquals(5, result.getMetrics().getMethodCount());
+        assertEquals(3, result.getMetrics().getFieldCount());
+        assertEquals(120, result.getMetrics().getTotalLinesOfCode());
+        assertEquals(8, result.getMetrics().getTotalCyclomaticComplexity());
+    }
+
+    @Test
+    void shouldAnswerMethodCountMetricsQuestion() {
+
+        QueryResult result =
+                engine.ask(
+                        "How many methods does UserController have?"
+                );
+
+        assertEquals(
+                QueryIntent.METRICS,
+                result.getIntent()
+        );
+
+        assertEquals(
+                "UserController",
+                result.getEntity().getName()
+        );
+
+        assertEquals(
+                5,
+                result.getMetrics().getMethodCount()
+        );
+    }
+
+    @Test
+    void shouldAnswerMetricsQuestionCaseInsensitively() {
+
+        QueryResult result =
+                engine.ask(
+                        "what are the metrics of usercontroller?"
+                );
+
+        assertEquals(
+                "UserController",
+                result.getEntity().getName()
+        );
+
+        assertTrue(result.hasMetrics());
     }
 
     @Test

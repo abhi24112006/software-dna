@@ -14,8 +14,10 @@ import com.softwaredna.knowledge.KnowledgeGraph;
  * Represents factual context retrieved from the Knowledge Graph
  * for use by an LLM.
  *
+ * <p>
  * This class contains only graph-derived information.
  * It does not generate or infer facts.
+ * </p>
  */
 public class GroundedContext {
 
@@ -28,8 +30,10 @@ public class GroundedContext {
     /**
      * Creates grounded context from a graph query result.
      *
+     * <p>
      * This constructor preserves the existing behavior and does not
      * include graph relationships.
+     * </p>
      *
      * @param result graph-derived query result
      */
@@ -37,8 +41,7 @@ public class GroundedContext {
 
         if (result == null) {
             throw new IllegalArgumentException(
-                    "QueryResult cannot be null."
-            );
+                    "QueryResult cannot be null.");
         }
 
         this.question = result.getOriginalQuestion();
@@ -52,14 +55,20 @@ public class GroundedContext {
      * Creates grounded context from a graph query result and the
      * Knowledge Graph.
      *
+     * <p>
      * Only relationships whose source and target are both present
      * in the grounded context are included.
+     * </p>
      *
+     * <p>
      * The grounded context consists of the target entity together
      * with the result nodes.
+     * </p>
      *
+     * <p>
      * Relationships are taken directly from the Knowledge Graph.
      * No relationships are inferred from node names or query intent.
+     * </p>
      *
      * @param result graph-derived query result
      * @param knowledgeGraph source Knowledge Graph
@@ -70,14 +79,12 @@ public class GroundedContext {
 
         if (result == null) {
             throw new IllegalArgumentException(
-                    "QueryResult cannot be null."
-            );
+                    "QueryResult cannot be null.");
         }
 
         if (knowledgeGraph == null) {
             throw new IllegalArgumentException(
-                    "KnowledgeGraph cannot be null."
-            );
+                    "KnowledgeGraph cannot be null.");
         }
 
         this.question = result.getOriginalQuestion();
@@ -87,16 +94,17 @@ public class GroundedContext {
         this.relationships = extractRelationships(
                 this.entity,
                 this.nodes,
-                knowledgeGraph
-        );
+                knowledgeGraph);
     }
 
     /**
      * Extracts graph relationships that connect two nodes in the
      * grounded context.
      *
+     * <p>
      * The grounded context includes both the target entity and
      * the nodes returned by the query.
+     * </p>
      */
     private List<GroundedRelationship> extractRelationships(
             GraphNode entity,
@@ -127,9 +135,8 @@ public class GroundedContext {
                         new GroundedRelationship(
                                 edge.getSource(),
                                 edge.getTarget(),
-                                edge.getType()
-                        )
-                );
+                                edge.getType(),
+                                edge.getSourceEvidence()));
             }
         }
 

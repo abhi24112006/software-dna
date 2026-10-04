@@ -1,12 +1,15 @@
 package com.softwaredna.parser.nlp;
 
 import com.softwaredna.knowledge.GraphNode;
+import com.softwaredna.model.SourceEvidence;
 
 /**
  * Builds prompts for an LLM using only graph-derived information.
  *
+ * <p>
  * The prompt explicitly instructs the LLM to treat the supplied
  * graph facts as the only source of truth.
+ * </p>
  */
 public class GroundedPromptBuilder {
 
@@ -20,8 +23,7 @@ public class GroundedPromptBuilder {
 
         if (context == null) {
             throw new IllegalArgumentException(
-                    "GroundedContext cannot be null."
-            );
+                    "GroundedContext cannot be null.");
         }
 
         StringBuilder prompt = new StringBuilder();
@@ -61,8 +63,7 @@ public class GroundedPromptBuilder {
 
         appendRelationshipInterpretation(
                 prompt,
-                context
-        );
+                context);
 
         prompt.append("\n");
 
@@ -104,6 +105,17 @@ public class GroundedPromptBuilder {
                         .append(" --> ")
                         .append(relationship.getTarget().getName())
                         .append("\n");
+
+                SourceEvidence evidence =
+                        relationship.getSourceEvidence();
+
+                if (evidence != null) {
+                    prompt.append("  Evidence: ")
+                            .append(evidence.getFilePath())
+                            .append(":")
+                            .append(evidence.getLineNumber())
+                            .append("\n");
+                }
             }
         }
 

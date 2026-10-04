@@ -6,11 +6,13 @@ import java.util.regex.Pattern;
 
 import com.softwaredna.analysis.architecture.ArchitectureAnalyzer;
 import com.softwaredna.analysis.architecture.ArchitectureReport;
+import com.softwaredna.analysis.metrics.MetricQueryService;
 import com.softwaredna.graph.GraphRepository;
 import com.softwaredna.knowledge.GraphNode;
 import com.softwaredna.knowledge.KnowledgeGraph;
 import com.softwaredna.knowledge.NodeType;
 import com.softwaredna.knowledge.query.KnowledgeGraphQuery;
+import com.softwaredna.model.RepositoryModel;
 
 /**
  * End-to-end natural-language query engine.
@@ -69,7 +71,19 @@ public class NaturalLanguageQueryEngine {
      * @param graph Knowledge Graph to query
      */
     public NaturalLanguageQueryEngine(KnowledgeGraph graph) {
-        this(graph, null, null);
+        this(graph, null, null, null);
+    }
+
+    /**
+     * Creates a natural-language query engine with metric-query support.
+     *
+     * @param graph Knowledge Graph to query
+     * @param repositoryModel normalized repository model containing metrics
+     */
+    public NaturalLanguageQueryEngine(
+            KnowledgeGraph graph,
+            RepositoryModel repositoryModel) {
+        this(graph, null, null, repositoryModel);
     }
 
     /**
@@ -86,7 +100,7 @@ public class NaturalLanguageQueryEngine {
             KnowledgeGraph graph,
             LLMClient llmClient) {
 
-        this(graph, null, llmClient);
+        this(graph, null, llmClient, null);
     }
 
     /**
@@ -100,7 +114,7 @@ public class NaturalLanguageQueryEngine {
             KnowledgeGraph graph,
             GraphRepository graphRepository) {
 
-        this(graph, graphRepository, null);
+        this(graph, graphRepository, null, null);
     }
 
     /**
@@ -115,6 +129,18 @@ public class NaturalLanguageQueryEngine {
             KnowledgeGraph graph,
             GraphRepository graphRepository,
             LLMClient llmClient) {
+        this(graph, graphRepository, llmClient, null);
+    }
+
+    /**
+     * Creates a natural-language query engine with optional architecture,
+     * LLM, and metric-query support.
+     */
+    public NaturalLanguageQueryEngine(
+            KnowledgeGraph graph,
+            GraphRepository graphRepository,
+            LLMClient llmClient,
+            RepositoryModel repositoryModel) {
 
         if (graph == null) {
             throw new IllegalArgumentException(
@@ -128,7 +154,17 @@ public class NaturalLanguageQueryEngine {
         this.intentDetector = new QueryIntentDetector();
         this.entityResolver = new EntityResolver(graph);
         this.queryPlanner = new QueryPlanner();
-        this.queryExecutor = new QueryExecutor(graphQuery);
+
+        MetricQueryService metricQueryService =
+                repositoryModel == null
+                        ? null
+                        : new MetricQueryService(repositoryModel);
+
+        this.queryExecutor =
+                new QueryExecutor(
+                        graphQuery,
+                        metricQueryService
+                );
         this.answerGenerator = new AnswerGenerator();
 
         this.graphRepository = graphRepository;
@@ -345,6 +381,9 @@ public class NaturalLanguageQueryEngine {
             case REACHABILITY:
                 return NodeType.CLASS;
 
+            case METRICS:
+                return NodeType.CLASS;
+
             default:
                 return null;
         }
@@ -460,9 +499,46 @@ public class NaturalLanguageQueryEngine {
             case REACHABILITY:
                 return extractReachabilityEntity(normalized);
 
+            case METRICS:
+                return extractMetricsEntity(normalized);
+
             default:
                 return null;
         }
+    }
+
+    /**
+     * Extracts the class entity from a metrics question.
+     *
+     * Supports forms such as:
+     * "What are the metrics of UserController?"
+     * "How many methods does UserService have?"
+     * "What is the cyclomatic complexity of UserController?"
+     */
+    private String extractMetricsEntity(String question) {
+
+        String result = extractUsingPattern(
+                question,
+                "(?:what are the metrics of|show me the metrics of|show metrics for|metrics of) (.+)"
+        );
+
+        if (result != null) {
+            return result;
+        }
+
+        result = extractUsingPattern(
+                question,
+                "(?:how many methods does|how many fields does|how many parameters does) (.+?) have"
+        );
+
+        if (result != null) {
+            return result;
+        }
+
+        return extractUsingPattern(
+                question,
+                "(?:what is the cyclomatic complexity of|what are the metrics for) (.+)"
+        );
     }
 
     /**

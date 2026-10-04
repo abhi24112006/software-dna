@@ -5,8 +5,10 @@ import java.util.Locale;
 /**
  * Detects the intent of a natural-language Software DNA query.
  *
+ * <p>
  * This is the initial deterministic NLP layer.
  * The LLM layer will be added after this foundation is verified.
+ * </p>
  */
 public class QueryIntentDetector {
 
@@ -54,17 +56,59 @@ public class QueryIntentDetector {
             return QueryIntent.IMPACT;
         }
 
+        // Metrics
+        if (containsAny(normalized,
+                "what are the metrics",
+                "what is the metric",
+                "what are the metrics of",
+                "show me the metrics",
+                "show metrics",
+                "software metrics",
+                "code metrics",
+                "cyclomatic complexity",
+                "lines of code",
+                "loc of",
+                "line count of",
+                "number of methods",
+                "how many methods",
+                "method count",
+                "number of fields",
+                "field count",
+                "number of parameters",
+                "parameter count",
+                "local variable count",
+                "method call count",
+                "object creation count",
+                "loop count",
+                "conditional count",
+                "return count",
+                "nesting depth",
+                "fan in",
+                "fan-in",
+                "fan out",
+                "fan-out",
+                "cbo",
+                "coupling",
+                "dit",
+                "depth of inheritance",
+                "noc",
+                "number of children",
+                "rfc",
+                "response for class")) {
+            return QueryIntent.METRICS;
+        }
+
         // Reachability
-if (containsAny(normalized,
-        "what is reachable from",
-        "what can be reached from",
-        "reachable from",
-        "path from",
-        "paths from")
-        || normalized.matches(".*what can .+ reach.*")
-        || normalized.matches(".*what does .+ reach.*")) {
-    return QueryIntent.REACHABILITY;
-}
+        if (containsAny(normalized,
+                "what is reachable from",
+                "what can be reached from",
+                "reachable from",
+                "path from",
+                "paths from")
+                || normalized.matches(".*what can .+ reach.*")
+                || normalized.matches(".*what does .+ reach.*")) {
+            return QueryIntent.REACHABILITY;
+        }
 
         // Callers
         if (containsAny(normalized,

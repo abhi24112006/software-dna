@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import com.softwaredna.knowledge.GraphNode;
+import com.softwaredna.model.ClassMetrics;
 
 /**
  * Generates natural-language answers from graph-derived query results.
@@ -102,6 +103,12 @@ public class AnswerGenerator {
                         "can reach"
                 );
 
+            case METRICS:
+                return generateMetricsAnswer(
+                        entity,
+                        result.getMetrics()
+                );
+
             case ARCHITECTURE:
                 return generateRelationshipAnswer(
                         entity,
@@ -136,6 +143,32 @@ public class AnswerGenerator {
                 + relationship
                 + " "
                 + names
+                + ".";
+    }
+
+    private String generateMetricsAnswer(
+            GraphNode entity,
+            ClassMetrics metrics) {
+
+        if (metrics == null) {
+            return "No metrics are available for "
+                    + entity.getName()
+                    + ".";
+        }
+
+        return entity.getName()
+                + " metrics: "
+                + "Methods: " + metrics.getMethodCount()
+                + ", Fields: " + metrics.getFieldCount()
+                + ", LOC: " + metrics.getTotalLinesOfCode()
+                + ", Cyclomatic Complexity: "
+                + metrics.getTotalCyclomaticComplexity()
+                + ", Fan-In: " + metrics.getFanIn()
+                + ", Fan-Out: " + metrics.getFanOut()
+                + ", CBO: " + metrics.getCbo()
+                + ", DIT: " + metrics.getDit()
+                + ", NOC: " + metrics.getNoc()
+                + ", RFC: " + metrics.getRfc()
                 + ".";
     }
 }

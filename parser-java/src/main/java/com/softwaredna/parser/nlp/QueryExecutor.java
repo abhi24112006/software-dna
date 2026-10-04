@@ -2,21 +2,40 @@ package com.softwaredna.parser.nlp;
 
 import java.util.List;
 
+import com.softwaredna.analysis.metrics.MetricQueryService;
 import com.softwaredna.knowledge.GraphNode;
 import com.softwaredna.knowledge.NodeType;
 import com.softwaredna.knowledge.query.ImpactAnalyzer;
 import com.softwaredna.knowledge.query.KnowledgeGraphQuery;
+import com.softwaredna.model.ClassMetrics;
 
 /**
  * Executes a QueryPlan against the existing Knowledge Graph
  * query layer.
+ *
+ * Metric queries are handled through MetricQueryService because
+ * metric data is stored in the normalized RepositoryModel rather
+ * than in the Knowledge Graph.
  */
 public class QueryExecutor {
 
     private final KnowledgeGraphQuery graphQuery;
     private final ImpactAnalyzer impactAnalyzer;
+    private final MetricQueryService metricQueryService;
 
+    /**
+     * Backward-compatible constructor for structural graph queries.
+     */
     public QueryExecutor(KnowledgeGraphQuery graphQuery) {
+        this(graphQuery, null);
+    }
+
+    /**
+     * Constructor that also enables metric queries.
+     */
+    public QueryExecutor(
+            KnowledgeGraphQuery graphQuery,
+            MetricQueryService metricQueryService) {
 
         if (graphQuery == null) {
             throw new IllegalArgumentException(
@@ -27,6 +46,7 @@ public class QueryExecutor {
         this.graphQuery = graphQuery;
         this.impactAnalyzer =
                 new ImpactAnalyzer(graphQuery);
+        this.metricQueryService = metricQueryService;
     }
 
     public QueryResult execute(
@@ -54,6 +74,7 @@ public class QueryExecutor {
                 entity.getId();
 
         List<GraphNode> nodes;
+        ClassMetrics metrics = null;
 
         switch (plan.getOperation()) {
 
@@ -149,8 +170,39 @@ public class QueryExecutor {
                 break;
 
             case GET_REACHABILITY:
-                nodes = graphQuery.getReachableNodes(entityId);
+
+                nodes =
+                        graphQuery.getReachableNodes(
+                                entityId
+                        );
+
                 break;
+
+            case GET_METRICS:
+
+                if (metricQueryService == null) {
+                    throw new IllegalStateException(
+                            "MetricQueryService is required "
+                                    + "for GET_METRICS queries."
+                    );
+                }
+
+                if (entity.getType() != NodeType.CLASS) {
+                    throw new IllegalArgumentException(
+                            "Metrics are currently supported "
+                                    + "only for class entities."
+                    );
+                }
+
+                metrics =
+                        metricQueryService.getClassMetrics(
+                                entity.getName()
+                        );
+
+                nodes = List.of();
+
+                break;
+
             case GET_ARCHITECTURE:
             case NONE:
 
@@ -167,7 +219,8 @@ public class QueryExecutor {
                 originalQuestion,
                 plan.getIntent(),
                 entity,
-                nodes
+                nodes,
+                metrics
         );
     }
 

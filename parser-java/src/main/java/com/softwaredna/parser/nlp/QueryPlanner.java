@@ -78,6 +78,9 @@ public class QueryPlanner {
             case REACHABILITY:
                 return QueryOperation.GET_REACHABILITY;
 
+            case METRICS:
+                return QueryOperation.GET_METRICS;
+
             case ARCHITECTURE:
                 return QueryOperation.GET_ARCHITECTURE;
 

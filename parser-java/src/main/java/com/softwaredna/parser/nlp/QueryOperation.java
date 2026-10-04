@@ -30,6 +30,8 @@ public enum QueryOperation {
 
     GET_REACHABILITY,
 
+    GET_METRICS,
+
     GET_ARCHITECTURE,
 
     NONE

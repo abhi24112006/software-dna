@@ -2,6 +2,8 @@ package com.softwaredna.knowledge;
 
 import java.util.Objects;
 
+import com.softwaredna.model.SourceEvidence;
+
 public class GraphEdge {
 
     private final GraphNode source;
@@ -10,15 +12,26 @@ public class GraphEdge {
 
     private final EdgeType type;
 
+    private final SourceEvidence sourceEvidence;
+
     public GraphEdge(
             GraphNode source,
             GraphNode target,
             EdgeType type) {
 
+        this(source, target, type, null);
+    }
+
+    public GraphEdge(
+            GraphNode source,
+            GraphNode target,
+            EdgeType type,
+            SourceEvidence sourceEvidence) {
+
         this.source = source;
         this.target = target;
         this.type = type;
-
+        this.sourceEvidence = sourceEvidence;
     }
 
     public GraphNode getSource() {
@@ -31,6 +44,10 @@ public class GraphEdge {
 
     public EdgeType getType() {
         return type;
+    }
+
+    public SourceEvidence getSourceEvidence() {
+        return sourceEvidence;
     }
 
     @Override
@@ -47,8 +64,8 @@ public class GraphEdge {
 
         return Objects.equals(source.getId(), other.source.getId())
                 && Objects.equals(target.getId(), other.target.getId())
-                && type == other.type;
-
+                && type == other.type
+                && Objects.equals(sourceEvidence, other.sourceEvidence);
     }
 
     @Override
@@ -57,9 +74,7 @@ public class GraphEdge {
         return Objects.hash(
                 source.getId(),
                 target.getId(),
-                type
-        );
-
+                type,
+                sourceEvidence);
     }
-
 }

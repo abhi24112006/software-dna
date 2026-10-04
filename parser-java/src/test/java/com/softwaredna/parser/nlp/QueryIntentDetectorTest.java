@@ -1,8 +1,7 @@
 package com.softwaredna.parser.nlp;
 
-import org.junit.jupiter.api.Test;
-
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import org.junit.jupiter.api.Test;
 
 class QueryIntentDetectorTest {
 
@@ -114,6 +113,56 @@ class QueryIntentDetectorTest {
                 QueryIntent.ARCHITECTURE,
                 detector.detectIntent(
                         "What is the architecture of this repository?"
+                )
+        );
+    }
+
+    @Test
+    void shouldDetectMetricsFromCyclomaticComplexityQuestion() {
+        assertEquals(
+                QueryIntent.METRICS,
+                detector.detectIntent(
+                        "What is the cyclomatic complexity of UserService?"
+                )
+        );
+    }
+
+    @Test
+    void shouldDetectMetricsFromLocQuestion() {
+        assertEquals(
+                QueryIntent.METRICS,
+                detector.detectIntent(
+                        "What is the LOC of UserController?"
+                )
+        );
+    }
+
+    @Test
+    void shouldDetectMetricsFromGeneralMetricsQuestion() {
+        assertEquals(
+                QueryIntent.METRICS,
+                detector.detectIntent(
+                        "What are the metrics of UserService?"
+                )
+        );
+    }
+
+    @Test
+    void shouldDetectMetricsFromFanInQuestion() {
+        assertEquals(
+                QueryIntent.METRICS,
+                detector.detectIntent(
+                        "What is the fan-in of UserRepository?"
+                )
+        );
+    }
+
+    @Test
+    void shouldDetectMetricsFromMethodCountQuestion() {
+        assertEquals(
+                QueryIntent.METRICS,
+                detector.detectIntent(
+                        "How many methods does UserService have?"
                 )
         );
     }

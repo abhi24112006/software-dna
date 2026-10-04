@@ -7,12 +7,17 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import com.softwaredna.analysis.metrics.MetricQueryService;
 import com.softwaredna.knowledge.EdgeType;
 import com.softwaredna.knowledge.GraphEdge;
 import com.softwaredna.knowledge.GraphNode;
 import com.softwaredna.knowledge.KnowledgeGraph;
 import com.softwaredna.knowledge.NodeType;
 import com.softwaredna.knowledge.query.KnowledgeGraphQuery;
+import com.softwaredna.model.ClassMetrics;
+import com.softwaredna.model.ParsedClass;
+import com.softwaredna.model.ParsedFile;
+import com.softwaredna.model.RepositoryModel;
 
 class QueryExecutorTest {
 
@@ -267,6 +272,155 @@ class QueryExecutorTest {
         assertFalse(result.hasResults());
         assertEquals(0, result.getResultCount());
         assertTrue(result.getNodes().isEmpty());
+    }
+
+    @Test
+    void shouldExecuteMetricsQuery() {
+
+        RepositoryModel repositoryModel =
+                new RepositoryModel();
+
+        ParsedFile file =
+                new ParsedFile();
+
+        ParsedClass parsedClass =
+                new ParsedClass("UserController");
+
+        ClassMetrics metrics =
+                new ClassMetrics();
+
+        metrics.setMethodCount(5);
+        metrics.setFieldCount(3);
+        metrics.setTotalLinesOfCode(120);
+        metrics.setTotalCyclomaticComplexity(8);
+        metrics.setFanIn(4);
+        metrics.setFanOut(2);
+
+        parsedClass.setMetrics(metrics);
+        file.getClasses().add(parsedClass);
+        repositoryModel.getFiles().add(file);
+
+        MetricQueryService metricQueryService =
+                new MetricQueryService(repositoryModel);
+
+        QueryExecutor metricExecutor =
+                new QueryExecutor(
+                        graphQuery,
+                        metricQueryService
+                );
+
+        QueryPlan plan = new QueryPlan(
+                QueryIntent.METRICS,
+                controller,
+                QueryOperation.GET_METRICS
+        );
+
+        QueryResult result =
+                metricExecutor.execute(plan);
+
+        assertEquals(
+                QueryIntent.METRICS,
+                result.getIntent()
+        );
+
+        assertEquals(
+                controller,
+                result.getEntity()
+        );
+
+        assertTrue(result.hasMetrics());
+
+        assertEquals(
+                5,
+                result.getMetrics().getMethodCount()
+        );
+
+        assertEquals(
+                3,
+                result.getMetrics().getFieldCount()
+        );
+
+        assertEquals(
+                120,
+                result.getMetrics().getTotalLinesOfCode()
+        );
+
+        assertEquals(
+                8,
+                result.getMetrics().getTotalCyclomaticComplexity()
+        );
+
+        assertEquals(
+                4,
+                result.getMetrics().getFanIn()
+        );
+
+        assertEquals(
+                2,
+                result.getMetrics().getFanOut()
+        );
+
+        assertTrue(result.getNodes().isEmpty());
+    }
+
+    @Test
+    void shouldRejectMetricsQueryWithoutMetricService() {
+
+        QueryPlan plan = new QueryPlan(
+                QueryIntent.METRICS,
+                controller,
+                QueryOperation.GET_METRICS
+        );
+
+        IllegalStateException exception =
+                assertThrows(
+                        IllegalStateException.class,
+                        () -> executor.execute(plan)
+                );
+
+        assertEquals(
+                "MetricQueryService is required for GET_METRICS queries.",
+                exception.getMessage()
+        );
+    }
+
+    @Test
+    void shouldRejectMetricsForNonClassEntity() {
+
+        GraphNode method = new GraphNode(
+                "method:UserController.createUser",
+                "UserController.createUser()",
+                NodeType.METHOD
+        );
+
+        RepositoryModel repositoryModel =
+                new RepositoryModel();
+
+        MetricQueryService metricQueryService =
+                new MetricQueryService(repositoryModel);
+
+        QueryExecutor metricExecutor =
+                new QueryExecutor(
+                        graphQuery,
+                        metricQueryService
+                );
+
+        QueryPlan plan = new QueryPlan(
+                QueryIntent.METRICS,
+                method,
+                QueryOperation.GET_METRICS
+        );
+
+        IllegalArgumentException exception =
+                assertThrows(
+                        IllegalArgumentException.class,
+                        () -> metricExecutor.execute(plan)
+                );
+
+        assertEquals(
+                "Metrics are currently supported only for class entities.",
+                exception.getMessage()
+        );
     }
 
     @Test

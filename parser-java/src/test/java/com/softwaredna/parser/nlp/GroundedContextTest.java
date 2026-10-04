@@ -12,6 +12,7 @@ import com.softwaredna.knowledge.GraphEdge;
 import com.softwaredna.knowledge.GraphNode;
 import com.softwaredna.knowledge.KnowledgeGraph;
 import com.softwaredna.knowledge.NodeType;
+import com.softwaredna.model.SourceEvidence;
 
 class GroundedContextTest {
 
@@ -22,15 +23,13 @@ class GroundedContextTest {
                 new GraphNode(
                         "class:UserController",
                         "UserController",
-                        NodeType.CLASS
-                );
+                        NodeType.CLASS);
 
         GraphNode service =
                 new GraphNode(
                         "class:UserService",
                         "UserService",
-                        NodeType.CLASS
-                );
+                        NodeType.CLASS);
 
         KnowledgeGraph graph =
                 new KnowledgeGraph();
@@ -42,46 +41,103 @@ class GroundedContextTest {
                 new GraphEdge(
                         controller,
                         service,
-                        EdgeType.DEPENDS_ON
-                )
-        );
+                        EdgeType.DEPENDS_ON));
 
         QueryResult queryResult =
                 new QueryResult(
                         "What does UserController depend on?",
                         QueryIntent.DEPENDENCIES,
                         controller,
-                        List.of(service)
-                );
+                        List.of(service));
 
         GroundedContext context =
                 new GroundedContext(
                         queryResult,
-                        graph
-                );
+                        graph);
 
         assertEquals(
                 1,
-                context.getRelationships().size()
-        );
+                context.getRelationships().size());
 
         GroundedRelationship relationship =
                 context.getRelationships().get(0);
 
         assertEquals(
                 controller,
-                relationship.getSource()
-        );
+                relationship.getSource());
 
         assertEquals(
                 service,
-                relationship.getTarget()
-        );
+                relationship.getTarget());
 
         assertEquals(
                 EdgeType.DEPENDS_ON,
-                relationship.getType()
-        );
+                relationship.getType());
+    }
+
+    @Test
+    void shouldPreserveSourceEvidenceFromGraphEdge() {
+
+        GraphNode controller =
+                new GraphNode(
+                        "class:UserController",
+                        "UserController",
+                        NodeType.CLASS);
+
+        GraphNode service =
+                new GraphNode(
+                        "class:UserService",
+                        "UserService",
+                        NodeType.CLASS);
+
+        SourceEvidence evidence =
+                new SourceEvidence(
+                        "src/main/java/UserController.java",
+                        42);
+
+        KnowledgeGraph graph =
+                new KnowledgeGraph();
+
+        graph.addNode(controller);
+        graph.addNode(service);
+
+        graph.addEdge(
+                new GraphEdge(
+                        controller,
+                        service,
+                        EdgeType.DEPENDS_ON,
+                        evidence));
+
+        QueryResult queryResult =
+                new QueryResult(
+                        "What does UserController depend on?",
+                        QueryIntent.DEPENDENCIES,
+                        controller,
+                        List.of(service));
+
+        GroundedContext context =
+                new GroundedContext(
+                        queryResult,
+                        graph);
+
+        assertEquals(
+                1,
+                context.getRelationships().size());
+
+        GroundedRelationship relationship =
+                context.getRelationships().get(0);
+
+        assertEquals(
+                evidence,
+                relationship.getSourceEvidence());
+
+        assertEquals(
+                "src/main/java/UserController.java",
+                relationship.getSourceEvidence().getFilePath());
+
+        assertEquals(
+                42,
+                relationship.getSourceEvidence().getLineNumber());
     }
 
     @Test
@@ -91,22 +147,19 @@ class GroundedContextTest {
                 new GraphNode(
                         "class:UserController",
                         "UserController",
-                        NodeType.CLASS
-                );
+                        NodeType.CLASS);
 
         GraphNode service =
                 new GraphNode(
                         "class:UserService",
                         "UserService",
-                        NodeType.CLASS
-                );
+                        NodeType.CLASS);
 
         GraphNode repository =
                 new GraphNode(
                         "class:UserRepository",
                         "UserRepository",
-                        NodeType.CLASS
-                );
+                        NodeType.CLASS);
 
         KnowledgeGraph graph =
                 new KnowledgeGraph();
@@ -119,36 +172,29 @@ class GroundedContextTest {
                 new GraphEdge(
                         controller,
                         service,
-                        EdgeType.DEPENDS_ON
-                )
-        );
+                        EdgeType.DEPENDS_ON));
 
         graph.addEdge(
                 new GraphEdge(
                         service,
                         repository,
-                        EdgeType.DEPENDS_ON
-                )
-        );
+                        EdgeType.DEPENDS_ON));
 
         QueryResult queryResult =
                 new QueryResult(
                         "What does UserController depend on?",
                         QueryIntent.DEPENDENCIES,
                         controller,
-                        List.of(service, repository)
-                );
+                        List.of(service, repository));
 
         GroundedContext context =
                 new GroundedContext(
                         queryResult,
-                        graph
-                );
+                        graph);
 
         assertEquals(
                 2,
-                context.getRelationships().size()
-        );
+                context.getRelationships().size());
     }
 
     @Test
@@ -158,29 +204,25 @@ class GroundedContextTest {
                 new GraphNode(
                         "class:UserController",
                         "UserController",
-                        NodeType.CLASS
-                );
+                        NodeType.CLASS);
 
         GraphNode service =
                 new GraphNode(
                         "class:UserService",
                         "UserService",
-                        NodeType.CLASS
-                );
+                        NodeType.CLASS);
 
         GraphNode repository =
                 new GraphNode(
                         "class:UserRepository",
                         "UserRepository",
-                        NodeType.CLASS
-                );
+                        NodeType.CLASS);
 
         GraphNode unrelated =
                 new GraphNode(
                         "class:AdminService",
                         "AdminService",
-                        NodeType.CLASS
-                );
+                        NodeType.CLASS);
 
         KnowledgeGraph graph =
                 new KnowledgeGraph();
@@ -194,49 +236,40 @@ class GroundedContextTest {
                 new GraphEdge(
                         controller,
                         service,
-                        EdgeType.DEPENDS_ON
-                )
-        );
+                        EdgeType.DEPENDS_ON));
 
         graph.addEdge(
                 new GraphEdge(
                         repository,
                         unrelated,
-                        EdgeType.DEPENDS_ON
-                )
-        );
+                        EdgeType.DEPENDS_ON));
 
         QueryResult queryResult =
                 new QueryResult(
                         "What does UserController depend on?",
                         QueryIntent.DEPENDENCIES,
                         controller,
-                        List.of(service)
-                );
+                        List.of(service));
 
         GroundedContext context =
                 new GroundedContext(
                         queryResult,
-                        graph
-                );
+                        graph);
 
         assertEquals(
                 1,
-                context.getRelationships().size()
-        );
+                context.getRelationships().size());
 
         GroundedRelationship relationship =
                 context.getRelationships().get(0);
 
         assertEquals(
                 "UserController",
-                relationship.getSource().getName()
-        );
+                relationship.getSource().getName());
 
         assertEquals(
                 "UserService",
-                relationship.getTarget().getName()
-        );
+                relationship.getTarget().getName());
     }
 
     @Test
@@ -246,15 +279,13 @@ class GroundedContextTest {
                 new GraphNode(
                         "class:UserController",
                         "UserController",
-                        NodeType.CLASS
-                );
+                        NodeType.CLASS);
 
         GraphNode service =
                 new GraphNode(
                         "class:UserService",
                         "UserService",
-                        NodeType.CLASS
-                );
+                        NodeType.CLASS);
 
         KnowledgeGraph graph =
                 new KnowledgeGraph();
@@ -266,28 +297,23 @@ class GroundedContextTest {
                 new GraphEdge(
                         controller,
                         service,
-                        EdgeType.DEPENDS_ON
-                )
-        );
+                        EdgeType.DEPENDS_ON));
 
         QueryResult queryResult =
                 new QueryResult(
                         "What does UserController depend on?",
                         QueryIntent.DEPENDENCIES,
                         controller,
-                        List.of(service)
-                );
+                        List.of(service));
 
         GroundedContext context =
                 new GroundedContext(
                         queryResult,
-                        graph
-                );
+                        graph);
 
         assertThrows(
                 UnsupportedOperationException.class,
-                () -> context.getRelationships().clear()
-        );
+                () -> context.getRelationships().clear());
     }
 
     @Test
@@ -297,24 +323,20 @@ class GroundedContextTest {
                 new GraphNode(
                         "class:UserController",
                         "UserController",
-                        NodeType.CLASS
-                );
+                        NodeType.CLASS);
 
         QueryResult queryResult =
                 new QueryResult(
                         "What does UserController depend on?",
                         QueryIntent.DEPENDENCIES,
                         controller,
-                        List.of()
-                );
+                        List.of());
 
         assertThrows(
                 IllegalArgumentException.class,
                 () -> new GroundedContext(
                         queryResult,
-                        null
-                )
-        );
+                        null));
     }
 
     @Test
@@ -324,22 +346,19 @@ class GroundedContextTest {
                 new GraphNode(
                         "class:UserController",
                         "UserController",
-                        NodeType.CLASS
-                );
+                        NodeType.CLASS);
 
         QueryResult queryResult =
                 new QueryResult(
                         "What does UserController depend on?",
                         QueryIntent.DEPENDENCIES,
                         controller,
-                        List.of()
-                );
+                        List.of());
 
         GroundedContext context =
                 new GroundedContext(queryResult);
 
         assertTrue(
-                context.getRelationships().isEmpty()
-        );
+                context.getRelationships().isEmpty());
     }
 }

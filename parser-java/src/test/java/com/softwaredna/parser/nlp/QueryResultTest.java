@@ -10,6 +10,7 @@ import org.junit.jupiter.api.Test;
 
 import com.softwaredna.knowledge.GraphNode;
 import com.softwaredna.knowledge.NodeType;
+import com.softwaredna.model.ClassMetrics;
 
 class QueryResultTest {
 
@@ -167,5 +168,42 @@ class QueryResultTest {
                         null
                 )
         );
+    }
+
+        @Test
+    void shouldStoreClassMetrics() {
+
+        ClassMetrics metrics = new ClassMetrics();
+        metrics.setMethodCount(5);
+        metrics.setFieldCount(3);
+        metrics.setTotalLinesOfCode(120);
+
+        QueryResult result = new QueryResult(
+                "What are the metrics of UserController?",
+                QueryIntent.METRICS,
+                controller,
+                List.of(),
+                metrics
+        );
+
+        assertTrue(result.hasMetrics());
+        assertEquals(metrics, result.getMetrics());
+        assertEquals(5, result.getMetrics().getMethodCount());
+        assertEquals(3, result.getMetrics().getFieldCount());
+        assertEquals(120, result.getMetrics().getTotalLinesOfCode());
+    }
+
+    @Test
+    void shouldHaveNoMetricsForStructuralQuery() {
+
+        QueryResult result = new QueryResult(
+                "What does UserController depend on?",
+                QueryIntent.DEPENDENCIES,
+                controller,
+                List.of(service)
+        );
+
+        assertFalse(result.hasMetrics());
+        assertEquals(null, result.getMetrics());
     }
 }

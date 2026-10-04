@@ -5,6 +5,7 @@ import java.util.Collections;
 import java.util.List;
 
 import com.softwaredna.knowledge.GraphNode;
+import com.softwaredna.model.ClassMetrics;
 
 /**
  * Represents the result of executing a natural-language query
@@ -12,6 +13,9 @@ import com.softwaredna.knowledge.GraphNode;
  *
  * QueryResult keeps the original query context together with
  * the graph facts returned by the query executor.
+ *
+ * For metric queries, the result can additionally contain
+ * ClassMetrics for the requested class.
  */
 public class QueryResult {
 
@@ -19,12 +23,35 @@ public class QueryResult {
     private final QueryIntent intent;
     private final GraphNode entity;
     private final List<GraphNode> nodes;
+    private final ClassMetrics metrics;
 
+    /**
+     * Backward-compatible constructor for structural graph queries.
+     */
     public QueryResult(
             String originalQuestion,
             QueryIntent intent,
             GraphNode entity,
             List<GraphNode> nodes) {
+
+        this(
+                originalQuestion,
+                intent,
+                entity,
+                nodes,
+                null
+        );
+    }
+
+    /**
+     * Constructor that also supports metric results.
+     */
+    public QueryResult(
+            String originalQuestion,
+            QueryIntent intent,
+            GraphNode entity,
+            List<GraphNode> nodes,
+            ClassMetrics metrics) {
 
         if (originalQuestion == null || originalQuestion.isBlank()) {
             throw new IllegalArgumentException(
@@ -54,6 +81,7 @@ public class QueryResult {
         this.intent = intent;
         this.entity = entity;
         this.nodes = new ArrayList<>(nodes);
+        this.metrics = metrics;
     }
 
     public String getOriginalQuestion() {
@@ -79,7 +107,26 @@ public class QueryResult {
     }
 
     /**
+     * Returns the class metrics associated with this query.
+     *
+     * This value is null for non-metric queries.
+     */
+    public ClassMetrics getMetrics() {
+        return metrics;
+    }
+
+    /**
+     * Returns whether metric data is present.
+     */
+    public boolean hasMetrics() {
+        return metrics != null;
+    }
+
+    /**
      * Returns whether the query produced at least one result.
+     *
+     * For structural queries this is based on graph nodes.
+     * Metric presence is handled separately through hasMetrics().
      */
     public boolean hasResults() {
         return !nodes.isEmpty();
@@ -99,6 +146,7 @@ public class QueryResult {
                 ", intent=" + intent +
                 ", entity=" + entity.getName() +
                 ", resultCount=" + nodes.size() +
+                ", hasMetrics=" + (metrics != null) +
                 '}';
     }
 }
