@@ -13,6 +13,8 @@ import com.softwaredna.knowledge.GraphEdge;
 import com.softwaredna.knowledge.GraphNode;
 import com.softwaredna.knowledge.KnowledgeGraph;
 import com.softwaredna.knowledge.NodeType;
+import com.softwaredna.knowledge.Subgraph;
+import com.softwaredna.knowledge.SubgraphRetriever;
 import com.softwaredna.knowledge.query.KnowledgeGraphQuery;
 import com.softwaredna.model.ClassMetrics;
 import com.softwaredna.model.ParsedClass;
@@ -422,6 +424,46 @@ class QueryExecutorTest {
                 exception.getMessage()
         );
     }
+
+    @Test
+void shouldIncludeRetrievedSubgraphInQueryResult() {
+
+    SubgraphRetriever subgraphRetriever =
+            new SubgraphRetriever(graph);
+
+    QueryExecutor subgraphExecutor =
+            new QueryExecutor(
+                    graphQuery,
+                    null,
+                    subgraphRetriever
+            );
+
+    QueryPlan plan = new QueryPlan(
+            QueryIntent.DEPENDENCIES,
+            controller,
+            QueryOperation.GET_DEPENDENCIES
+    );
+
+    QueryResult result =
+            subgraphExecutor.execute(plan);
+
+    assertTrue(result.hasSubgraph());
+
+    Subgraph subgraph =
+            result.getSubgraph();
+
+    assertEquals(2, subgraph.getNodeCount());
+    assertEquals(1, subgraph.getEdgeCount());
+
+    assertTrue(
+            subgraph.getNodes().contains(controller)
+    );
+
+    assertTrue(
+            subgraph.getNodes().contains(service)
+    );
+
+}
 
     @Test
     void shouldRejectNullPlan() {

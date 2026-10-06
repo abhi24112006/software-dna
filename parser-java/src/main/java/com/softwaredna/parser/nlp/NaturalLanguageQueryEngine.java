@@ -11,6 +11,7 @@ import com.softwaredna.graph.GraphRepository;
 import com.softwaredna.knowledge.GraphNode;
 import com.softwaredna.knowledge.KnowledgeGraph;
 import com.softwaredna.knowledge.NodeType;
+import com.softwaredna.knowledge.SubgraphRetriever;
 import com.softwaredna.knowledge.query.KnowledgeGraphQuery;
 import com.softwaredna.model.RepositoryModel;
 
@@ -83,6 +84,7 @@ public class NaturalLanguageQueryEngine {
     public NaturalLanguageQueryEngine(
             KnowledgeGraph graph,
             RepositoryModel repositoryModel) {
+
         this(graph, null, null, repositoryModel);
     }
 
@@ -129,6 +131,7 @@ public class NaturalLanguageQueryEngine {
             KnowledgeGraph graph,
             GraphRepository graphRepository,
             LLMClient llmClient) {
+
         this(graph, graphRepository, llmClient, null);
     }
 
@@ -160,11 +163,16 @@ public class NaturalLanguageQueryEngine {
                         ? null
                         : new MetricQueryService(repositoryModel);
 
+        SubgraphRetriever subgraphRetriever =
+                new SubgraphRetriever(graph);
+
         this.queryExecutor =
                 new QueryExecutor(
                         graphQuery,
-                        metricQueryService
+                        metricQueryService,
+                        subgraphRetriever
                 );
+
         this.answerGenerator = new AnswerGenerator();
 
         this.graphRepository = graphRepository;

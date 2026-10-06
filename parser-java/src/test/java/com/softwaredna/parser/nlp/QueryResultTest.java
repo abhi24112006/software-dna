@@ -1,6 +1,7 @@
 package com.softwaredna.parser.nlp;
 
 import java.util.List;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -10,6 +11,7 @@ import org.junit.jupiter.api.Test;
 
 import com.softwaredna.knowledge.GraphNode;
 import com.softwaredna.knowledge.NodeType;
+import com.softwaredna.knowledge.Subgraph;
 import com.softwaredna.model.ClassMetrics;
 
 class QueryResultTest {
@@ -206,4 +208,49 @@ class QueryResultTest {
         assertFalse(result.hasMetrics());
         assertEquals(null, result.getMetrics());
     }
+
+    @Test
+void shouldStoreSubgraph() {
+    GraphNode user = new GraphNode(
+            "class:User",
+            "User",
+            NodeType.CLASS
+    );
+
+    Subgraph subgraph = new Subgraph(
+            Set.of(user),
+            Set.of()
+    );
+
+    QueryResult result = new QueryResult(
+            "What does User depend on?",
+            QueryIntent.DEPENDENCIES,
+            user,
+            List.of(),
+            null,
+            subgraph
+    );
+
+    assertTrue(result.hasSubgraph());
+    assertEquals(subgraph, result.getSubgraph());
+}
+
+@Test
+void shouldHaveNoSubgraphForExistingConstructor() {
+    GraphNode user = new GraphNode(
+            "class:User",
+            "User",
+            NodeType.CLASS
+    );
+
+    QueryResult result = new QueryResult(
+            "What does User depend on?",
+            QueryIntent.DEPENDENCIES,
+            user,
+            List.of()
+    );
+
+    assertFalse(result.hasSubgraph());
+    assertEquals(null, result.getSubgraph());
+}
 }

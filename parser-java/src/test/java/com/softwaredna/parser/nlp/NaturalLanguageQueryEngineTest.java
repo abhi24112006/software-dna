@@ -266,6 +266,51 @@ class NaturalLanguageQueryEngineTest {
     }
 
     @Test
+void shouldIncludeRetrievedSubgraphForDependenciesQuestion() {
+
+    QueryResult result =
+            engine.ask(
+                    "What does UserController depend on?"
+            );
+
+    assertTrue(result.hasSubgraph());
+
+    assertEquals(
+            4,
+            result.getSubgraph().getNodeCount()
+    );
+
+    assertEquals(
+            3,
+            result.getSubgraph().getEdgeCount()
+    );
+
+    assertTrue(
+            result.getSubgraph()
+                    .getNodes()
+                    .contains(controller)
+    );
+
+    assertTrue(
+            result.getSubgraph()
+                    .getNodes()
+                    .contains(service)
+    );
+
+    assertTrue(
+            result.getSubgraph()
+                    .getNodes()
+                    .contains(user)
+    );
+
+    assertTrue(
+            result.getSubgraph()
+                    .getNodes()
+                    .contains(controllerCreate)
+    );
+}
+
+    @Test
     void shouldAnswerDependentsQuestion() {
 
         QueryResult result =

@@ -1,7 +1,8 @@
-STYLE=LAYERED
-CONFIDENCE=0.8
-HEALTH=94.0
+STYLE=MVC
+CONFIDENCE=0.85
+HEALTH=95.5
 DEPENDENCIES
 UserController --DEPENDS_ON--> UserService
+UserController --DEPENDS_ON--> UserView
 UserService --DEPENDS_ON--> UserRepository
 ANOMALIES

@@ -5,6 +5,8 @@ import java.util.List;
 import com.softwaredna.analysis.metrics.MetricQueryService;
 import com.softwaredna.knowledge.GraphNode;
 import com.softwaredna.knowledge.NodeType;
+import com.softwaredna.knowledge.Subgraph;
+import com.softwaredna.knowledge.SubgraphRetriever;
 import com.softwaredna.knowledge.query.ImpactAnalyzer;
 import com.softwaredna.knowledge.query.KnowledgeGraphQuery;
 import com.softwaredna.model.ClassMetrics;
@@ -16,18 +18,22 @@ import com.softwaredna.model.ClassMetrics;
  * Metric queries are handled through MetricQueryService because
  * metric data is stored in the normalized RepositoryModel rather
  * than in the Knowledge Graph.
+ *
+ * Structural query results can also carry a focused Subgraph
+ * retrieved around the target entity.
  */
 public class QueryExecutor {
 
     private final KnowledgeGraphQuery graphQuery;
     private final ImpactAnalyzer impactAnalyzer;
     private final MetricQueryService metricQueryService;
+    private final SubgraphRetriever subgraphRetriever;
 
     /**
      * Backward-compatible constructor for structural graph queries.
      */
     public QueryExecutor(KnowledgeGraphQuery graphQuery) {
-        this(graphQuery, null);
+        this(graphQuery, null, null);
     }
 
     /**
@@ -36,6 +42,17 @@ public class QueryExecutor {
     public QueryExecutor(
             KnowledgeGraphQuery graphQuery,
             MetricQueryService metricQueryService) {
+
+        this(graphQuery, metricQueryService, null);
+    }
+
+    /**
+     * Constructor that enables metric queries and subgraph retrieval.
+     */
+    public QueryExecutor(
+            KnowledgeGraphQuery graphQuery,
+            MetricQueryService metricQueryService,
+            SubgraphRetriever subgraphRetriever) {
 
         if (graphQuery == null) {
             throw new IllegalArgumentException(
@@ -47,6 +64,7 @@ public class QueryExecutor {
         this.impactAnalyzer =
                 new ImpactAnalyzer(graphQuery);
         this.metricQueryService = metricQueryService;
+        this.subgraphRetriever = subgraphRetriever;
     }
 
     public QueryResult execute(
@@ -215,12 +233,20 @@ public class QueryExecutor {
                 );
         }
 
+        Subgraph subgraph = null;
+
+        if (subgraphRetriever != null) {
+            subgraph =
+                    subgraphRetriever.retrieve(entity);
+        }
+
         return new QueryResult(
                 originalQuestion,
                 plan.getIntent(),
                 entity,
                 nodes,
-                metrics
+                metrics,
+                subgraph
         );
     }
 
